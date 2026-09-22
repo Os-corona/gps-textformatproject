@@ -37,6 +37,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'documents',
+    'docx_engine',
+    'templates_engine',
+    'ai_engine',
+    'orchestrator',
+    'api',
 ]
 
 MIDDLEWARE = [
