@@ -1,4 +1,4 @@
-﻿asgiref==3.12.1
+asgiref==3.12.1
 djangorestframework
 tzdata==2026.4
 Django
@@ -9,4 +9,3 @@ lxml
 pytest
 pytest-django
 factory_boy
-
