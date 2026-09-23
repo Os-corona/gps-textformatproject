@@ -96,7 +96,7 @@ function formatSize(bytes: number) {
 
                         <!-- Supported formats -->
                         <p class="text-secondary small mb-0">
-                        DOCX | Hasta 10MB
+                        .DOCX | Hasta 10MB
                         </p>
 
                         <!-- Hidden input -->
