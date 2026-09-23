@@ -1,0 +1,11 @@
+asgiref==3.12.1
+djangorestframework
+tzdata==2026.4
+Django
+psycopg2-binary
+django-environ
+python-docx
+lxml
+pytest
+pytest-django
+factory_boy
