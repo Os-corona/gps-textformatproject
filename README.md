@@ -2,7 +2,7 @@
 
 Plataforma web para el **formateo y personalización de documentos de texto** mediante inteligencia artificial.
 
-> **Estado del proyecto:** 🟡 Planeación
+> **Estado del proyecto:** 🟡 En desarrollo — Sprint 1 (esqueleto del sistema)
 
 ## 📋 Descripción
 
@@ -10,15 +10,11 @@ PrettyDocs es un proyecto de software que tiene como objetivo desarrollar una pl
 
 La plataforma estará orientada a usuarios que necesitan adaptar documentos a determinados formatos de presentación, permitiendo seleccionar diferentes opciones de configuración y utilizar agentes de inteligencia artificial proporcionados por el usuario.
 
-Actualmente, el proyecto se encuentra en su **etapa de planeación**, por lo que las funcionalidades descritas en este documento representan características propuestas y compromisos establecidos para el desarrollo del sistema.
-
 ## 🎯 Objetivo
 
 Brindar una plataforma web capaz de entregar documentos con un formato adecuado y personalizado a partir de un documento de texto.
 
 ## ✨ Funcionalidades planeadas
-
-El sistema contempla las siguientes funcionalidades:
 
 * Dar formato preestablecido a documentos `.docx`.
 * Permitir personalizar diferentes aspectos del formato.
@@ -27,93 +23,186 @@ El sistema contempla las siguientes funcionalidades:
   * Márgenes.
   * Fuente.
   * Tamaño de fuente.
+  * Número de página.
+  * Logo institucional.
   * Otras opciones de formato.
 * Permitir al usuario seleccionar diferentes opciones de formato.
-* Permitir la interacción con un agente de inteligencia artificial mediante prompts personalizados.
+* Corrección gramatical/ortográfica y reestructuración jerárquica del texto asistida por IA.
 * Permitir el uso de distintos agentes de IA proporcionados por el usuario.
 
 ## 🚫 Fuera del alcance
 
-Para mantener definido el alcance del proyecto, PrettyDocs **no contempla**:
-
 * Aceptar documentos que no sean `.docx`.
-* Modificar la información existente en el documento.
+* Modificar el significado del contenido existente.
 * Agregar información nueva al documento.
-
-El propósito del sistema es **dar formato al contenido existente**, no generar, modificar o complementar su información.
+* Interacción del usuario con la IA mediante prompts libres (el sistema usa prompts predefinidos).
 
 ## 👥 Equipo
 
 | Integrante                      | Rol                            |
-| ------------------------------- | ------------------------------ |
+| -------------------------------- | ------------------------------- |
 | Oscar Alejandro Arias Corona    | Líder de proyecto              |
 | Alfonso Maron Fernandez Garibay | Frontend                       |
 | Luis Dorian Ferreira Calderon   | Backend                        |
 | Luis Arturo Roman Sanchez       | Administrador de Base de Datos |
 | Roberto Cisneros Garcia         | Backend                        |
 
-## 🧩 Roles y responsabilidades
+## 🛠️ Stack tecnológico
 
-### Líder de proyecto
+| Capa | Tecnología |
+| --- | --- |
+| Backend | Django + Django REST Framework |
+| Base de datos | PostgreSQL |
+| Manipulación de documentos | python-docx / lxml |
+| Frontend | Vue 3 + Vite + Bootstrap |
+| Procesamiento asíncrono | Celery + Redis *(se integra en sprints posteriores)* |
+| IA | API de Anthropic / OpenAI / Gemini *(se integra en sprints posteriores)* |
+| Testing | pytest + pytest-django |
 
-**Oscar Alejandro Arias Corona**
+## 📦 Estructura del repositorio
 
-Responsable de la organización y seguimiento del proyecto, incluyendo la gestión del tablero de trabajo, asignación de tareas, sprints e historias de usuario, así como la planificación y elaboración de documentación. También brindará apoyo en el desarrollo backend y frontend.
+```
+prettydocs/
+├── backend/
+│   ├── documents/          # Modelos y gestión de archivos (Document, ProcessingJob)
+│   ├── docx_engine/        # Extracción y reconstrucción de .docx (sin IA)
+│   ├── templates_engine/   # Plantillas y formato visual (sin IA)
+│   ├── ai_engine/          # Integración con modelos de lenguaje
+│   ├── orchestrator/       # Orquestación del pipeline (Celery)
+│   ├── api/                # Endpoints REST para el frontend
+│   ├── requirements.txt
+│   └── manage.py
+└── frontend/
+    ├── src/
+    │   ├── components/     # Componentes reutilizables (header, etc.)
+    │   ├── views/          # Pantallas (carga, historial, etc.)
+    │   ├── router/         # Rutas de la aplicación
+    │   ├── services/       # Llamadas a la API del backend
+    │   └── assets/
+    ├── package.json
+    └── vite.config.js
+```
 
-### Frontend
+## 🚀 Instalación y ejecución
 
-**Alfonso Maron Fernandez Garibay**
+A continuación se describen los pasos para levantar el proyecto completo (backend + frontend) en una computadora nueva.
 
-Responsable del diseño y desarrollo de la interfaz frontend, procurando mantener un diseño responsivo, claro y orientado a la experiencia del usuario.
+### Requisitos previos
 
-### Backend
+* Python 3.11+
+* Node.js 18+ y npm
+* PostgreSQL instalado y corriendo localmente
+* Git
 
-**Luis Dorian Ferreira Calderon**
+### 1. Clonar el repositorio
 
-Responsable del desarrollo del backend en conjunto con el resto del equipo encargado de esta área, además de proporcionar apoyo en la documentación del sistema.
+```bash
+git clone https://github.com/Os-corona/gps-textformatproject.git
+cd gps-textformatproject
+```
 
-### Administrador de Base de Datos
+### 2. Backend (Django)
 
-**Luis Arturo Roman Sanchez**
+```bash
+cd backend
 
-Responsable del diseño y administración de la base de datos, su conexión con el backend y el manejo adecuado y seguro de los datos utilizados por el sistema, incluyendo su interacción con APIs e inteligencia artificial.
+# Crear y activar entorno virtual
+python -m venv venv
 
-### Backend
+# Windows
+venv\Scripts\activate
+# Mac/Linux
+source venv/bin/activate
 
-**Roberto Cisneros Garcia**
+# Instalar dependencias
+pip install -r requirements.txt
+```
 
-Responsable del desarrollo del backend en conjunto, incluyendo el manejo de Django y de las librerías necesarias para implementar las funcionalidades y llamadas a APIs.
+Crear la base de datos en PostgreSQL:
+
+```sql
+CREATE DATABASE prettydocs_db;
+```
+
+Crear un archivo `.env` dentro de `backend/` (usa `.env.example` como referencia) con tus credenciales locales:
+
+```
+DB_NAME=prettydocs_db
+DB_USER=postgres
+DB_PASSWORD=tu_password
+DB_HOST=localhost
+DB_PORT=5432
+```
+
+Aplicar migraciones y levantar el servidor:
+
+```bash
+python manage.py migrate
+python manage.py runserver
+```
+
+El backend quedará disponible en `http://localhost:8000`.
+
+### 3. Frontend (Vue)
+
+En otra terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+El frontend quedará disponible en `http://localhost:5173` (o el puerto que indique Vite en consola).
+
+### 4. Correr las pruebas del backend
+
+```bash
+cd backend
+pytest
+```
+
+Esto ejecuta las pruebas de `docx_engine` (incluyendo las pruebas de round-trip de extracción/reconstrucción de documentos) y del resto de módulos con cobertura de tests.
 
 ## 📦 Alcance
 
 ### Incluye
 
-* Formateo preestablecido de documentos `.docx`.
-* Personalización del formato de los documentos.
-* Configuración de márgenes, fuentes y tamaños de fuente.
-* Interacción con agentes de IA mediante prompts personalizados.
+* Formateo preestablecido y personalizable de documentos `.docx` (márgenes, tipografía, jerarquía de títulos, interlineado).
+* Corrección gramatical/ortográfica y reestructuración jerárquica asistida por IA.
 * Utilización de agentes de IA proporcionados por el usuario.
 
 ### No incluye
 
 * Soporte para formatos de documentos distintos a `.docx`.
-* Modificación del contenido original.
-* Agregado de información al documento.
+* Modificación del significado del contenido original.
+* Interacción del usuario con la IA mediante prompts libres.
 
-## 📅 Plan de trabajo (Ingenieria en Software)
+## 📅 Plan de trabajo (Ingeniería en Software)
 
-El proyecto se encuentra organizado en diferentes fases:
+| Fase | Entregable principal | Fecha |
+| --- | --- | --- |
+| U1 · Arranque | Acta, sistema de gestión, repositorio con esqueleto ejecutable y base de datos inicial | 11/09/2026 |
+| U2 · Calidad y catálogo | Plan de calidad y módulo de catálogo | 02/10/2026 |
+| U3 · Planificación | Plan del proyecto, matriz de riesgos y funcionalidades relacionadas | 30/10/2026 |
+| U4 · Propuesta y alertas | Propuesta, contrato y funcionalidades de alertas/reportes | 13/11/2026 |
+| U5 · Cierre | Prueba, informe de cierre y entrega | 04/12/2026 |
 
-| Fase                     | Entregable principal                                                                   | Fecha      |
-| ------------------------ | -------------------------------------------------------------------------------------- | ---------- |
-| U1 · Arranque            | Acta, sistema de gestión, repositorio con esqueleto ejecutable y base de datos inicial | 11/09/2026 |
-| U2 · Calidad y catálogo  | Plan de calidad y módulo de catálogo                                                   | 02/10/2026 |
-| U3 · Planificación       | Plan del proyecto, matriz de riesgos y funcionalidades relacionadas                    | 30/10/2026 |
-| U4 · Propuesta y alertas | Propuesta, contrato y funcionalidades de alertas/reportes                              | 13/11/2026 |
-| U5 · Cierre              | Prueba, informe de cierre y entrega                                                    | 04/12/2026 |
+## 🧭 Progreso actual (Sprint 1)
 
+El Sprint 1 se enfoca en construir el esqueleto del sistema y el núcleo de manipulación de documentos `.docx`, sin integración de IA todavía:
+
+- [x] Proyecto Django inicializado con estructura de apps (`documents`, `docx_engine`, `templates_engine`, `ai_engine`, `orchestrator`, `api`)
+- [x] Conexión a PostgreSQL configurada
+- [x] Modelos base `Document` y `ProcessingJob`
+- [ ] Extractor de párrafos, runs, tablas, imágenes y listas
+- [ ] Rebuilder de párrafos, tablas, imágenes y listas
+- [ ] Función de comparación de documentos (`compare_documents`) y pruebas manuales del pipeline
+- [ ] Set completo de documentos de prueba y test de round-trip automatizado
+- [x] Proyecto Vue inicializado (Vite + Bootstrap)
+- [x] Layout base y navegación (header + rutas)
+- [ ] Pantalla de carga de archivo con validación `.docx`
 
 ## 📄 Documentación
 
 La documentación del proyecto se irá incorporando conforme avance el desarrollo y las diferentes fases de gestión.
-
