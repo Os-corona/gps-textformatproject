@@ -1,8 +1,7 @@
-from django.shortcuts import render
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from .services import extract_paragraphs
+from .docx_engine.extractor import extract_structure
 
 @api_view(['POST'])
 def extract_text_view(request):
@@ -15,11 +14,11 @@ def extract_text_view(request):
         return Response({"error": "El archivo debe ser un documento .docx."}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        extracted_paragraphs = extract_paragraphs(uploaded_file)
+        extracted_data = extract_structure(uploaded_file)
         return Response({
             'filename': uploaded_file.name,
-            'total_paragraphs': len(extracted_paragraphs),
-            'paragraphs': extracted_paragraphs
+            'total_blocks': len(extracted_data),
+            'blocks': extracted_data
         }, status=status.HTTP_200_OK)
 
     except Exception as e:
