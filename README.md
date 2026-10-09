@@ -155,15 +155,6 @@ npm run dev
 
 El frontend quedará disponible en `http://localhost:5173` (o el puerto que indique Vite en consola).
 
-### 4. Correr las pruebas del backend
-
-```bash
-cd backend
-pytest
-```
-
-Esto ejecuta las pruebas de `docx_engine` (incluyendo las pruebas de round-trip de extracción/reconstrucción de documentos) y del resto de módulos con cobertura de tests.
-
 ## 📦 Alcance
 
 ### Incluye
@@ -195,13 +186,13 @@ El Sprint 1 se enfoca en construir el esqueleto del sistema y el núcleo de mani
 - [x] Proyecto Django inicializado con estructura de apps (`documents`, `docx_engine`, `templates_engine`, `ai_engine`, `orchestrator`, `api`)
 - [x] Conexión a PostgreSQL configurada
 - [x] Modelos base `Document` y `ProcessingJob`
-- [ ] Extractor de párrafos, runs, tablas, imágenes y listas
-- [ ] Rebuilder de párrafos, tablas, imágenes y listas
-- [ ] Función de comparación de documentos (`compare_documents`) y pruebas manuales del pipeline
-- [ ] Set completo de documentos de prueba y test de round-trip automatizado
+- [X] Extractor de párrafos, runs, tablas, imágenes y listas
+- [X] Rebuilder de párrafos, tablas, imágenes y listas
+- [X] Función de comparación de documentos (`compare_documents`) y pruebas manuales del pipeline
+- [X] Set completo de documentos de prueba y test de round-trip automatizado
 - [x] Proyecto Vue inicializado (Vite + Bootstrap)
 - [x] Layout base y navegación (header + rutas)
-- [ ] Pantalla de carga de archivo con validación `.docx`
+- [X] Pantalla de carga de archivo con validación `.docx`
 
 ## 📄 Documentación
 
