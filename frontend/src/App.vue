@@ -1,21 +1,14 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import Sidebar from "@/components/Sidebar.vue";
-import FileDropzone from "@/components/FileDropzone.vue";
-import HistoryView from "@/views/HistoryView.vue";
-import SettingsView from "@/views/SettingsView.vue";
-import type { ViewKey } from "@/types";
 
-const activeView = ref<ViewKey>("format");
 const sidebarExpanded = ref(true);
 </script>
 
 <template>
   <div class="d-flex vh-100 bg-light">
     <Sidebar
-      :active="activeView"
       :expanded="sidebarExpanded"
-      @update:active="activeView = $event"
       @toggle="sidebarExpanded = !sidebarExpanded"
     />
 
@@ -28,11 +21,9 @@ const sidebarExpanded = ref(true);
         </p>
       </div>
 
-      <!-- Contenido -->
+      <!-- Router Content -->
       <div class="mx-4 pb-5">
-        <FileDropzone v-if="activeView === 'format'" />
-        <HistoryView v-else-if="activeView === 'history'" />
-        <SettingsView v-else-if="activeView === 'settings'" />
+        <router-view />
       </div>
     </main>
   </div>
