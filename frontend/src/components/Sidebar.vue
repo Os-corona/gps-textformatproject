@@ -1,21 +1,33 @@
 <script setup lang="ts">
-import type { ViewKey } from "@/types";
+import { useRoute, useRouter } from "vue-router";
 
 defineProps<{
-  active: ViewKey;
   expanded: boolean;
 }>();
 
 const emit = defineEmits<{
-  (e: "update:active", value: ViewKey): void;
   (e: "toggle"): void;
 }>();
 
-const items: { key: ViewKey; label: string; icon: string }[] = [
-  { key: "format", label: "Formatear", icon: "📝" },
-  { key: "history", label: "Historial", icon: "🕘" },
-  { key: "settings", label: "Configuración", icon: "⚙️" },
+const route = useRoute();
+const router = useRouter();
+
+const items = [
+  { path: "/", label: "Formatear", icon: "📝" },
+  { path: "/history", label: "Historial", icon: "🕘" },
+  { path: "/settings", label: "Configuración", icon: "⚙️" },
 ];
+
+function navigate(path: string) {
+  router.push(path);
+}
+
+function isItemActive(path: string) {
+  if (path === "/") {
+    return ["/", "/config", "/result"].includes(route.path);
+  }
+  return route.path === path;
+}
 </script>
 
 <template>
@@ -37,14 +49,14 @@ const items: { key: ViewKey; label: string; icon: string }[] = [
     <nav class="nav flex-column p-2 gap-1 flex-grow-1">
       <button
         v-for="item in items"
-        :key="item.key"
+        :key="item.path"
         class="btn text-start d-flex align-items-center gap-3 nav-item-btn"
         :class="
-          active === item.key
+          isItemActive(item.path)
             ? 'btn-primary'
             : 'btn-light text-dark'
         "
-        @click="emit('update:active', item.key)"
+        @click="navigate(item.path)"
       >
         <span class="fs-5">{{ item.icon }}</span>
         <span v-if="expanded" class="fw-medium">{{ item.label }}</span>
