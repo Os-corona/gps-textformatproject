@@ -1,16 +1,24 @@
-def apply_margins(doc, config):
-    # TODO: Implementar en S2T3
-    pass
 
-def apply_typography(doc, config):
-    # TODO: Implementar en S2T4
-    pass
+from .margins import apply_margins
+from .typography import apply_typography
+from .spacing import apply_spacing
 
-def apply_spacing(doc, config):
-    # TODO: Implementar en S2T5
-    pass
 
 def apply_template(doc, config):
-    apply_margins(doc, config)
-    apply_typography(doc, config)
-    apply_spacing(doc, config)
+    margins_cm = {
+        "top": config.margin_top,
+        "bottom": config.margin_bottom,
+        "left": config.margin_left,
+        "right": config.margin_right,
+    }
+
+    apply_margins(doc, margins_cm)
+
+    apply_typography(
+        doc,
+        config.font_name,
+        config.font_size,
+        getattr(config, "heading_sizes", None),
+    )
+
+    apply_spacing(doc, config.line_spacing)
