@@ -23,9 +23,43 @@ apiClient.interceptors.response.use(
   }
 )
 
+// Mock error scenarios:
+// Set VITE_MOCK_UPLOAD_ERROR=bad_extension | file_too_large | bad_signature | cannot_open
+// in .env.local to simulate each failure case.
+const MOCK_UPLOAD_ERROR = import.meta.env.VITE_MOCK_UPLOAD_ERROR
+
+const MOCK_UPLOAD_ERRORS = {
+  bad_extension: {
+    code: 'INVALID_FILE',
+    message: 'Solo se permiten archivos .docx.',
+    details: { reason: 'bad_extension' }
+  },
+  file_too_large: {
+    code: 'FILE_TOO_LARGE',
+    message: 'El archivo supera el límite de 10 MB.',
+    details: { reason: 'file_too_large' }
+  },
+  bad_signature: {
+    code: 'INVALID_FILE',
+    message: 'El archivo no es un documento de Word válido.',
+    details: { reason: 'bad_signature' }
+  },
+  cannot_open: {
+    code: 'INVALID_FILE',
+    message: 'No se pudo abrir el documento. Puede estar dañado o protegido con contraseña.',
+    details: { reason: 'cannot_open' }
+  }
+}
+
 export async function uploadDocument(file) {
   if (USE_MOCKS) {
-    await new Promise((resolve) => setTimeout(resolve, 300))
+    await new Promise((resolve) => setTimeout(resolve, 600))
+
+    // Simulate a specific error when VITE_MOCK_UPLOAD_ERROR is set
+    if (MOCK_UPLOAD_ERROR && MOCK_UPLOAD_ERRORS[MOCK_UPLOAD_ERROR]) {
+      return Promise.reject(MOCK_UPLOAD_ERRORS[MOCK_UPLOAD_ERROR])
+    }
+
     return {
       document_id: 1,
       job_id: 1,
