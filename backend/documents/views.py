@@ -7,6 +7,13 @@ from django.contrib.auth.models import User
 from .docx_engine.extractor import extract_structure
 from .serializers import DocumentUploadSerializer
 from .models import Document, ProcessingJob
+import io
+from django.utils import timezone
+from django.core.files.base import ContentFile
+from docx import Document as DocxDocument
+from pydantic import ValidationError
+from .templates_engine.config import TemplateConfig, load_preset
+from .pipeline import PIPELINE
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -72,3 +79,68 @@ def upload_document_view(request):
         "status": job.status,
         "original_name": document.original_name
     }, status=status.HTTP_201_CREATED)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def format_document_view(request, id):
+    try:
+        document = Document.objects.get(id=id)
+    except Document.DoesNotExist:
+        return Response({"error": "NOT_FOUND", "message": "El documento no existe."}, status=status.HTTP_404_NOT_FOUND)
+    
+    job = ProcessingJob.objects.filter(document=document).last()
+    if not job:
+        return Response({"error": "JOB_NOT_FOUND", "message": "Job de procesamiento no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+    data = request.data.copy()
+    preset_id = data.pop('preset_id', None)
+    
+    try:
+        if preset_id:
+            preset_config = load_preset(preset_id)
+            config_dict = preset_config.model_dump()
+            config_dict.update(data)
+            config = TemplateConfig(**config_dict)
+        else:
+            config = TemplateConfig(**data)
+    except ValidationError as e:
+        return Response({"error": "INVALID_CONFIG", "message": e.errors()}, status=status.HTTP_400_BAD_REQUEST)
+    except FileNotFoundError:
+        return Response({"error": "INVALID_CONFIG", "message": f"El preset '{preset_id}' no existe."}, status=status.HTTP_400_BAD_REQUEST)
+
+    job.config = config.model_dump()
+    job.status = 'processing'
+    job.started_at = timezone.now()
+    job.save()
+
+    try:
+        doc_obj = DocxDocument(document.original_file)
+        
+        for step in PIPELINE:
+            doc_obj = step(doc_obj, job)
+            
+        temp_io = io.BytesIO()
+        doc_obj.save(temp_io)
+        temp_io.seek(0)
+        
+        try:
+            DocxDocument(temp_io)
+            temp_io.seek(0)
+        except Exception:
+            raise Exception("El documento resultante quedó corrupto tras el formateo.")
+            
+        filename = f"result_{job.id}.docx"
+        job.result_file.save(filename, ContentFile(temp_io.read()))
+        
+        job.status = 'done'
+        job.finished_at = timezone.now()
+        job.save()
+        
+        return Response({"status": job.status}, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        # 8. Error general
+        job.status = 'error'
+        job.error_message = str(e)
+        job.save()
+        return Response({"error": "PROCESSING_ERROR", "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
