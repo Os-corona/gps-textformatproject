@@ -1,3 +1,4 @@
+from django.db.migrations import serializer
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -29,16 +30,24 @@ def extract_text_view(request):
     except Exception as e:
         return Response({"error": f'Error al procesar el documento: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-# --- AQUI VAN LOS DECORADORES PARA TU NUEVO ENDPOINT ---
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def upload_document_view(request):
     serializer = DocumentUploadSerializer(data=request.data)
     
     if not serializer.is_valid():
-        error_dict = serializer.errors.get('file', [{}])[0]
-        code = error_dict.get('code', 'INVALID_FILE')
-        message = error_dict.get('message', 'Error de validación desconocido.')
+        file_errors = serializer.errors.get('file', [])
+        
+        if file_errors:
+            error_detail = file_errors[0]
+            code = getattr(error_detail, 'code', 'INVALID_FILE')
+            if code not in ['INVALID_FILE', 'FILE_TOO_LARGE']:
+                code = 'INVALID_FILE'
+            message = str(error_detail)
+        else:
+            code = 'INVALID_FILE'
+            message = 'Error de validación desconocido.'
+            
         return Response({"error": code, "message": message}, status=status.HTTP_400_BAD_REQUEST)
         
     uploaded_file = serializer.validated_data['file']
@@ -47,9 +56,9 @@ def upload_document_view(request):
     
     document = Document.objects.create(
         user=dev_user,
-        file=uploaded_file,
+        original_file=uploaded_file,
         original_name=uploaded_file.name,
-        file_size=uploaded_file.size
+        size_bytes=uploaded_file.size
     )
     
     job = ProcessingJob.objects.create(
