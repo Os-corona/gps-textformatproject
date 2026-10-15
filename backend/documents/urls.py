@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import extract_text_view, format_document_view
+from .views import extract_text_view
 from .views import upload_document_view
 
 urlpatterns = [

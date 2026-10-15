@@ -64,5 +64,8 @@ htmlcov/
 # --- Archivos generados ---
 *.log
 
-# --- Archivos de prueba ---
+# --- Archivos de prueba / Word temporales ---
+~$*.docx
 *.docx
+!backend/tests/fixtures/**/*.docx
+!backend/tests/fixtures/*.docx
