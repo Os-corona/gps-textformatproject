@@ -185,17 +185,56 @@ pytest tests/test_templates_engine.py -k "test_typography" -v
 
 ---
 
+### 5. Pruebas de API REST (Testing — Tarea S2T16)
+
+Para ejecutar la suite de pruebas de endpoints de la API (`test_api.py`):
+
+```bash
+cd backend
+
+# Ejecutar con el runner de Django
+python manage.py test tests.test_api
+
+# O ejecutar con pytest
+pytest tests/test_api.py -v
+```
+
+#### Cobertura de la Suite de Pruebas de API (S2T16):
+1. **Carga Válida (`test_valid_upload_*`)**: Verifica que `POST /api/documents/` y `/api/documents/upload/` respondan `201 Created` con `document_id`, `job_id`, estado `pending` y persistencia en DB.
+2. **Carga Inválida (`test_invalid_upload_*`)**:
+   - `falso.docx` (PDF disfrazado con magic bytes `%PDF-`): responde `400 Bad Request` con código `INVALID_FILE`.
+   - `vacio.docx` (ZIP vacío de 22 bytes): responde `400 Bad Request` con código `INVALID_FILE`.
+   - `corrupto.docx` (DOCX truncado): responde `400 Bad Request` con código `INVALID_FILE`.
+   - Archivo mayor a 10 MB: responde `400 Bad Request` con código `FILE_TOO_LARGE`.
+   - Archivo `.pdf`: responde `400 Bad Request` con código `INVALID_FILE`.
+3. **Configuración Fuera de Rango (`test_format_out_of_range_*` y `test_format_disallowed_font`)**:
+   - Margen de 20 cm (límite permitido: 0.5 a 5.0 cm): responde `400 Bad Request` con código `INVALID_CONFIG`.
+   - Tamaño de fuente de 2 pt (límite permitido: 8 a 24 pt): responde `400 Bad Request` con código `INVALID_CONFIG`.
+   - Fuente no permitida (e.g. `Comic Sans MS`): responde `400 Bad Request` con código `INVALID_CONFIG`.
+   - Documento inexistente: responde `404 Not Found` con código `NOT_FOUND`.
+4. **Descarga (`test_download_*`)**:
+   - Documento inexistente: responde `404 Not Found` con código `NOT_FOUND`.
+   - Descarga antes de formatear (job en estado `pending`): responde `409 Conflict` con código `NOT_READY`.
+5. **Flujo Completo (`test_complete_flow_upload_format_status_download_and_verify`)**:
+   - Carga exitosa (`POST /api/documents/` $\rightarrow$ `201 Created`).
+   - Formateo (`POST /api/documents/{id}/format/` $\rightarrow$ `200 OK`).
+   - Consulta de estado (`GET /api/documents/{id}/` $\rightarrow$ `200 OK`, `status: "done"`, `download_url` generado).
+   - Descarga de archivo `.docx` binario (`GET /api/documents/{id}/download/` $\rightarrow$ `200 OK`, Content-Type OOXML).
+   - Verificación de bytes con `python-docx`: márgenes aplicados en todas las secciones y fuente asignada en estilos y runs.
+
+---
+
 ### 🐛 Registro de Fallos y Bugs Detectados (Jira Tickets)
 
-A partir de la ejecución de la suite de pruebas sobre el estado actual de `templates_engine`, se registraron los siguientes bugs para su seguimiento y resolución en Jira:
+A partir de la ejecución de las suites de pruebas, se registran y actualizan los siguientes tickets:
 
 | Ticket Jira | Severidad | Componente | Resumen del Fallo | Estado Actual |
 | :--- | :--- | :--- | :--- | :--- |
-| **PRETTY-BUG-01** | Crítica / Bloqueante | `templates_engine/applier.py` | `ModuleNotFoundError: No module named 'documents.templates_engine.typography'`. `applier.py` importa `typography.py` el cual no fue creado/comiteado en S2T4. | Mitigado con stub temporal para pruebas; requiere implementación de S2T4. |
-| **PRETTY-BUG-02** | Alta | `templates_engine/typography.py` | Los estilos `Normal` y `Heading 1` a `3` mantienen `font.name=None` y retienen atributos de tema (`asciiTheme`, `hAnsiTheme`, etc.) sin aplicar la fuente configurada. | Abierto (Fallo en `test_typography_styles_no_theme_attributes` en todos los fixtures). |
-| **PRETTY-BUG-03** | Alta | `templates_engine/typography.py` | Los runs con formato directo (override manual) en cuerpo y tablas no normalizan su fuente ni tamaño a la configuración establecida. | Abierto (Fallo en `test_typography_runs_no_divergent_font_or_size` en fixtures `02`, `04`, `05`, `06`). |
-| **PRETTY-BUG-04** | Media | `documents/pipeline.py` / `applier.py` | Incompatibilidad de tipos: `pipeline.py` pasa `job.config` como diccionario a `apply_template()`, pero este accede a los campos mediante atributos de objeto (`config.margin_top`), causando `AttributeError`. | Abierto (Requiere parseo a `TemplateConfig` en `pipeline.py`). |
-| **PRETTY-BUG-05** | Media | `templates_engine/config.py` | `TemplateConfig` (Pydantic v2) no define `heading_sizes` y lanza `ValueError` al intentar asignar tamaños dinámicos; existe discrepancia con los nombres del contrato de API (`font_family` vs `font_name`, etc.). | Abierto. |
+| **PRETTY-BUG-01** | Crítica / Bloqueante | `templates_engine/applier.py` | `ModuleNotFoundError: No module named 'documents.templates_engine.typography'`. Falta de módulo `typography.py`. | **Resuelto en S2T16**: Implementado `typography.py`. |
+| **PRETTY-BUG-02** | Alta | `templates_engine/typography.py` | Los estilos `Normal` y `Heading 1` a `3` mantienen `font.name=None` y retienen atributos de tema (`asciiTheme`, etc.). | **Resuelto en S2T16**: `apply_typography` normaliza `w:rFonts` y asigna fuentes a estilos. |
+| **PRETTY-BUG-03** | Alta | `templates_engine/typography.py` | Los runs con formato directo (override manual) en cuerpo y tablas no normalizan su fuente ni tamaño a la configuración establecida. | Abierto (en fixtures sucios `02`, `04`, `05`, `06`). |
+| **PRETTY-BUG-04** | Media | `documents/pipeline.py` / `applier.py` | Incompatibilidad de tipos: `pipeline.py` pasa `job.config` como diccionario a `apply_template()`, causando `AttributeError`. | **Resuelto en S2T16**: `apply_template` soporta tanto diccionarios como objetos `TemplateConfig`. |
+| **PRETTY-BUG-05** | Media | `templates_engine/config.py` | `TemplateConfig` discrepancia con nombres del contrato (`font_family`, `margins_cm`, `font_size_pt`). | **Resuelto en S2T16**: `normalize_fields` mapea y valida los esquemas del contrato. |
 | **PRETTY-BUG-06** | Baja | `templates_engine/spacing.py` | `UserWarning` emitido por python-docx 1.2.0 por resolución de estilos mediante ID (`doc.styles["Normal"]`). | Abierto. |
 
 ## 📦 Alcance
