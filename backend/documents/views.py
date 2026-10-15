@@ -80,6 +80,9 @@ def upload_document_view(request):
         "original_name": document.original_name
     }, status=status.HTTP_201_CREATED)
 
+import os
+from django.http import FileResponse
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def format_document_view(request, id):
@@ -104,7 +107,8 @@ def format_document_view(request, id):
         else:
             config = TemplateConfig(**data)
     except ValidationError as e:
-        return Response({"error": "INVALID_CONFIG", "message": e.errors()}, status=status.HTTP_400_BAD_REQUEST)
+        clean_errors = [{k: (str(v) if k == 'ctx' else v) for k, v in err.items()} for err in e.errors()]
+        return Response({"error": "INVALID_CONFIG", "message": clean_errors}, status=status.HTTP_400_BAD_REQUEST)
     except FileNotFoundError:
         return Response({"error": "INVALID_CONFIG", "message": f"El preset '{preset_id}' no existe."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -114,6 +118,7 @@ def format_document_view(request, id):
     job.save()
 
     try:
+        document.original_file.seek(0)
         doc_obj = DocxDocument(document.original_file)
         
         for step in PIPELINE:
@@ -144,3 +149,51 @@ def format_document_view(request, id):
         job.error_message = str(e)
         job.save()
         return Response({"error": "PROCESSING_ERROR", "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def document_detail_view(request, id):
+    try:
+        document = Document.objects.get(id=id)
+    except Document.DoesNotExist:
+        return Response({"error": "NOT_FOUND", "message": "El documento no existe."}, status=status.HTTP_404_NOT_FOUND)
+
+    job = ProcessingJob.objects.filter(document=document).last()
+
+    return Response({
+        "document_id": document.id,
+        "job_id": job.id if job else None,
+        "original_name": document.original_name,
+        "size_bytes": document.size_bytes,
+        "uploaded_at": document.uploaded_at,
+        "status": job.status if job else "pending",
+        "config": job.config if job else {},
+        "use_ai": job.use_ai if job else False,
+        "error_message": job.error_message if job else None,
+        "started_at": job.started_at if job else None,
+        "finished_at": job.finished_at if job else None,
+        "download_url": f"/api/documents/{document.id}/download/" if (job and job.status == 'done') else None,
+    }, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def download_document_view(request, id):
+    try:
+        document = Document.objects.get(id=id)
+    except Document.DoesNotExist:
+        return Response({"error": "NOT_FOUND", "message": "El documento no existe."}, status=status.HTTP_404_NOT_FOUND)
+
+    job = ProcessingJob.objects.filter(document=document).last()
+    if not job or job.status != 'done' or not job.result_file:
+        return Response({"error": "NOT_READY", "message": "El documento aún no está listo para descargar."}, status=status.HTTP_409_CONFLICT)
+
+    base_name = os.path.splitext(document.original_name)[0]
+    filename = f"{base_name}_formateado.docx"
+
+    response = FileResponse(
+        job.result_file.open('rb'),
+        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
