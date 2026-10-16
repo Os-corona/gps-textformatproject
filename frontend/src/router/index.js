@@ -36,7 +36,12 @@ const router = createRouter({
   routes
 })
 
+const DEV_BYPASS = String(import.meta.env.VITE_USE_MOCKS).toLowerCase() === 'true'
+
 router.beforeEach((to, from, next) => {
+  // Skip guards in mock/dev mode so we can navigate directly to any route
+  if (DEV_BYPASS) return next()
+
   const flowStore = useFlowStore()
 
   if (to.meta.requiresDocument && !flowStore.document) {
