@@ -83,6 +83,9 @@ def upload_document_view(request):
         "original_name": document.original_name
     }, status=status.HTTP_201_CREATED)
 
+import os
+from django.http import FileResponse
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def format_document_view(request, id):
@@ -107,7 +110,8 @@ def format_document_view(request, id):
         else:
             config = TemplateConfig(**data)
     except ValidationError as e:
-        return Response({"error": "INVALID_CONFIG", "message": e.errors()}, status=status.HTTP_400_BAD_REQUEST)
+        clean_errors = [{k: (str(v) if k == 'ctx' else v) for k, v in err.items()} for err in e.errors()]
+        return Response({"error": "INVALID_CONFIG", "message": clean_errors}, status=status.HTTP_400_BAD_REQUEST)
     except FileNotFoundError:
         return Response({"error": "INVALID_CONFIG", "message": f"El preset '{preset_id}' no existe."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -117,6 +121,7 @@ def format_document_view(request, id):
     job.save()
 
     try:
+        document.original_file.seek(0)
         doc_obj = DocxDocument(document.original_file)
         
         for step in PIPELINE:
