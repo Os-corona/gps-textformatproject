@@ -14,6 +14,9 @@ from docx import Document as DocxDocument
 from pydantic import ValidationError
 from .templates_engine.config import TemplateConfig, load_preset
 from .pipeline import PIPELINE
+import os
+from django.http import FileResponse
+from .templates_engine.config import list_presets
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -144,3 +147,61 @@ def format_document_view(request, id):
         job.error_message = str(e)
         job.save()
         return Response({"error": "PROCESSING_ERROR", "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def document_status_view(request, id):
+    try:
+        document = Document.objects.get(id=id)
+        job = ProcessingJob.objects.filter(document=document).last()
+        
+        if not job:
+            return Response({"error": "JOB_NOT_FOUND"}, status=status.HTTP_404_NOT_FOUND)
+            
+        return Response({
+            "status": job.status,
+            "config": job.config,
+            "original_name": document.original_name,
+            "error_message": job.error_message,
+            "started_at": job.started_at,
+            "finished_at": job.finished_at
+        }, status=status.HTTP_200_OK)
+        
+    except Document.DoesNotExist:
+        return Response({"error": "NOT_FOUND"}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def download_document_view(request, id):
+    try:
+        document = Document.objects.get(id=id)
+        job = ProcessingJob.objects.filter(document=document).last()
+        
+        if not job:
+            return Response({"error": "JOB_NOT_FOUND"}, status=status.HTTP_404_NOT_FOUND)
+            
+        if job.status != 'done' or not job.result_file:
+            return Response({"error": "NOT_READY", "message": "El documento aún no está listo."}, status=status.HTTP_409_CONFLICT)
+            
+        # Preparar archivo para descarga
+        file_handle = job.result_file.open('rb')
+        response = FileResponse(
+            file_handle, 
+            content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+        
+        # Generar nombre: ejemplo.docx -> ejemplo_formateado.docx
+        name, ext = os.path.splitext(document.original_name)
+        download_name = f"{name}_formateado{ext}"
+        
+        response['Content-Disposition'] = f'attachment; filename="{download_name}"'
+        return response
+        
+    except Document.DoesNotExist:
+        return Response({"error": "NOT_FOUND"}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def list_templates_view(request):
+    presets = list_presets()
+    return Response(presets, status=status.HTTP_200_OK)
