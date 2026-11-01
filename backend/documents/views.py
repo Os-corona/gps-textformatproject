@@ -14,6 +14,9 @@ from docx import Document as DocxDocument
 from pydantic import ValidationError
 from .templates_engine.config import TemplateConfig, load_preset
 from .pipeline import PIPELINE
+import os
+from django.http import FileResponse
+from .templates_engine.config import list_presets
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -152,48 +155,58 @@ def format_document_view(request, id):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
-def document_detail_view(request, id):
+def document_status_view(request, id):
     try:
         document = Document.objects.get(id=id)
+        job = ProcessingJob.objects.filter(document=document).last()
+        
+        if not job:
+            return Response({"error": "JOB_NOT_FOUND"}, status=status.HTTP_404_NOT_FOUND)
+            
+        return Response({
+            "status": job.status,
+            "config": job.config,
+            "original_name": document.original_name,
+            "error_message": job.error_message,
+            "started_at": job.started_at,
+            "finished_at": job.finished_at
+        }, status=status.HTTP_200_OK)
+        
     except Document.DoesNotExist:
-        return Response({"error": "NOT_FOUND", "message": "El documento no existe."}, status=status.HTTP_404_NOT_FOUND)
-
-    job = ProcessingJob.objects.filter(document=document).last()
-
-    return Response({
-        "document_id": document.id,
-        "job_id": job.id if job else None,
-        "original_name": document.original_name,
-        "size_bytes": document.size_bytes,
-        "uploaded_at": document.uploaded_at,
-        "status": job.status if job else "pending",
-        "config": job.config if job else {},
-        "use_ai": job.use_ai if job else False,
-        "error_message": job.error_message if job else None,
-        "started_at": job.started_at if job else None,
-        "finished_at": job.finished_at if job else None,
-        "download_url": f"/api/documents/{document.id}/download/" if (job and job.status == 'done') else None,
-    }, status=status.HTTP_200_OK)
+        return Response({"error": "NOT_FOUND"}, status=status.HTTP_404_NOT_FOUND)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def download_document_view(request, id):
     try:
         document = Document.objects.get(id=id)
+        job = ProcessingJob.objects.filter(document=document).last()
+        
+        if not job:
+            return Response({"error": "JOB_NOT_FOUND"}, status=status.HTTP_404_NOT_FOUND)
+            
+        if job.status != 'done' or not job.result_file:
+            return Response({"error": "NOT_READY", "message": "El documento aún no está listo."}, status=status.HTTP_409_CONFLICT)
+            
+        # Preparar archivo para descarga
+        file_handle = job.result_file.open('rb')
+        response = FileResponse(
+            file_handle, 
+            content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+        
+        # Generar nombre: ejemplo.docx -> ejemplo_formateado.docx
+        name, ext = os.path.splitext(document.original_name)
+        download_name = f"{name}_formateado{ext}"
+        
+        response['Content-Disposition'] = f'attachment; filename="{download_name}"'
+        return response
+        
     except Document.DoesNotExist:
-        return Response({"error": "NOT_FOUND", "message": "El documento no existe."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error": "NOT_FOUND"}, status=status.HTTP_404_NOT_FOUND)
 
-    job = ProcessingJob.objects.filter(document=document).last()
-    if not job or job.status != 'done' or not job.result_file:
-        return Response({"error": "NOT_READY", "message": "El documento aún no está listo para descargar."}, status=status.HTTP_409_CONFLICT)
-
-    base_name = os.path.splitext(document.original_name)[0]
-    filename = f"{base_name}_formateado.docx"
-
-    response = FileResponse(
-        job.result_file.open('rb'),
-        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    )
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    return response
-
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def list_templates_view(request):
+    presets = list_presets()
+    return Response(presets, status=status.HTTP_200_OK)
