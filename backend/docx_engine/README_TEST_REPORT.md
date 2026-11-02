@@ -37,3 +37,4 @@ En este documento se registran las diferencias encontradas al comparar los docum
 * Las diferencias de estilo ("normal" vs "Normal") son un detalle técnico de la librería que se puede ignorar, ya que visualmente representan el mismo estilo base.
 * El manejo de las listas es adecuado, ya que el rebuilder aplica correctamente los estilos de lista nativos de Word (`List Bullet` y `List Number`).
 * No parece haber ajustes urgentes requeridos para la reconstrucción básica de cara al Sprint 2, el pipeline actual está listo para empezar a integrarse.
+
