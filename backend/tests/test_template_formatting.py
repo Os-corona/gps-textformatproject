@@ -2,7 +2,7 @@
 from docx import Document
 from docx.oxml.ns import qn
 
-from documents.templates_engine.spacing import apply_spacing
+from templates_engine.spacing import apply_spacing
 
 
 def test_spacing_applies_to_body_paragraphs():

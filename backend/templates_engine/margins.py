@@ -1,4 +1,3 @@
-
 from docx.shared import Cm
 
 
@@ -16,3 +15,4 @@ def apply_margins(doc, margins_cm):
         section.bottom_margin = Cm(margins_cm["bottom"])
         section.left_margin = Cm(margins_cm["left"])
         section.right_margin = Cm(margins_cm["right"])
+

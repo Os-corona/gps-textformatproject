@@ -1,4 +1,3 @@
-
 from .margins import apply_margins
 from .typography import apply_typography
 from .spacing import apply_spacing
@@ -44,3 +43,4 @@ def apply_template(doc, config):
     )
 
     apply_spacing(doc, line_spacing)
+

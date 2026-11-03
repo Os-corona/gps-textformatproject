@@ -2,6 +2,7 @@ import os
 from rest_framework import serializers
 from docx import Document as DocxDocument
 
+
 class DocumentUploadSerializer(serializers.Serializer):
     file = serializers.FileField()
 
@@ -25,3 +26,4 @@ class DocumentUploadSerializer(serializers.Serializer):
             raise serializers.ValidationError("El documento está corrupto o no se pudo analizar.", code="INVALID_FILE")
         
         return value
+

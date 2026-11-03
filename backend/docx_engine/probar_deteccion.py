@@ -24,3 +24,4 @@ for nombre in nombres:
     salida = os.path.join(base, "reconstruido_" + nombre)
     doc.save(salida)
     print("Guardado:", salida)
+

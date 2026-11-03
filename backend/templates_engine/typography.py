@@ -72,3 +72,4 @@ def apply_typography(doc, font_name, font_size, heading_sizes=None):
                                         del rFonts.attrib[attr]
                                 rFonts.set(qn("w:ascii"), font_name)
                                 rFonts.set(qn("w:hAnsi"), font_name)
+
