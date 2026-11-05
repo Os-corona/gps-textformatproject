@@ -410,3 +410,34 @@ class DocumentAPITests(APITestCase):
                         target_font,
                         f"Run con texto '{run.text}' no tiene la fuente configurada",
                     )
+
+    # -------------------------------------------------------------------------
+    # 7) Test de listado de plantillas / presets (S3T1)
+    # -------------------------------------------------------------------------
+    def test_list_templates_returns_contract_presets(self):
+        """
+        Valida que GET /api/templates/ devuelva {"presets": [...]}
+        con la estructura completa según api-contract.md.
+        """
+        response = self.client.get("/api/templates/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("presets", response.data)
+
+        presets = response.data["presets"]
+        self.assertEqual(len(presets), 3)
+
+        preset_ids = [p["id"] for p in presets]
+        self.assertEqual(preset_ids, ["apa7", "reporte", "personalizado"])
+
+        for preset in presets:
+            self.assertIn("id", preset)
+            self.assertIn("name", preset)
+            self.assertIn("description", preset)
+            self.assertIn("config", preset)
+            config = preset["config"]
+            self.assertIn("margins_cm", config)
+            self.assertIn("font_family", config)
+            self.assertIn("font_size_pt", config)
+            self.assertIn("line_spacing", config)
+            self.assertIn("heading_sizes_pt", config)
+

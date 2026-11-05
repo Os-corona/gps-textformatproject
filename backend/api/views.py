@@ -217,4 +217,5 @@ def download_document_view(request, id):
 @permission_classes([AllowAny])
 def list_templates_view(request):
     presets = list_presets()
-    return Response(presets, status=status.HTTP_200_OK)
+    return Response({"presets": presets}, status=status.HTTP_200_OK)
+
