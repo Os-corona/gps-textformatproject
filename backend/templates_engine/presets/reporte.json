@@ -1,10 +1,21 @@
 {
-    "margin_top": 2.5,
-    "margin_bottom": 2.5,
-    "margin_left": 2.5,
-    "margin_right": 2.5,
-    "font_name": "Calibri",
-    "font_size": 11,
-    "line_spacing": 1.15
+  "id": "reporte",
+  "name": "Reporte ejecutivo",
+  "description": "Calibri 11, interlineado 1.15, márgenes de 2.5 cm.",
+  "config": {
+    "margins_cm": {
+      "top": 2.5,
+      "bottom": 2.5,
+      "left": 2.5,
+      "right": 2.5
+    },
+    "font_family": "Calibri",
+    "font_size_pt": 11,
+    "line_spacing": 1.15,
+    "heading_sizes_pt": {
+      "h1": 16,
+      "h2": 14,
+      "h3": 12
+    }
+  }
 }
-

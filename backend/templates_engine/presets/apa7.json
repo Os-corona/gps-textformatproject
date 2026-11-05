@@ -1,10 +1,21 @@
 {
-    "margin_top": 2.54,
-    "margin_bottom": 2.54,
-    "margin_left": 2.54,
-    "margin_right": 2.54,
-    "font_name": "Times New Roman",
-    "font_size": 12,
-    "line_spacing": 2.0
+  "id": "apa7",
+  "name": "Formato académico (APA 7)",
+  "description": "Times New Roman 12, interlineado doble, márgenes de 2.54 cm.",
+  "config": {
+    "margins_cm": {
+      "top": 2.54,
+      "bottom": 2.54,
+      "left": 2.54,
+      "right": 2.54
+    },
+    "font_family": "Times New Roman",
+    "font_size_pt": 12,
+    "line_spacing": 2.0,
+    "heading_sizes_pt": {
+      "h1": 12,
+      "h2": 12,
+      "h3": 12
+    }
+  }
 }
-

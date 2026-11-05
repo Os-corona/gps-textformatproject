@@ -1,10 +1,11 @@
 import json
 import os
-from typing import Optional, Dict, Any, Union
+from typing import Optional, Dict, Any, Union, List
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 PRESETS_DIR = os.path.join(os.path.dirname(__file__), 'presets')
 ALLOWED_FONTS = ["Times New Roman", "Arial", "Calibri", "Cambria", "Georgia", "Verdana"]
+PRESET_ORDER = ["apa7", "reporte", "personalizado"]
 
 class TemplateConfig(BaseModel):
     margin_top: float = Field(..., ge=0.5, le=5.0, description="Margen superior en cm")
@@ -25,6 +26,13 @@ class TemplateConfig(BaseModel):
         data = data.copy()
         if data.get("use_ai") is True:
             raise ValueError("La corrección con IA aún no está disponible.")
+
+        # Soportar config anidado si se recibe el objeto completo de un preset
+        if "config" in data and isinstance(data["config"], dict):
+            inner = data["config"].copy()
+            for k, v in inner.items():
+                if k not in data:
+                    data[k] = v
 
         # Soportar margins_cm anidado
         if "margins_cm" in data and isinstance(data["margins_cm"], dict):
@@ -55,18 +63,46 @@ class TemplateConfig(BaseModel):
             raise ValueError(f"Fuente '{value}' no permitida. Opciones válidas: {ALLOWED_FONTS}")
         return value
 
-def list_presets():
-    if not os.path.exists(PRESETS_DIR):
-        return []
-    return [f.replace('.json', '') for f in os.listdir(PRESETS_DIR) if f.endswith('.json')]
-
-def load_preset(preset_id: str) -> 'TemplateConfig':
+def load_preset_raw(preset_id: str) -> Dict[str, Any]:
     file_path = os.path.join(PRESETS_DIR, f"{preset_id}.json")
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"El preset '{preset_id}' no existe.")
 
     with open(file_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+        return json.load(f)
 
-    return TemplateConfig(**data)
+def load_preset(preset_id: str) -> 'TemplateConfig':
+    data = load_preset_raw(preset_id)
+    config_data = data.get("config", data)
+    return TemplateConfig(**config_data)
 
+def list_presets() -> List[Dict[str, Any]]:
+    if not os.path.exists(PRESETS_DIR):
+        return []
+
+    preset_files = [f.replace('.json', '') for f in os.listdir(PRESETS_DIR) if f.endswith('.json')]
+    preset_files.sort(key=lambda pid: PRESET_ORDER.index(pid) if pid in PRESET_ORDER else 999)
+
+    presets = []
+    for pid in preset_files:
+        try:
+            data = load_preset_raw(pid)
+            if "config" in data and "id" in data:
+                presets.append(data)
+            else:
+                presets.append({
+                    "id": pid,
+                    "name": data.get("name", pid.capitalize()),
+                    "description": data.get("description", ""),
+                    "config": data.get("config", data)
+                })
+        except Exception:
+            continue
+    return presets
+
+def list_preset_ids() -> List[str]:
+    if not os.path.exists(PRESETS_DIR):
+        return []
+    preset_files = [f.replace('.json', '') for f in os.listdir(PRESETS_DIR) if f.endswith('.json')]
+    preset_files.sort(key=lambda pid: PRESET_ORDER.index(pid) if pid in PRESET_ORDER else 999)
+    return preset_files
