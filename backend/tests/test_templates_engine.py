@@ -13,8 +13,8 @@ import pytest
 from docx import Document
 from docx.oxml.ns import qn
 
-from documents.templates_engine.applier import apply_template
-from documents.templates_engine.config import TemplateConfig
+from templates_engine.applier import apply_template
+from templates_engine.config import TemplateConfig
 
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
 

@@ -46,3 +46,4 @@ def compare_tables(path_a, path_b):
                     diffs.append(f"Tabla {t}, celda ({i},{j}): '{cell_a.text}' vs '{cell_b.text}'")
 
     return diffs
+

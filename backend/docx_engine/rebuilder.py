@@ -142,8 +142,9 @@ def rebuild_from_structure(blocks, config=None):
 
     # Aplicar la plantilla después de construir el documento.
     if config is not None:
-        from documents.templates_engine.applier import apply_template
+        from templates_engine.applier import apply_template
 
         apply_template(doc, config)
 
     return doc
+

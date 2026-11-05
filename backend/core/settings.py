@@ -41,12 +41,20 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Librerías de terceros
+    'rest_framework',
+    'corsheaders',
+
+    # Apps del sistema
     'documents',
     'docx_engine',
     'templates_engine',
     'ai_engine',
     'orchestrator',
     'api',
+    'users',
+    'jobs',
 ]
 
 MIDDLEWARE = [
@@ -140,24 +148,6 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
-
-INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    
-    # Librerías de terceros
-    'rest_framework',
-    'corsheaders',
-    
-    # Apps del sistema
-    'users',
-    'documents',
-    'jobs',
-]
 
 # Configuración de CORS
 CORS_ALLOWED_ORIGINS = [

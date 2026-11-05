@@ -1,4 +1,3 @@
-
 from docx.enum.text import WD_LINE_SPACING
 from docx.oxml.ns import qn
 
@@ -30,3 +29,4 @@ def apply_spacing(doc, line_spacing):
             paragraph.paragraph_format,
             line_spacing,
         )
+
