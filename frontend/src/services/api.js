@@ -13,7 +13,7 @@ export const apiClient = axios.create({
 })
 
 /** Convert any backend message (string, array or validation object) to text. */
-function messageToString(value) {
+export function messageToString(value) {
   if (typeof value === 'string') return value
   if (Array.isArray(value)) {
     return value.map(messageToString).filter(Boolean).join(' ')
@@ -27,12 +27,16 @@ function messageToString(value) {
 }
 
 /**
- * Normalize both error shapes used by the backend:
- *  - Contract: { error: { code, message, details } }
- *  - Current API: { error: "CODE", message: "..." }
+ * Normalize every error shape used by the backend into { code, message, details }:
+ *  - Nested (API contract): { error: { code, message, details } }
+ *  - Flat (current API): { error: "CODE", message: "...", details? }
+ *  - Django REST Framework fallback: { detail: "..." }
+ *
+ * Keeping a single shape means views can always render `error.code` and
+ * `error.message` without knowing which endpoint produced the failure.
  */
-function normalizeError(error) {
-  const responseData = error.response?.data
+export function normalizeError(error) {
+  const responseData = error?.response?.data
   const apiError = responseData?.error
 
   let code = 'ERR_UNKNOWN'
@@ -40,18 +44,22 @@ function normalizeError(error) {
   let details = {}
 
   if (apiError && typeof apiError === 'object') {
+    // Nested: { error: { code, message, details } }
     code = apiError.code || code
     message = messageToString(apiError.message)
     details = apiError.details ?? {}
   } else if (typeof apiError === 'string') {
+    // Flat: { error: "CODE", message: "..." }
     code = apiError
     message = messageToString(responseData?.message)
     details = responseData?.details ?? {}
   }
 
+  // Fallbacks for partial bodies, plain DRF errors and network failures.
   if (!message) message = messageToString(responseData?.message ?? responseData?.detail)
-  if (!message) message = error.message || 'Ocurrió un error inesperado'
-  if (code === 'ERR_UNKNOWN' && typeof error.code === 'string') code = error.code
+  if (!message) message = error?.message || 'Ocurrió un error inesperado'
+  if (code === 'ERR_UNKNOWN' && typeof responseData?.code === 'string') code = responseData.code
+  if (code === 'ERR_UNKNOWN' && typeof error?.code === 'string') code = error.code
 
   return { code, message, details }
 }
