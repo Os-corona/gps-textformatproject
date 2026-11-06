@@ -44,32 +44,40 @@ def apply_typography(doc, font_name, font_size, heading_sizes=None):
                     rFonts.set(qn("w:ascii"), font_name)
                     rFonts.set(qn("w:hAnsi"), font_name)
 
+    def _get_target_run_size(paragraph):
+        style_name = paragraph.style.name if paragraph.style else ""
+        if "Heading 1" in style_name and "h1" in heading_sizes:
+            return heading_sizes["h1"]
+        elif "Heading 2" in style_name and "h2" in heading_sizes:
+            return heading_sizes["h2"]
+        elif "Heading 3" in style_name and "h3" in heading_sizes:
+            return heading_sizes["h3"]
+        return font_size
+
+    def _normalize_run(run, target_size):
+        run.font.name = font_name
+        if run.font.size is not None:
+            run.font.size = Pt(target_size)
+        if run._r.rPr is not None:
+            rFonts = run._r.rPr.find(qn("w:rFonts"))
+            if rFonts is not None:
+                for attr in list(rFonts.attrib.keys()):
+                    if "theme" in attr.lower():
+                        del rFonts.attrib[attr]
+                rFonts.set(qn("w:ascii"), font_name)
+                rFonts.set(qn("w:hAnsi"), font_name)
+
     # 2. Configurar runs en párrafos
     for paragraph in doc.paragraphs:
+        target_size = _get_target_run_size(paragraph)
         for run in paragraph.runs:
-            run.font.name = font_name
-            if run._r.rPr is not None:
-                rFonts = run._r.rPr.find(qn("w:rFonts"))
-                if rFonts is not None:
-                    for attr in list(rFonts.attrib.keys()):
-                        if "theme" in attr.lower():
-                            del rFonts.attrib[attr]
-                    rFonts.set(qn("w:ascii"), font_name)
-                    rFonts.set(qn("w:hAnsi"), font_name)
+            _normalize_run(run, target_size)
 
     # 3. Configurar runs en tablas
     for table in doc.tables:
         for row in table.rows:
             for cell in row.cells:
                 for paragraph in cell.paragraphs:
+                    target_size = _get_target_run_size(paragraph)
                     for run in paragraph.runs:
-                        run.font.name = font_name
-                        if run._r.rPr is not None:
-                            rFonts = run._r.rPr.find(qn("w:rFonts"))
-                            if rFonts is not None:
-                                for attr in list(rFonts.attrib.keys()):
-                                    if "theme" in attr.lower():
-                                        del rFonts.attrib[attr]
-                                rFonts.set(qn("w:ascii"), font_name)
-                                rFonts.set(qn("w:hAnsi"), font_name)
-
+                        _normalize_run(run, target_size)

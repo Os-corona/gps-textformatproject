@@ -93,3 +93,44 @@ class TemplatesEndpointAPITests(SimpleTestCase):
         response = self.client.get('/api/documents/templates/')
         self.assertEqual(response.status_code, 200)
         self.assertIn("presets", response.data)
+
+
+class TypographyRunNormalizationTests(SimpleTestCase):
+    def test_manual_run_size_normalized_in_body_table_and_headings(self):
+        from docx import Document
+        from docx.shared import Pt
+        from templates_engine.typography import apply_typography
+
+        doc = Document()
+        # Párrafo normal con run con tamaño manual
+        p_normal = doc.add_paragraph("Texto normal")
+        r_normal = p_normal.add_run(" con override")
+        r_normal.font.size = Pt(20)
+
+        # Párrafo heading con run con tamaño manual
+        p_h1 = doc.add_paragraph("Título 1", style="Heading 1")
+        r_h1 = p_h1.add_run(" con override")
+        r_h1.font.size = Pt(30)
+
+        # Tabla con run con tamaño manual
+        table = doc.add_table(rows=1, cols=1)
+        p_table = table.rows[0].cells[0].paragraphs[0]
+        p_table.text = "Celda"
+        r_table = p_table.add_run(" con override")
+        r_table.font.size = Pt(8)
+
+        # Aplicar tipografía
+        apply_typography(
+            doc,
+            font_name="Arial",
+            font_size=12,
+            heading_sizes={"h1": 16, "h2": 14, "h3": 12}
+        )
+
+        self.assertEqual(r_normal.font.size, Pt(12))
+        self.assertEqual(r_normal.font.name, "Arial")
+        self.assertEqual(r_h1.font.size, Pt(16))
+        self.assertEqual(r_h1.font.name, "Arial")
+        self.assertEqual(r_table.font.size, Pt(12))
+        self.assertEqual(r_table.font.name, "Arial")
+
