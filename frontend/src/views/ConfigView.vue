@@ -196,7 +196,8 @@ async function submitFormatting() {
 
   try {
     const resultData = await formatDocument(flowStore.document.document_id, payload)
-    flowStore.setConfig(payload)
+    // Prefer the config resolved by the backend (preset + overrides).
+    flowStore.setConfig(resultData.config ?? payload)
     flowStore.setResult(resultData)
     router.push('/result')
   } catch (err: any) {

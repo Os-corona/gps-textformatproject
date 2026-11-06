@@ -1,26 +1,64 @@
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace(/\/+$/, '')
 const USE_MOCKS = String(import.meta.env.VITE_USE_MOCKS).toLowerCase() === 'true'
 
+// Do not set a default 'Content-Type' here. Axios picks the right one per
+// request: 'application/json' for plain objects and 'multipart/form-data'
+// (with its boundary) for FormData. Forcing JSON globally made axios
+// serialize the upload FormData as `{ "file": {} }`, so Django never
+// received an UploadedFile.
 export const apiClient = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json'
-  }
+  baseURL: API_URL
 })
+
+/** Convert any backend message (string, array or validation object) to text. */
+function messageToString(value) {
+  if (typeof value === 'string') return value
+  if (Array.isArray(value)) {
+    return value.map(messageToString).filter(Boolean).join(' ')
+  }
+  if (value && typeof value === 'object') {
+    if (typeof value.message === 'string') return value.message
+    if (typeof value.msg === 'string') return value.msg
+    return Object.values(value).map(messageToString).filter(Boolean).join(' ')
+  }
+  return ''
+}
+
+/**
+ * Normalize both error shapes used by the backend:
+ *  - Contract: { error: { code, message, details } }
+ *  - Current API: { error: "CODE", message: "..." }
+ */
+function normalizeError(error) {
+  const responseData = error.response?.data
+  const apiError = responseData?.error
+
+  let code = 'ERR_UNKNOWN'
+  let message = ''
+  let details = {}
+
+  if (apiError && typeof apiError === 'object') {
+    code = apiError.code || code
+    message = messageToString(apiError.message)
+    details = apiError.details ?? {}
+  } else if (typeof apiError === 'string') {
+    code = apiError
+    message = messageToString(responseData?.message)
+    details = responseData?.details ?? {}
+  }
+
+  if (!message) message = messageToString(responseData?.message ?? responseData?.detail)
+  if (!message) message = error.message || 'Ocurrió un error inesperado'
+  if (code === 'ERR_UNKNOWN' && typeof error.code === 'string') code = error.code
+
+  return { code, message, details }
+}
 
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    const apiError = error.response?.data?.error
-    const formattedError = {
-      code: apiError?.code || error.code || 'ERR_UNKNOWN',
-      message: apiError?.message || error.message || 'Ocurrió un error inesperado',
-      details: apiError?.details || {}
-    }
-    return Promise.reject(formattedError)
-  }
+  (error) => Promise.reject(normalizeError(error))
 )
 
 // Mock error scenarios:
@@ -74,9 +112,9 @@ export async function uploadDocument(file) {
   if (file) {
     formData.append('file', file)
   }
-  const response = await apiClient.post('/documents/', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  })
+  // No manual Content-Type: axios sets multipart/form-data and the browser
+  // adds the boundary. Setting it by hand (or as JSON) breaks the upload.
+  const response = await apiClient.post('/documents/', formData)
   return response.data
 }
 
@@ -96,7 +134,15 @@ export async function formatDocument(id, config) {
   }
 
   const response = await apiClient.post(`/documents/${id}/format/`, config)
-  return response.data
+
+  // The current backend only returns { status }, while the contract may also
+  // include document_id/config. Fill in the missing values so the result view
+  // always has everything it needs.
+  return {
+    ...response.data,
+    document_id: response.data?.document_id ?? id,
+    config: response.data?.config ?? config
+  }
 }
 
 export async function getDocument(id) {
