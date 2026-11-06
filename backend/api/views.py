@@ -143,7 +143,13 @@ def format_document_view(request, id):
         job.finished_at = timezone.now()
         job.save()
         
-        return Response({"status": job.status}, status=status.HTTP_200_OK)
+        return Response({
+            "document_id": document.id,
+            "job_id": job.id,
+            "status": job.status,
+            "config": job.config,
+            "finished_at": job.finished_at,
+        }, status=status.HTTP_200_OK)
 
     except Exception as e:
         job.status = 'error'
