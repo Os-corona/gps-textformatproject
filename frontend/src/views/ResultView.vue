@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFlowStore } from '@/stores/flowStore'
@@ -216,6 +216,15 @@ function formatAnother() {
               <div class="text-uppercase text-secondary small fw-semibold mb-1 letter-spacing">Interlineado</div>
               <div class="fw-medium text-dark">
                 {{ flowStore.config?.line_spacing != null ? `× ${flowStore.config.line_spacing}` : '—' }}
+              </div>
+            </div>
+          </div>
+          <div v-if="flowStore.config?.use_ai" class="col-12">
+            <div class="config-item p-3 rounded-3 bg-primary-subtle border border-primary-subtle h-100">
+              <div class="text-uppercase text-primary small fw-semibold mb-1 letter-spacing">Estructuración con IA</div>
+              <div class="fw-medium text-dark">
+                Activada · Tipo: <span class="text-capitalize">{{ flowStore.config.document_type || flowStore.config.ai_options?.document_type || 'General' }}</span>
+                · Énfasis: <span class="text-capitalize">{{ flowStore.config.emphasis || flowStore.config.ai_options?.emphasis || 'Ligero' }}</span>
               </div>
             </div>
           </div>

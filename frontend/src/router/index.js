@@ -14,6 +14,11 @@ const routes = [
     meta: { requiresDocument: true }
   },
   {
+    path: '/processing/:id',
+    name: 'processing',
+    component: () => import('@/views/ProcessingView.vue')
+  },
+  {
     path: '/result',
     name: 'result',
     component: () => import('@/views/ResultView.vue'),
