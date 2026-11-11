@@ -1,0 +1,104 @@
+{
+  "additionalProperties": true,
+  "description": "Reporte de integridad para verificar que la IA no alteró ni destruyó contenido crítico.",
+  "properties": {
+    "schema_version": {
+      "default": "di.v1",
+      "description": "Versión del esquema",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "is_valid": {
+      "description": "True si el documento supera todas las reglas de integridad",
+      "title": "Is Valid",
+      "type": "boolean"
+    },
+    "total_source_blocks": {
+      "default": 0,
+      "description": "Total de bloques de origen analizados",
+      "minimum": 0,
+      "title": "Total Source Blocks",
+      "type": "integer"
+    },
+    "total_out_blocks": {
+      "default": 0,
+      "description": "Total de bloques de salida generados",
+      "minimum": 0,
+      "title": "Total Out Blocks",
+      "type": "integer"
+    },
+    "source_characters": {
+      "default": 0,
+      "description": "Total de caracteres en los bloques de origen",
+      "minimum": 0,
+      "title": "Source Characters",
+      "type": "integer"
+    },
+    "out_characters": {
+      "default": 0,
+      "description": "Total de caracteres en los bloques de salida",
+      "minimum": 0,
+      "title": "Out Characters",
+      "type": "integer"
+    },
+    "warnings": {
+      "description": "Lista de advertencias no bloqueantes",
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    },
+    "errors": {
+      "description": "Lista de violaciones de integridad",
+      "items": {
+        "type": "string"
+      },
+      "title": "Errors",
+      "type": "array"
+    },
+    "preserved_elements": {
+      "additionalProperties": {
+        "type": "boolean"
+      },
+      "description": "Preservación de elementos críticos ('tables', 'images', 'lists')",
+      "title": "Preserved Elements",
+      "type": "object"
+    },
+    "similarity_score": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Puntaje de similitud textual/semántica (0.0 a 1.0)",
+      "title": "Similarity Score"
+    },
+    "metadata": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Información adicional del reporte",
+      "title": "Metadata"
+    }
+  },
+  "required": [
+    "is_valid"
+  ],
+  "title": "IntegrityReport",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "di.v1"
+}
