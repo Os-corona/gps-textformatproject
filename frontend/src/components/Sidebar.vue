@@ -24,7 +24,7 @@ function navigate(path: string) {
 
 function isItemActive(path: string) {
   if (path === "/") {
-    return ["/", "/config", "/result"].includes(route.path) || route.path.startsWith("/processing");
+    return ["/", "/config", "/result"].includes(route.path) || route.path.startsWith("/processing") || route.path.startsWith("/review");
   }
   return route.path === path;
 }
