@@ -1,0 +1,528 @@
+{
+  "$defs": {
+    "Hints": {
+      "additionalProperties": true,
+      "description": "Pistas y sugerencias tipográficas o jerárquicas emitidas por el extractor o la IA.",
+      "properties": {
+        "style_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Nombre del estilo original en el documento de Word",
+          "title": "Style Name"
+        },
+        "suggested_type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Tipo sugerido por extractor o IA (e.g. 'heading')",
+          "title": "Suggested Type"
+        },
+        "suggested_level": {
+          "anyOf": [
+            {
+              "maximum": 9,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Nivel jerárquico sugerido (0 a 9)",
+          "title": "Suggested Level"
+        },
+        "is_list": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Indica si el bloque parece pertenecer a una lista",
+          "title": "Is List"
+        },
+        "is_numbered": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Indica si la lista es numerada o viñeta",
+          "title": "Is Numbered"
+        },
+        "list_level": {
+          "anyOf": [
+            {
+              "maximum": 8,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Nivel de anidamiento de lista (0 a 8)",
+          "title": "List Level"
+        },
+        "has_inline_image": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Indica si el bloque contiene imágenes embebidas",
+          "title": "Has Inline Image"
+        },
+        "keep_with_next": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Regla de maquetación: mantener con el párrafo siguiente",
+          "title": "Keep With Next"
+        },
+        "grammar_checked": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Indica si el texto pasó por revisión gramatical",
+          "title": "Grammar Checked"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Nivel de certeza de la sugerencia",
+          "title": "Confidence"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Notas explicativas adicionales",
+          "title": "Notes"
+        }
+      },
+      "title": "Hints",
+      "type": "object"
+    },
+    "Run": {
+      "description": "Segmento de texto continuo con un formato tipográfico consistente.",
+      "properties": {
+        "text": {
+          "description": "Texto contenido en el run (no vacío)",
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "bold": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Indica si el texto tiene formato negrita",
+          "title": "Bold"
+        },
+        "italic": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Indica si el texto tiene formato cursiva",
+          "title": "Italic"
+        },
+        "underline": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Indica si el texto tiene subrayado",
+          "title": "Underline"
+        },
+        "font": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Nombre de la fuente (e.g. 'Calibri')",
+          "title": "Font"
+        },
+        "size": {
+          "anyOf": [
+            {
+              "minimum": 1.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Tamaño de la fuente en puntos tipográficos (pt)",
+          "title": "Size"
+        },
+        "color": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Color en hexadecimal o nombre",
+          "title": "Color"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "Run",
+      "type": "object"
+    },
+    "SourceBlock": {
+      "additionalProperties": true,
+      "description": "Bloque de contenido sin modificar tal como fue extraído del documento original.",
+      "properties": {
+        "id": {
+          "description": "Identificador único del bloque de origen",
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "description": "Tipo de bloque: 'paragraph', 'heading', 'list_item', 'table', 'image'",
+          "title": "Type",
+          "type": "string"
+        },
+        "text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Texto plano consolidado del bloque",
+          "title": "Text"
+        },
+        "runs": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Run"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Runs de texto con formato",
+          "title": "Runs"
+        },
+        "level": {
+          "anyOf": [
+            {
+              "maximum": 9,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Nivel jerárquico si aplica (0 a 9)",
+          "title": "Level"
+        },
+        "rows": {
+          "anyOf": [
+            {
+              "items": {
+                "items": {
+                  "$ref": "#/$defs/TableCell"
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Filas de celdas para bloques tipo 'table'",
+          "title": "Rows"
+        },
+        "hints": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Hints"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Pistas detectadas por el extractor"
+        },
+        "style_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Estilo de párrafo original de Word",
+          "title": "Style Name"
+        },
+        "has_inline_image": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Rutas o indicador de imágenes",
+          "title": "Has Inline Image"
+        },
+        "list_info": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Metadatos de numeración y viñetas",
+          "title": "List Info"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "SourceBlock",
+      "type": "object"
+    },
+    "TableCell": {
+      "additionalProperties": true,
+      "description": "Celda individual dentro de una fila de tabla.",
+      "properties": {
+        "text": {
+          "default": "",
+          "description": "Texto plano extraído de la celda",
+          "title": "Text",
+          "type": "string"
+        },
+        "runs": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Run"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Runs detallados con formato dentro de la celda",
+          "title": "Runs"
+        },
+        "h_span": {
+          "default": 1,
+          "description": "Extensión horizontal (column span / gridSpan)",
+          "minimum": 1,
+          "title": "H Span",
+          "type": "integer"
+        },
+        "v_merge": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Fusión vertical ('restart', 'continue' o None)",
+          "title": "V Merge"
+        },
+        "hints": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Hints"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Pistas opcionales sobre la celda"
+        }
+      },
+      "title": "TableCell",
+      "type": "object"
+    }
+  },
+  "additionalProperties": true,
+  "description": "Carga de entrada enviada al motor de IA para procesar un fragmento (chunk) del documento.",
+  "properties": {
+    "schema_version": {
+      "default": "di.v1",
+      "description": "Versión del esquema de documento intermedio",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "chunk_id": {
+      "description": "Identificador único del chunk",
+      "title": "Chunk Id",
+      "type": "string"
+    },
+    "document_id": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "ID del documento original",
+      "title": "Document Id"
+    },
+    "blocks": {
+      "description": "Bloques de origen contenidos en el chunk",
+      "items": {
+        "$ref": "#/$defs/SourceBlock"
+      },
+      "title": "Blocks",
+      "type": "array"
+    },
+    "hints": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Hints"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Pistas globales o contextuales para la IA"
+    },
+    "metadata": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Metadatos auxiliares de ejecución",
+      "title": "Metadata"
+    }
+  },
+  "title": "AIChunkInput",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "di.v1"
+}
