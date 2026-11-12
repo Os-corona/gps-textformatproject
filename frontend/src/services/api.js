@@ -129,7 +129,21 @@ export async function uploadDocument(file) {
 export async function formatDocument(id, config) {
   if (USE_MOCKS) {
     await new Promise((resolve) => setTimeout(resolve, 400))
+    if (config?.use_ai) {
+      return {
+        httpStatus: 202,
+        status: 202,
+        job_status: 'processing',
+        document_id: id,
+        job_id: id,
+        config: {
+          ...config
+        },
+        message: 'Job encolado para procesamiento con IA.'
+      }
+    }
     return {
+      httpStatus: 200,
       document_id: id,
       job_id: id,
       status: 'done',
@@ -148,6 +162,8 @@ export async function formatDocument(id, config) {
   // always has everything it needs.
   return {
     ...response.data,
+    httpStatus: response.status,
+    status: response.status === 202 ? 202 : (response.data?.status ?? response.status),
     document_id: response.data?.document_id ?? id,
     config: response.data?.config ?? config
   }
