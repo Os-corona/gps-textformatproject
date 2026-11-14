@@ -1,0 +1,56 @@
+{
+  "id": "tesis",
+  "name": "Formato de Tesis / Académico",
+  "description": "Arial 12, interlineado 1.5, margen izquierdo 3 cm y resto 2.5 cm, texto justificado y número de página.",
+  "config": {
+    "margins_cm": {
+      "top": 2.5,
+      "bottom": 2.5,
+      "left": 3.0,
+      "right": 2.5
+    },
+    "font_family": "Arial",
+    "font_size_pt": 12,
+    "line_spacing": 1.5,
+    "heading_sizes_pt": {
+      "h1": 16,
+      "h2": 14,
+      "h3": 12
+    },
+    "paragraph": {
+      "alignment": "justify",
+      "first_line_indent_cm": 1.0,
+      "space_after_pt": 6.0
+    },
+    "headings": {
+      "h1": {
+        "size_pt": 16,
+        "bold": true,
+        "align": "left",
+        "space_before_pt": 18.0,
+        "space_after_pt": 6.0
+      },
+      "h2": {
+        "size_pt": 14,
+        "bold": true,
+        "align": "left",
+        "space_before_pt": 12.0,
+        "space_after_pt": 4.0
+      },
+      "h3": {
+        "size_pt": 12,
+        "bold": true,
+        "align": "left",
+        "space_before_pt": 8.0,
+        "space_after_pt": 2.0
+      }
+    },
+    "tables": {
+      "header_bold": true,
+      "header_fill": "EAEAEA",
+      "cell_line_spacing": 1.0
+    },
+    "page_numbers": true
+  }
+}
+
