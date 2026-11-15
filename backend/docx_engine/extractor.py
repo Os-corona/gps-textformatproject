@@ -15,22 +15,6 @@ os.makedirs(IMG_DIR, exist_ok=True)
 _img_counter = itertools.count(1)
 
 
-def extract_paragraphs(file_object):
-    """
-    Recibe un archivo .docx y devuelve una lista con el texto de cada parrafo.
-    Ignora los parrafos que solo contienen espacios o saltos de linea.
-    """
-    document = docx.Document(file_object)
-    paragraphs = []
-
-    for paragraph in document.paragraphs:
-        text = paragraph.text.strip()
-        if text:  # Ignorar párrafos vacíos
-            paragraphs.append(text)
-
-    return paragraphs
-
-
 # ---------- Imágenes ----------
 def detect_inline_images(paragraph, doc_part):
     """Lista de rutas de imágenes del párrafo, o False si no hay."""

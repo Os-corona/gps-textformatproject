@@ -1,3 +1,4 @@
+from docx.enum.style import WD_STYLE_TYPE
 from docx.enum.text import WD_LINE_SPACING
 from docx.oxml.ns import qn
 
@@ -14,15 +15,29 @@ def _set_multiple_spacing(paragraph_format, line_spacing):
     spacing.set(qn("w:lineRule"), "auto")
 
 
+def _get_normal_style(doc):
+    """
+    Busca de forma segura el estilo Normal por tipo o por ID/nombre sin
+    provocar el UserWarning de python-docx ('style lookup by style_id is deprecated').
+    """
+    for style in doc.styles:
+        if style.type == WD_STYLE_TYPE.PARAGRAPH:
+            if style.name in ("Normal", "normal") or getattr(style, "style_id", None) == "Normal":
+                return style
+    return None
+
+
 def apply_spacing(doc, line_spacing):
     """
     Aplica interlineado múltiple al estilo Normal y a los
     párrafos del cuerpo, excluyendo tablas, encabezados y pies.
     """
-    _set_multiple_spacing(
-        doc.styles["Normal"].paragraph_format,
-        line_spacing,
-    )
+    normal_style = _get_normal_style(doc)
+    if normal_style is not None:
+        _set_multiple_spacing(
+            normal_style.paragraph_format,
+            line_spacing,
+        )
 
     for paragraph in doc.paragraphs:
         _set_multiple_spacing(

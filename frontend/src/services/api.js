@@ -129,7 +129,21 @@ export async function uploadDocument(file) {
 export async function formatDocument(id, config) {
   if (USE_MOCKS) {
     await new Promise((resolve) => setTimeout(resolve, 400))
+    if (config?.use_ai) {
+      return {
+        httpStatus: 202,
+        status: 202,
+        job_status: 'processing',
+        document_id: id,
+        job_id: id,
+        config: {
+          ...config
+        },
+        message: 'Job encolado para procesamiento con IA.'
+      }
+    }
     return {
+      httpStatus: 200,
       document_id: id,
       job_id: id,
       status: 'done',
@@ -148,27 +162,54 @@ export async function formatDocument(id, config) {
   // always has everything it needs.
   return {
     ...response.data,
+    httpStatus: response.status,
+    status: response.status === 202 ? 202 : (response.data?.status ?? response.status),
     document_id: response.data?.document_id ?? id,
     config: response.data?.config ?? config
   }
 }
 
+const mockPollCounts = {}
+
 export async function getDocument(id) {
   if (USE_MOCKS) {
     await new Promise((resolve) => setTimeout(resolve, 200))
+    const mockStatusEnv = import.meta.env.VITE_MOCK_JOB_STATUS
+    mockPollCounts[id] = (mockPollCounts[id] || 0) + 1
+    const count = mockPollCounts[id]
+
+    let status = 'processing'
+    let current_chunk = Math.min(count, 4)
+    let total_chunks = 4
+    let stage = 'Estructurando jerarquía de títulos y párrafos'
+
+    if (count >= 3) {
+      if (mockStatusEnv === 'review') {
+        status = 'review'
+      } else if (mockStatusEnv === 'error') {
+        status = 'error'
+      } else {
+        status = 'done'
+      }
+    }
+
     return {
       document_id: id,
       job_id: id,
       original_name: 'documento_ejemplo.docx',
       size_bytes: 102400,
       uploaded_at: new Date().toISOString(),
-      status: 'done',
+      status,
+      current_chunk,
+      total_chunks,
+      stage,
+      error_code: status === 'error' ? (import.meta.env.VITE_MOCK_ERROR_CODE || 'AI_PROVIDER_ERROR') : null,
+      error_message: status === 'error' ? 'El proveedor de IA no pudo procesar el documento.' : null,
       config: {},
-      use_ai: false,
-      error_message: null,
+      use_ai: true,
       started_at: new Date().toISOString(),
-      finished_at: new Date().toISOString(),
-      download_url: `/api/documents/${id}/download/`
+      finished_at: status === 'done' ? new Date().toISOString() : null,
+      download_url: status === 'done' ? `/api/documents/${id}/download/` : null
     }
   }
 

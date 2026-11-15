@@ -61,6 +61,27 @@ const form = reactive<FormState>({
   line_spacing: 1.15
 })
 
+// ─── AI Structuring State (Sprint 3) ──────────────────────────────────────────
+interface AiFormState {
+  enabled: boolean
+  document_type: string
+  detect_titles: boolean
+  detect_lists: boolean
+  detect_tables: boolean
+  emphasis: 'ninguno' | 'ligero' | 'medio'
+  accepted_disclaimer: boolean
+}
+
+const aiForm = reactive<AiFormState>({
+  enabled: false,
+  document_type: 'general',
+  detect_titles: true,
+  detect_lists: true,
+  detect_tables: true,
+  emphasis: 'ligero',
+  accepted_disclaimer: false
+})
+
 // Snapshot of the current preset values (for Reset button)
 const presetSnapshot = reactive<Omit<FormState, 'preset_id'>>({
   margins_cm: { top: 2.54, bottom: 2.54, left: 2.54, right: 2.54 },
@@ -111,6 +132,9 @@ const errors = computed(() => {
 
   if (!isValidLineSpacing(form.line_spacing))
     e['line_spacing'] = 'Debe estar entre 1.0 y 3.0.'
+
+  if (aiForm.enabled && !aiForm.accepted_disclaimer)
+    e['ai_disclaimer'] = 'Debes aceptar el aviso para poder usar la estructuración con IA.'
 
   return e
 })
@@ -179,7 +203,7 @@ async function submitFormatting() {
   isSubmitting.value = true
   flowStore.setError(null)
 
-  // Build the JSON exactly as the contract defines
+  // Build payload v1.1 (when aiForm.enabled is true, include AI structuring fields; when false, identical to Sprint 2)
   const payload: Record<string, any> = {
     preset_id: form.preset_id ?? null,
     margins_cm: {
@@ -191,7 +215,23 @@ async function submitFormatting() {
     font_family: form.font_family,
     font_size_pt: Number(form.font_size_pt),
     line_spacing: Number(form.line_spacing),
-    use_ai: false
+    use_ai: aiForm.enabled
+  }
+
+  if (aiForm.enabled) {
+    payload.document_type = aiForm.document_type
+    payload.detect_titles = aiForm.detect_titles
+    payload.detect_lists = aiForm.detect_lists
+    payload.detect_tables = aiForm.detect_tables
+    payload.emphasis = aiForm.emphasis
+    payload.ai_options = {
+      document_type: aiForm.document_type,
+      detect_titles: aiForm.detect_titles,
+      detect_lists: aiForm.detect_lists,
+      detect_tables: aiForm.detect_tables,
+      emphasis: aiForm.emphasis,
+      accepted_disclaimer: aiForm.accepted_disclaimer
+    }
   }
 
   try {
@@ -199,7 +239,14 @@ async function submitFormatting() {
     // Prefer the config resolved by the backend (preset + overrides).
     flowStore.setConfig(resultData.config ?? payload)
     flowStore.setResult(resultData)
-    router.push('/result')
+
+    const is202 = resultData.httpStatus === 202 || resultData.status === 202
+
+    if (is202) {
+      router.push(`/processing/${flowStore.document.document_id}`)
+    } else {
+      router.push('/result')
+    }
   } catch (err: any) {
     flowStore.setError(err)
   } finally {
@@ -483,6 +530,217 @@ function cancel() {
       </div>
     </div>
 
+    <!-- ── ESTRUCTURAR CON IA (Sprint 3) ────────────────────────────────────── -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4" id="ai-structure-section">
+      <div class="d-flex align-items-center justify-content-between">
+        <div>
+          <div class="d-flex align-items-center gap-2">
+            <h4 class="fw-semibold text-dark mb-0">Estructurar con IA</h4>
+            <span class="badge rounded-pill text-bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 small">
+              Sprint 3
+            </span>
+          </div>
+          <p class="text-secondary small mb-0 mt-1">
+            Detecta y organiza jerárquicamente títulos, listas y tablas mediante inteligencia artificial sin modificar el contenido.
+          </p>
+        </div>
+
+        <!-- Interruptor apagado por defecto -->
+        <div class="form-check form-switch fs-4 mb-0 ms-3">
+          <input
+            id="ai-switch"
+            class="form-check-input cursor-pointer"
+            type="checkbox"
+            role="switch"
+            v-model="aiForm.enabled"
+            aria-label="Interruptor Estructurar con IA"
+          />
+        </div>
+      </div>
+
+      <!-- Contenido desplegado al activar el interruptor -->
+      <div v-if="aiForm.enabled" class="pt-4 mt-3 border-top">
+        <div class="row g-4 mb-4">
+          <!-- Tipo de documento -->
+          <div class="col-md-6">
+            <label for="ai-document-type" class="form-label fw-semibold">
+              Tipo de documento
+            </label>
+            <select
+              id="ai-document-type"
+              v-model="aiForm.document_type"
+              class="form-select"
+            >
+              <option value="general">General / Estándar</option>
+              <option value="academico">Académico / Científico</option>
+              <option value="informe">Informe / Reporte ejecutivo</option>
+              <option value="ensayo">Ensayo</option>
+              <option value="tesis">Tesis / Trabajo de grado</option>
+              <option value="articulo">Artículo</option>
+            </select>
+            <div class="form-text">
+              Contextualiza el análisis de la estructura según el tipo de documento.
+            </div>
+          </div>
+
+          <!-- Selector de énfasis (ninguno, ligero, medio) -->
+          <div class="col-md-6">
+            <label class="form-label fw-semibold d-block">
+              Selector de énfasis
+            </label>
+            <div class="btn-group w-100" role="group" aria-label="Selector de énfasis">
+              <input
+                type="radio"
+                class="btn-check"
+                name="ai-emphasis"
+                id="emphasis-none"
+                value="ninguno"
+                v-model="aiForm.emphasis"
+              />
+              <label
+                class="btn"
+                :class="aiForm.emphasis === 'ninguno' ? 'btn-primary' : 'btn-outline-secondary'"
+                for="emphasis-none"
+              >
+                Ninguno
+              </label>
+
+              <input
+                type="radio"
+                class="btn-check"
+                name="ai-emphasis"
+                id="emphasis-light"
+                value="ligero"
+                v-model="aiForm.emphasis"
+              />
+              <label
+                class="btn"
+                :class="aiForm.emphasis === 'ligero' ? 'btn-primary' : 'btn-outline-secondary'"
+                for="emphasis-light"
+              >
+                Ligero
+              </label>
+
+              <input
+                type="radio"
+                class="btn-check"
+                name="ai-emphasis"
+                id="emphasis-medium"
+                value="medio"
+                v-model="aiForm.emphasis"
+              />
+              <label
+                class="btn"
+                :class="aiForm.emphasis === 'medio' ? 'btn-primary' : 'btn-outline-secondary'"
+                for="emphasis-medium"
+              >
+                Medio
+              </label>
+            </div>
+            <div class="form-text">
+              Define el grado de ajuste en la jerarquía y formateo de elementos.
+            </div>
+          </div>
+        </div>
+
+        <!-- Casillas para detectar títulos, listas y tablas -->
+        <div class="mb-4">
+          <label class="form-label fw-semibold mb-2">
+            Casillas de detección estructural
+          </label>
+          <div class="row g-3">
+            <!-- Detectar títulos -->
+            <div class="col-md-4">
+              <div class="form-check p-3 border rounded-3 bg-light-subtle h-100">
+                <input
+                  id="detect-titles"
+                  class="form-check-input ms-0 me-2"
+                  type="checkbox"
+                  v-model="aiForm.detect_titles"
+                />
+                <label class="form-check-label fw-medium text-dark" for="detect-titles">
+                  Detectar títulos
+                </label>
+                <div class="small text-secondary mt-1">
+                  Reconoce encabezados principales y secundarios (H1, H2, H3).
+                </div>
+              </div>
+            </div>
+
+            <!-- Detectar listas -->
+            <div class="col-md-4">
+              <div class="form-check p-3 border rounded-3 bg-light-subtle h-100">
+                <input
+                  id="detect-lists"
+                  class="form-check-input ms-0 me-2"
+                  type="checkbox"
+                  v-model="aiForm.detect_lists"
+                />
+                <label class="form-check-label fw-medium text-dark" for="detect-lists">
+                  Detectar listas
+                </label>
+                <div class="small text-secondary mt-1">
+                  Estructura listas numeradas y viñetas con sangría uniforme.
+                </div>
+              </div>
+            </div>
+
+            <!-- Detectar tablas -->
+            <div class="col-md-4">
+              <div class="form-check p-3 border rounded-3 bg-light-subtle h-100">
+                <input
+                  id="detect-tables"
+                  class="form-check-input ms-0 me-2"
+                  type="checkbox"
+                  v-model="aiForm.detect_tables"
+                />
+                <label class="form-check-label fw-medium text-dark" for="detect-tables">
+                  Detectar tablas
+                </label>
+                <div class="small text-secondary mt-1">
+                  Alinea y da formato coherente al contenido en tablas.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Aviso y casilla obligatoria -->
+        <div
+          class="alert alert-warning border-warning-subtle d-flex flex-column gap-3 mb-0"
+          role="alert"
+        >
+          <div class="d-flex align-items-start gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-shield-exclamation text-warning flex-shrink-0 mt-1" viewBox="0 0 16 16">
+              <path d="M5.338 1.59a61.44 61.44 0 0 0-2.837.856.481.481 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.725 10.725 0 0 0 2.287 2.233c.346.244.652.42.893.533.12.057.218.095.293.118a.55.55 0 0 0 .101.025.615.615 0 0 0 .1-.025c.076-.023.174-.061.294-.118.24-.113.547-.29.893-.533a10.726 10.726 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.775 11.775 0 0 1-2.517 2.453 7.159 7.159 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7.158 7.158 0 0 1-1.048-.625 11.777 11.777 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 62.456 62.456 0 0 1 5.072.56z"/>
+              <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+            </svg>
+            <div class="text-dark fw-semibold">
+              El texto de tu documento se enviará a un proveedor de IA. El contenido no se modifica, solo su estructura
+            </div>
+          </div>
+
+          <!-- Casilla obligatoria -->
+          <div class="form-check pt-2 border-top border-warning-subtle">
+            <input
+              id="ai-disclaimer"
+              class="form-check-input"
+              type="checkbox"
+              v-model="aiForm.accepted_disclaimer"
+              :class="{ 'is-invalid': errors.ai_disclaimer }"
+              required
+            />
+            <label class="form-check-label fw-semibold text-dark cursor-pointer ms-1" for="ai-disclaimer">
+              Acepto el procesamiento del documento con el proveedor de IA <span class="text-danger">*</span>
+            </label>
+            <div v-if="errors.ai_disclaimer" class="invalid-feedback d-block">
+              {{ errors.ai_disclaimer }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ── Action Buttons ─────────────────────────────────────────────────────── -->
     <div class="d-flex justify-content-between align-items-center">
       <button class="btn btn-outline-secondary px-4" @click="cancel">
@@ -533,5 +791,8 @@ function cancel() {
 }
 .letter-spacing-1 {
   letter-spacing: 0.05em;
+}
+.cursor-pointer {
+  cursor: pointer;
 }
 </style>
