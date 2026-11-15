@@ -152,13 +152,13 @@ class OutBlockDiscriminatedUnionTests(SimpleTestCase):
             ParagraphOutBlock(runs=[])
 
     def test_heading_outblock_levels(self):
-        for lvl in range(1, 7):
+        for lvl in range(0, 7):
             h = HeadingOutBlock(level=lvl, runs=[Run(text=f"Título H{lvl}")])
             self.assertEqual(h.level, lvl)
 
-        # Nivel menor a 1
+        # Nivel menor a 0 (el nivel 0 representa Title)
         with self.assertRaises(ValidationError):
-            HeadingOutBlock(level=0, runs=[Run(text="Inválido")])
+            HeadingOutBlock(level=-1, runs=[Run(text="Inválido")])
 
         # Nivel mayor a 6
         with self.assertRaises(ValidationError):

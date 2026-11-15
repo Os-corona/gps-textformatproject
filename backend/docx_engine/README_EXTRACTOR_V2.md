@@ -77,5 +77,5 @@ Las pruebas cubren los seis fixtures, las señales de listas de `05_listas`,
 los títulos con formato manual de `02_headings_mixto`, los bloques opacos de
 `04_tabla_imagen` y `06_secciones`, herencia tipográfica, tipos de contenido
 opaco, estabilidad de IDs, serialización, subrayado y el endpoint de extracción.
-Las dos pruebas `xfail` existentes del rebuilder v1 siguen documentando la
-pérdida de secciones de `06_secciones`; su corrección pertenece al rebuilder v2.
+Las pruebas de secciones ahora utilizan `rebuild_document()` del rebuilder v2
+y comprueban las tres secciones de `06_secciones`, incluida la página horizontal.

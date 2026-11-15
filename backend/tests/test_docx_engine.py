@@ -14,7 +14,7 @@ Utiliza las funciones de 'comparator' para verificar la fidelidad de:
 2. Número de tablas y contenido de celdas.
 3. Imágenes embebidas (a:blip).
 4. Celdas combinadas (spans horizontales y verticales).
-5. Secciones y orientaciones (06_secciones se marca como xfail documentado hasta S3T5).
+5. Secciones y orientaciones, conservadas por el Rebuilder v2 (S3T11).
 """
 
 from pathlib import Path
@@ -22,8 +22,8 @@ import pytest
 from docx import Document
 from docx.enum.section import WD_ORIENT
 
-from docx_engine.extractor import extract_structure
-from docx_engine.rebuilder import rebuild_from_structure
+from docx_engine.extractor import extract_document, extract_structure
+from docx_engine.rebuilder import rebuild_document, rebuild_from_structure
 from docx_engine.comparator import (
     compare_documents,
     compare_tables,
@@ -43,25 +43,6 @@ ALL_FIXTURE_NAMES = [
     "06_secciones.docx",
 ]
 
-ROUNDTRIP_PARAMS = [
-    "01_planos.docx",
-    "02_headings_mixto.docx",
-    "03_tema.docx",
-    "04_tabla_imagen.docx",
-    "05_listas.docx",
-    pytest.param(
-        "06_secciones.docx",
-        marks=pytest.mark.xfail(
-            reason=(
-                "Caso conocido (deuda técnica): 06_secciones pierde secciones y "
-                "orientación durante el rebuild v1; se resolverá en S3T5 con Rebuilder v2."
-            ),
-            strict=True,
-        ),
-    ),
-]
-
-
 @pytest.fixture(params=ALL_FIXTURE_NAMES)
 def fixture_path(request):
     """Provee la ruta absoluta a cada uno de los 6 fixtures válidos."""
@@ -74,7 +55,7 @@ def fixture_path(request):
 # Requisito 1 y 2: Roundtrip completo extract -> rebuild con comparator
 # ---------------------------------------------------------------------------
 
-@pytest.mark.parametrize("fixture_name", ROUNDTRIP_PARAMS)
+@pytest.mark.parametrize("fixture_name", ALL_FIXTURE_NAMES)
 def test_docx_engine_roundtrip_full_integrity(fixture_name, tmp_path):
     """
     Roundtrip completo: extract -> rebuild -> save.
@@ -83,17 +64,14 @@ def test_docx_engine_roundtrip_full_integrity(fixture_name, tmp_path):
     - Número de tablas y textos de celdas idénticos.
     - Conteo de imágenes preservado.
     - Celdas combinadas (gridSpan y vMerge) idénticas.
-    - Número de secciones y orientación (xfail en 06_secciones hasta S3T5).
+    - Número de secciones y orientación, también en 06_secciones.
     """
     original_path = FIXTURES_DIR / fixture_name
     assert original_path.exists(), f"Fixture no existe: {original_path}"
 
-    with open(original_path, "rb") as f:
-        blocks = extract_structure(f)
-
-    assert len(blocks) > 0, f"La extracción no produjo bloques para {fixture_name}"
-
-    rebuilt_doc = rebuild_from_structure(blocks)
+    blocks = extract_document(original_path)
+    assert blocks.blocks, f"La extracción no produjo bloques para {fixture_name}"
+    rebuilt_doc = rebuild_document(original_path, blocks)
     rebuilt_path = tmp_path / f"rebuilt_{fixture_name}"
     rebuilt_doc.save(str(rebuilt_path))
 
@@ -121,7 +99,7 @@ def test_docx_engine_roundtrip_full_integrity(fixture_name, tmp_path):
         f"Diferencias en celdas combinadas para '{fixture_name}': {merged_diffs}"
     )
 
-    # 5. Comparar secciones (06_secciones falla aquí y dispara el xfail documentado)
+    # 5. Comparar secciones, incluida la página horizontal de 06_secciones.
     section_diffs = compare_sections(original_path, rebuilt_path)
     assert not section_diffs, (
         f"Diferencias en secciones para '{fixture_name}': {section_diffs}"
@@ -196,21 +174,15 @@ def test_roundtrip_inline_images_preservation(tmp_path):
     assert not image_diffs, f"Diferencias en imágenes: {image_diffs}"
 
 
-@pytest.mark.xfail(
-    reason="Caso conocido: 06_secciones pierde secciones en docx_engine v1 (hasta S3T5)",
-    strict=True,
-)
-def test_known_debt_06_secciones_loses_sections(tmp_path):
+def test_roundtrip_06_secciones_preserves_sections_and_orientation(tmp_path):
     """
-    Verifica explícitamente el caso conocido de deuda técnica del Sprint 2:
-    06_secciones.docx tiene 3 secciones en el original pero el rebuilder v1
-    actualmente solo genera 1 sección.
+    Cierra la deuda técnica: se conservan las 3 secciones y la página horizontal.
     """
     original_path = FIXTURES_DIR / "06_secciones.docx"
-    with open(original_path, "rb") as f:
-        blocks = extract_structure(f)
-
-    rebuilt_doc = rebuild_from_structure(blocks)
+    blocks = extract_document(original_path)
+    rebuilt_doc = rebuild_document(original_path, blocks)
+    assert len(rebuilt_doc.sections) == 3
+    assert rebuilt_doc.sections[1].orientation == WD_ORIENT.LANDSCAPE
     rebuilt_path = tmp_path / "rebuilt_06_secciones.docx"
     rebuilt_doc.save(str(rebuilt_path))
 

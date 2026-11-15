@@ -1,7 +1,72 @@
 {
   "$defs": {
+    "CalloutOutBlock": {
+      "properties": {
+        "type": {
+          "const": "callout",
+          "default": "callout",
+          "title": "Type",
+          "type": "string"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "ID único del bloque",
+          "title": "Id"
+        },
+        "src": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Src",
+          "type": "array"
+        },
+        "runs": {
+          "description": "Runs de texto que forman el párrafo",
+          "items": {
+            "$ref": "#/$defs/Run"
+          },
+          "minItems": 1,
+          "title": "Runs",
+          "type": "array"
+        },
+        "hints": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Hints"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Pistas opcionales de formato"
+        },
+        "kind": {
+          "default": "quote",
+          "enum": [
+            "quote",
+            "note",
+            "warning"
+          ],
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "runs"
+      ],
+      "title": "CalloutOutBlock",
+      "type": "object"
+    },
     "HeadingOutBlock": {
-      "description": "Título o encabezado jerárquico con nivel estricto entre 1 y 6.",
+      "description": "Título (nivel 0) o encabezado; conserva compatibilidad con niveles 1–6.",
       "properties": {
         "type": {
           "const": "heading",
@@ -21,10 +86,17 @@
           "description": "ID único del bloque",
           "title": "Id"
         },
+        "src": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Src",
+          "type": "array"
+        },
         "level": {
-          "description": "Nivel del título (1 a 6: H1, H2, H3, H4, H5, H6)",
+          "description": "0 = Title; 1–6 = Heading 1–6",
           "maximum": 6,
-          "minimum": 1,
+          "minimum": 0,
           "title": "Level",
           "type": "integer"
         },
@@ -325,6 +397,38 @@
       "title": "ImageOutBlock",
       "type": "object"
     },
+    "KeepOutBlock": {
+      "description": "Referencia al XML del original; nunca acepta XML suministrado por la IA.",
+      "properties": {
+        "type": {
+          "const": "keep",
+          "default": "keep",
+          "title": "Type",
+          "type": "string"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "src": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Src",
+          "type": "array"
+        }
+      },
+      "title": "KeepOutBlock",
+      "type": "object"
+    },
     "ListItemOutBlock": {
       "description": "Elemento de lista (viñeta o numerada) con nivel de anidamiento entre 0 y 8.",
       "properties": {
@@ -346,6 +450,13 @@
           "description": "ID único del bloque",
           "title": "Id"
         },
+        "src": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Src",
+          "type": "array"
+        },
         "level": {
           "default": 0,
           "description": "Nivel de anidamiento de la lista (0 a 8)",
@@ -358,6 +469,23 @@
           "default": false,
           "description": "True si es lista numerada, False si es viñeta",
           "title": "Is Numbered",
+          "type": "boolean"
+        },
+        "list_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "List Id"
+        },
+        "restart": {
+          "default": false,
+          "title": "Restart",
           "type": "boolean"
         },
         "runs": {
@@ -408,6 +536,13 @@
           ],
           "description": "ID único del bloque",
           "title": "Id"
+        },
+        "src": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Src",
+          "type": "array"
         },
         "runs": {
           "description": "Runs de texto que forman el párrafo",
@@ -615,6 +750,13 @@
           "description": "ID único del bloque",
           "title": "Id"
         },
+        "src": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Src",
+          "type": "array"
+        },
         "rows": {
           "description": "Filas de la tabla",
           "items": {
@@ -667,8 +809,10 @@
         "description": "Bloque de salida discriminado por 'type'",
         "discriminator": {
           "mapping": {
+            "callout": "#/$defs/CalloutOutBlock",
             "heading": "#/$defs/HeadingOutBlock",
             "image": "#/$defs/ImageOutBlock",
+            "keep": "#/$defs/KeepOutBlock",
             "list_item": "#/$defs/ListItemOutBlock",
             "paragraph": "#/$defs/ParagraphOutBlock",
             "table": "#/$defs/TableOutBlock"
@@ -690,6 +834,12 @@
           },
           {
             "$ref": "#/$defs/ImageOutBlock"
+          },
+          {
+            "$ref": "#/$defs/CalloutOutBlock"
+          },
+          {
+            "$ref": "#/$defs/KeepOutBlock"
           }
         ]
       },
