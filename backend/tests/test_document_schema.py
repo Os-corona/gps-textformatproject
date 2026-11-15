@@ -316,6 +316,7 @@ class ExportJsonSchemasTests(SimpleTestCase):
         self.assertIn("aichunk_input.schema.json", exported)
         self.assertIn("integrity_report.schema.json", exported)
         self.assertIn("source_block.schema.json", exported)
+        self.assertIn("document_intermediate.schema.json", exported)
 
         for filename, filepath_str in exported.items():
             path = Path(filepath_str)

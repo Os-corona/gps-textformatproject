@@ -95,6 +95,15 @@ class Hints(BaseModel):
     """Pistas y sugerencias tipográficas o jerárquicas emitidas por el extractor o la IA."""
     model_config = ConfigDict(extra="allow")
 
+    all_bold: bool = False
+    size_ratio: float = Field(default=1.0, gt=0)
+    words: int = Field(default=0, ge=0)
+    ends_with_period: bool = False
+    starts_with_glyph: bool = False
+    manual_numbering: bool = False
+    indent_level: int = Field(default=0, ge=0)
+    indent_cm: float = 0.0
+    is_native_list: bool = False
     style_name: Optional[str] = Field(default=None, description="Nombre del estilo original en el documento de Word")
     suggested_type: Optional[str] = Field(default=None, description="Tipo sugerido por extractor o IA (e.g. 'heading')")
     suggested_level: Optional[int] = Field(default=None, ge=0, le=9, description="Nivel jerárquico sugerido (0 a 9)")
@@ -141,7 +150,9 @@ class SourceBlock(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Identificador único del bloque de origen")
-    type: str = Field(..., description="Tipo de bloque: 'paragraph', 'heading', 'list_item', 'table', 'image'")
+    type: str = Field(..., description="Tipo de bloque: 'paragraph', 'heading', 'list_item', 'table', 'image', 'keep'")
+    xml: Optional[str] = Field(default=None, description="XML original de un bloque opaco, sin transformar")
+    opaque_reasons: List[str] = Field(default_factory=list, description="Motivos por los que el bloque debe conservarse intacto")
     text: Optional[str] = Field(default=None, description="Texto plano consolidado del bloque")
     runs: Optional[List[Run]] = Field(default=None, description="Runs de texto con formato")
     level: Optional[int] = Field(default=None, ge=0, le=9, description="Nivel jerárquico si aplica (0 a 9)")
@@ -174,7 +185,29 @@ class SourceBlock(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# 5. OutBlock: Bloques de Salida (Unión discriminada por 'type')
+# 5. Documento intermedio producido por el extractor
+# ---------------------------------------------------------------------------
+class ExtractionStats(BaseModel):
+    total_blocks: int = Field(default=0, ge=0)
+    text_blocks: int = Field(default=0, ge=0)
+    opaque_blocks: int = Field(default=0, ge=0)
+    opaque_reasons: Dict[str, List[str]] = Field(default_factory=dict)
+
+
+class DocumentIntermediate(BaseModel):
+    """Un bloque por hijo del body, incluida la configuración final de sección."""
+
+    schema_version: Literal["di.v1"] = SCHEMA_VERSION
+    base_font_size: float = Field(default=11.0, gt=0)
+    blocks: List[SourceBlock] = Field(default_factory=list)
+    stats: ExtractionStats = Field(default_factory=ExtractionStats)
+
+
+DI = DocumentIntermediate
+
+
+# ---------------------------------------------------------------------------
+# 6. OutBlock: Bloques de Salida (Unión discriminada por 'type')
 # ---------------------------------------------------------------------------
 class ParagraphOutBlock(BaseModel):
     """Párrafo normal de texto procesado."""
@@ -278,7 +311,7 @@ OutBlock = Annotated[
 
 
 # ---------------------------------------------------------------------------
-# 6. AIChunkInput y AIChunkOutput
+# 7. AIChunkInput y AIChunkOutput
 # ---------------------------------------------------------------------------
 class AIChunkInput(BaseModel):
     """Carga de entrada enviada al motor de IA para procesar un fragmento (chunk) del documento."""
@@ -319,7 +352,7 @@ class AIChunkOutput(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# 7. IntegrityReport
+# 8. IntegrityReport
 # ---------------------------------------------------------------------------
 class IntegrityReport(BaseModel):
     """Reporte de integridad para verificar que la IA no alteró ni destruyó contenido crítico."""
@@ -354,7 +387,7 @@ class IntegrityReport(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# 8. Exportador de JSON Schemas a docs/schemas/
+# 9. Exportador de JSON Schemas a docs/schemas/
 # ---------------------------------------------------------------------------
 def export_json_schemas(output_dir: Union[str, Path] = "docs/schemas") -> Dict[str, str]:
     """
@@ -375,6 +408,7 @@ def export_json_schemas(output_dir: Union[str, Path] = "docs/schemas") -> Dict[s
         "aichunk_input.schema.json": AIChunkInput,
         "integrity_report.schema.json": IntegrityReport,
         "source_block.schema.json": SourceBlock,
+        "document_intermediate.schema.json": DocumentIntermediate,
     }
 
     generated_files: Dict[str, str] = {}
