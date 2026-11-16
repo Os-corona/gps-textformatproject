@@ -11,7 +11,7 @@ import os
 import uuid
 from pathlib import Path
 from typing import Annotated, Any, Dict, List, Literal, Optional, Union
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
 
 # ---------------------------------------------------------------------------
 # 1. Versión del Esquema
@@ -215,6 +215,7 @@ class ParagraphOutBlock(BaseModel):
 
     type: Literal["paragraph"] = "paragraph"
     id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()), description="ID único del bloque")
+    src: List[str] = Field(default_factory=list)
     runs: List[Run] = Field(..., min_length=1, description="Runs de texto que forman el párrafo")
     hints: Optional[Hints] = Field(default=None, description="Pistas opcionales de formato")
 
@@ -225,20 +226,21 @@ class ParagraphOutBlock(BaseModel):
 
 
 class HeadingOutBlock(BaseModel):
-    """Título o encabezado jerárquico con nivel estricto entre 1 y 6."""
+    """Título (nivel 0) o encabezado; conserva compatibilidad con niveles 1–6."""
     model_config = ConfigDict(extra="ignore")
 
     type: Literal["heading"] = "heading"
     id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()), description="ID único del bloque")
-    level: int = Field(..., ge=1, le=6, description="Nivel del título (1 a 6: H1, H2, H3, H4, H5, H6)")
+    src: List[str] = Field(default_factory=list)
+    level: int = Field(..., ge=0, le=6, description="0 = Title; 1–6 = Heading 1–6")
     runs: List[Run] = Field(..., min_length=1, description="Runs de texto que forman el título")
     hints: Optional[Hints] = Field(default=None, description="Pistas opcionales")
 
     @field_validator("level")
     @classmethod
     def check_level(cls, v: int) -> int:
-        if not (1 <= v <= 6):
-            raise ValueError(f"El nivel de título (level) debe estar entre 1 y 6, recibido: {v}")
+        if not (0 <= v <= 6):
+            raise ValueError(f"El nivel de título (level) debe estar entre 0 y 6, recibido: {v}")
         return v
 
     @field_validator("runs")
@@ -253,8 +255,11 @@ class ListItemOutBlock(BaseModel):
 
     type: Literal["list_item"] = "list_item"
     id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()), description="ID único del bloque")
+    src: List[str] = Field(default_factory=list)
     level: int = Field(default=0, ge=0, le=8, description="Nivel de anidamiento de la lista (0 a 8)")
-    is_numbered: bool = Field(default=False, description="True si es lista numerada, False si es viñeta")
+    is_numbered: bool = Field(default=False, validation_alias=AliasChoices("is_numbered", "ordered"), description="True si es lista numerada, False si es viñeta")
+    list_id: Optional[str] = None
+    restart: bool = False
     runs: List[Run] = Field(..., min_length=1, description="Runs de texto del elemento de lista")
     hints: Optional[Hints] = Field(default=None, description="Pistas opcionales")
 
@@ -277,6 +282,7 @@ class TableOutBlock(BaseModel):
 
     type: Literal["table"] = "table"
     id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()), description="ID único del bloque")
+    src: List[str] = Field(default_factory=list)
     rows: List[List[TableCell]] = Field(..., min_length=1, description="Filas de la tabla")
     hints: Optional[Hints] = Field(default=None, description="Pistas opcionales de formato de tabla")
 
@@ -297,6 +303,25 @@ class ImageOutBlock(BaseModel):
     hints: Optional[Hints] = Field(default=None, description="Pistas opcionales")
 
 
+class CalloutOutBlock(ParagraphOutBlock):
+    type: Literal["callout"] = "callout"
+    kind: Literal["quote", "note", "warning"] = "quote"
+
+
+class KeepOutBlock(BaseModel):
+    """Referencia al XML del original; nunca acepta XML suministrado por la IA."""
+
+    type: Literal["keep"] = "keep"
+    id: Optional[str] = None
+    src: List[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def check_reference(self):
+        if not self.src and not self.id:
+            raise ValueError("Un bloque keep necesita src o un id del documento original.")
+        return self
+
+
 # Unión discriminada por 'type'
 OutBlock = Annotated[
     Union[
@@ -305,6 +330,8 @@ OutBlock = Annotated[
         ListItemOutBlock,
         TableOutBlock,
         ImageOutBlock,
+        CalloutOutBlock,
+        KeepOutBlock,
     ],
     Field(discriminator="type", description="Bloque de salida discriminado por 'type'")
 ]
