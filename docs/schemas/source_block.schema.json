@@ -4,6 +4,54 @@
       "additionalProperties": true,
       "description": "Pistas y sugerencias tipográficas o jerárquicas emitidas por el extractor o la IA.",
       "properties": {
+        "all_bold": {
+          "default": false,
+          "title": "All Bold",
+          "type": "boolean"
+        },
+        "size_ratio": {
+          "default": 1.0,
+          "exclusiveMinimum": 0,
+          "title": "Size Ratio",
+          "type": "number"
+        },
+        "words": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Words",
+          "type": "integer"
+        },
+        "ends_with_period": {
+          "default": false,
+          "title": "Ends With Period",
+          "type": "boolean"
+        },
+        "starts_with_glyph": {
+          "default": false,
+          "title": "Starts With Glyph",
+          "type": "boolean"
+        },
+        "manual_numbering": {
+          "default": false,
+          "title": "Manual Numbering",
+          "type": "boolean"
+        },
+        "indent_level": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Indent Level",
+          "type": "integer"
+        },
+        "indent_cm": {
+          "default": 0.0,
+          "title": "Indent Cm",
+          "type": "number"
+        },
+        "is_native_list": {
+          "default": false,
+          "title": "Is Native List",
+          "type": "boolean"
+        },
         "style_name": {
           "anyOf": [
             {
@@ -324,9 +372,30 @@
       "type": "string"
     },
     "type": {
-      "description": "Tipo de bloque: 'paragraph', 'heading', 'list_item', 'table', 'image'",
+      "description": "Tipo de bloque: 'paragraph', 'heading', 'list_item', 'table', 'image', 'keep'",
       "title": "Type",
       "type": "string"
+    },
+    "xml": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "XML original de un bloque opaco, sin transformar",
+      "title": "Xml"
+    },
+    "opaque_reasons": {
+      "description": "Motivos por los que el bloque debe conservarse intacto",
+      "items": {
+        "type": "string"
+      },
+      "title": "Opaque Reasons",
+      "type": "array"
     },
     "text": {
       "anyOf": [

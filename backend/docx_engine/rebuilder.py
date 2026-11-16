@@ -12,6 +12,9 @@ def apply_runs(paragraph, runs):
         if run_data.get("italic"):
             run.italic = True
 
+        if run_data.get("underline") is not None:
+            run.underline = run_data["underline"]
+
         if run_data.get("font"):
             run.font.name = run_data["font"]
 
