@@ -2,7 +2,7 @@
 Registro y fábrica de proveedores de IA.
 
 Lee la configuración desde variables de entorno (.env / Django settings):
-- AI_PROVIDER (por defecto: 'openrouter')
+- AI_PROVIDER (por defecto: 'openrouter'; 'fake' funciona sin credenciales)
 - AI_API_KEY (obligatoria para proveedores reales; si falta, lanza AINotConfiguredError / AI_NOT_CONFIGURED)
 - AI_MODEL (por defecto: 'google/gemini-2.0-flash-001')
 - AI_TIMEOUT_S (por defecto: 30.0)
@@ -78,6 +78,11 @@ def get_provider(
             **kwargs,
         )
 
+    if resolved_provider == "fake":
+        from .fake import FakeProvider
+
+        return FakeProvider(**kwargs)
+
     if resolved_provider == "openrouter":
         resolved_key = (
             api_key if api_key is not None else (_read_config_value("AI_API_KEY", "") or "")
@@ -138,5 +143,5 @@ def get_provider(
 
     raise AINotConfiguredError(
         f"Proveedor de IA no soportado: '{resolved_provider}'. "
-        "Configura AI_PROVIDER=openrouter en .env."
+        "Configura AI_PROVIDER=openrouter o fake en .env."
     )

@@ -12,6 +12,7 @@ from .base import (
     ProviderUnavailableError,
     TokenUsage,
 )
+from .fake import FakeProvider
 from .openrouter import OpenRouterProvider
 from .registry import get_provider, register_provider
 
@@ -20,6 +21,7 @@ __all__ = [
     "AINotConfiguredError",
     "InvalidModelOutputError",
     "LLMProvider",
+    "FakeProvider",
     "OpenRouterProvider",
     "ProviderAuthError",
     "ProviderError",
