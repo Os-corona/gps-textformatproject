@@ -20,9 +20,11 @@ def apply_typography(doc, font_name, font_size, heading_sizes=None):
     if heading_sizes is None:
         heading_sizes = {}
 
+    h1_size = heading_sizes.get("h1", round(font_size * 1.5 * 2) / 2)
     target_styles = {
         "Normal": font_size,
-        "Heading 1": heading_sizes.get("h1", round(font_size * 1.5 * 2) / 2),
+        "Title": heading_sizes.get("title", h1_size),
+        "Heading 1": h1_size,
         "Heading 2": heading_sizes.get("h2", round(font_size * 1.25 * 2) / 2),
         "Heading 3": heading_sizes.get("h3", round(font_size * 1.1 * 2) / 2),
     }
@@ -52,6 +54,8 @@ def apply_typography(doc, font_name, font_size, heading_sizes=None):
             return heading_sizes["h2"]
         elif "Heading 3" in style_name and "h3" in heading_sizes:
             return heading_sizes["h3"]
+        elif style_name == "Title" and "title" in heading_sizes:
+            return heading_sizes["title"]
         return font_size
 
     def _normalize_run(run, target_size):

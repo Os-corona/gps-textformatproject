@@ -265,6 +265,8 @@ def extract_document(path) -> DI:
     if isinstance(path, Document):
         document = path
     else:
+        if hasattr(path, "seek"):
+            path.seek(0)
         document = docx.Document(os.fspath(path) if isinstance(path, PathLike) else path)
 
     default_size = _default_font_size(document)

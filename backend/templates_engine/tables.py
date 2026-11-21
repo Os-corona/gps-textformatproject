@@ -4,9 +4,12 @@ Aplica estilo de tabla, negrita en encabezado, sombreado de encabezado (fill)
 e interlineado específico para celdas (por defecto 1.0).
 """
 
+import re
 from docx.shared import Pt
 from docx.oxml import parse_xml
 from docx.oxml.ns import nsdecls
+
+_HEX_COLOR_RE = re.compile(r"^[0-9A-Fa-f]{6}$")
 
 
 def apply_tables(doc, tables_config=None):
@@ -52,10 +55,11 @@ def apply_tables(doc, tables_config=None):
 
                 # Sombreado de encabezado (w:shd)
                 if header_fill:
-                    hex_code = header_fill.lstrip("#")
-                    tcPr = cell._tc.get_or_add_tcPr()
-                    for old_shd in tcPr.xpath("./w:shd"):
-                        tcPr.remove(old_shd)
-                    shd = parse_xml(f'<w:shd {nsdecls("w")} w:fill="{hex_code}"/>')
-                    tcPr.append(shd)
+                    hex_code = str(header_fill).lstrip("#").strip()
+                    if _HEX_COLOR_RE.match(hex_code):
+                        tcPr = cell._tc.get_or_add_tcPr()
+                        for old_shd in tcPr.xpath("./w:shd"):
+                            tcPr.remove(old_shd)
+                        shd = parse_xml(f'<w:shd {nsdecls("w")} w:fill="{hex_code}"/>')
+                        tcPr.append(shd)
 

@@ -4,10 +4,13 @@ Aplica alineación (left|justify), sangría de primera línea, espacio posterior
 y estilos de callouts/citas en párrafos del cuerpo.
 """
 
+import re
 from docx.shared import Inches, Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import parse_xml
 from docx.oxml.ns import nsdecls
+
+_HEX_COLOR_RE = re.compile(r"^[0-9A-Fa-f]{6}$")
 
 ALIGN_MAP = {
     "left": WD_ALIGN_PARAGRAPH.LEFT,
@@ -75,12 +78,13 @@ def apply_paragraphs(doc, paragraph_config=None, callout_config=None):
 
             fill_color = c_cfg.get("fill")
             if fill_color:
-                hex_fill = fill_color.lstrip("#")
-                pPr = paragraph._p.get_or_add_pPr()
-                for old_shd in pPr.xpath("./w:shd"):
-                    pPr.remove(old_shd)
-                shd = parse_xml(f'<w:shd {nsdecls("w")} w:fill="{hex_fill}"/>')
-                pPr.append(shd)
+                hex_fill = str(fill_color).lstrip("#").strip()
+                if _HEX_COLOR_RE.match(hex_fill):
+                    pPr = paragraph._p.get_or_add_pPr()
+                    for old_shd in pPr.xpath("./w:shd"):
+                        pPr.remove(old_shd)
+                    shd = parse_xml(f'<w:shd {nsdecls("w")} w:fill="{hex_fill}"/>')
+                    pPr.append(shd)
             continue
 
         if _is_list(paragraph):

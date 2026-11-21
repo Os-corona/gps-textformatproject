@@ -76,12 +76,25 @@ class AIConfig(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     enabled: bool = Field(default=True, description="Habilitar estructuración con IA")
-    document_type: Optional[str] = Field(default="general", description="Tipo de documento (general, academico, reporte)")
-    detect_titles: bool = Field(default=True, description="Detectar y jerarquizar títulos")
+    document_type: Optional[str] = Field(default="reporte", description="Tipo de documento (reporte, academico, acta, propuesta, otro)")
+    detect_headings: bool = Field(default=True, description="Detectar y jerarquizar títulos")
+    detect_titles: bool = Field(default=True, description="Alias retrocompatible de detect_headings")
     detect_lists: bool = Field(default=True, description="Detectar listas")
     detect_tables: bool = Field(default=True, description="Detectar tablas")
-    emphasis: Optional[str] = Field(default="ligero", description="Énfasis de IA: ninguno, ligero, medio")
+    emphasis: Optional[str] = Field(default="light", description="Énfasis de IA: none|light|medium (o ninguno|ligero|medio)")
     accepted_disclaimer: Optional[bool] = Field(default=True, description="Aceptación de aviso de IA")
+
+    @model_validator(mode="before")
+    @classmethod
+    def sync_heading_aliases(cls, data: Any):
+        if not isinstance(data, dict):
+            return data
+        data = data.copy()
+        if "detect_headings" in data and "detect_titles" not in data:
+            data["detect_titles"] = data["detect_headings"]
+        elif "detect_titles" in data and "detect_headings" not in data:
+            data["detect_headings"] = data["detect_titles"]
+        return data
 
 
 class TemplateConfig(BaseModel):
@@ -112,15 +125,25 @@ class TemplateConfig(BaseModel):
         data = data.copy()
 
         # Requisito 5: Dejar de rechazar use_ai=True y validar submodelo ai
-        use_ai_val = data.get("use_ai", False)
-        if use_ai_val is True or "ai" in data or "ai_options" in data:
-            ai_data = data.get("ai") or data.get("ai_options") or {}
+        # Solo activar use_ai cuando se pide explícitamente o se envía un bloque ai no nulo sin use_ai=False
+        use_ai_val = data.get("use_ai")
+        raw_ai = data.get("ai")
+        raw_ai_options = data.get("ai_options")
+        has_non_null_ai = raw_ai is not None or raw_ai_options is not None
+
+        if use_ai_val is False:
+            data["use_ai"] = False
+            data["ai"] = None
+        elif use_ai_val is True or has_non_null_ai:
+            ai_data = raw_ai if raw_ai is not None else (raw_ai_options if raw_ai_options is not None else {})
             if isinstance(ai_data, dict):
                 ai_dict = ai_data.copy()
                 if "document_type" in data and "document_type" not in ai_dict:
                     ai_dict["document_type"] = data["document_type"]
                 if "emphasis" in data and "emphasis" not in ai_dict:
                     ai_dict["emphasis"] = data["emphasis"]
+                if "detect_headings" in data and "detect_headings" not in ai_dict:
+                    ai_dict["detect_headings"] = data["detect_headings"]
                 if "detect_titles" in data and "detect_titles" not in ai_dict:
                     ai_dict["detect_titles"] = data["detect_titles"]
                 if "detect_lists" in data and "detect_lists" not in ai_dict:
@@ -133,6 +156,8 @@ class TemplateConfig(BaseModel):
             else:
                 data["ai"] = AIConfig(enabled=True)
             data["use_ai"] = True
+        else:
+            data["use_ai"] = False
 
         # Soportar config anidado si se recibe el objeto completo de un preset
         if "config" in data and isinstance(data["config"], dict):

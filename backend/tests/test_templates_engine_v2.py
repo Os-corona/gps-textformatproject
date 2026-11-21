@@ -325,3 +325,73 @@ class TemplateConfigAITests(SimpleTestCase):
         self.assertEqual(cfg.ai.document_type, "reporte")
         self.assertEqual(cfg.ai.emphasis, "ligero")
 
+    def test_preset_roundtrip_with_ai_none_keeps_use_ai_false(self):
+        preset = load_preset("apa7")
+        dumped = preset.model_dump()
+        self.assertIn("ai", dumped)
+        self.assertIsNone(dumped["ai"])
+
+        rebuilt_cfg = TemplateConfig(**dumped)
+        self.assertFalse(rebuilt_cfg.use_ai)
+        self.assertIsNone(rebuilt_cfg.ai)
+
+    def test_ai_config_detect_headings_alias_and_explicit_false(self):
+        cfg = TemplateConfig(
+            margin_top=2.5,
+            margin_bottom=2.5,
+            margin_left=2.5,
+            margin_right=2.5,
+            font_name="Calibri",
+            font_size=11,
+            line_spacing=1.15,
+            use_ai=True,
+            ai={
+                "document_type": "reporte",
+                "detect_headings": False,
+                "emphasis": "light",
+            },
+        )
+        self.assertTrue(cfg.use_ai)
+        self.assertFalse(cfg.ai.detect_headings)
+        self.assertFalse(cfg.ai.detect_titles)
+        self.assertEqual(cfg.ai.emphasis, "light")
+
+        disabled_cfg = TemplateConfig(
+            margin_top=2.5,
+            margin_bottom=2.5,
+            margin_left=2.5,
+            margin_right=2.5,
+            font_name="Calibri",
+            font_size=11,
+            line_spacing=1.15,
+            use_ai=False,
+            ai={"document_type": "reporte"},
+        )
+        self.assertFalse(disabled_cfg.use_ai)
+        self.assertIsNone(disabled_cfg.ai)
+
+    def test_page_numbers_preserves_existing_header_text_and_partial_margins(self):
+        blocks = create_sample_structure_blocks()
+        doc = rebuild_from_structure(blocks)
+        doc.sections[0].header.paragraphs[0].text = "Encabezado Existente"
+
+        apply_template(
+            doc,
+            {
+                "margins_cm": {"left": 3.0},
+                "font_family": "Arial",
+                "font_size_pt": 11,
+                "line_spacing": 1.15,
+                "tables": {"header_fill": "not-a-hex"},
+                "callout": {"fill": "invalid"},
+                "page_numbers": True,
+            },
+        )
+
+        self.assertEqual(round(doc.sections[0].left_margin.cm, 1), 3.0)
+        self.assertEqual(doc.sections[0].header.paragraphs[0].text, "Encabezado Existente")
+        self.assertIn("PAGE", doc.sections[0].header._element.xml)
+        self.assertEqual(doc.styles["Title"].font.name, "Arial")
+        self.assertEqual(doc.styles["Title"].font.size, Pt(16.5))
+
+

@@ -143,6 +143,8 @@ def rebuild_document(original_path, structured_di) -> DocumentObject:
         buffer.seek(0)
         document = Document(buffer)
     else:
+        if hasattr(original_path, "seek"):
+            original_path.seek(0)
         document = Document(fspath(original_path) if isinstance(original_path, PathLike) else original_path)
     originals = {f"b{index}": element for index, element in enumerate(document.element.body)}
     source_di = extract_document(document)

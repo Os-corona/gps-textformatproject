@@ -22,15 +22,16 @@ def apply_template(doc, config):
     8. Numeración de páginas
     """
     if isinstance(config, dict):
+        margins_cm = {
+            "top": config.get("margin_top", 2.54),
+            "bottom": config.get("margin_bottom", 2.54),
+            "left": config.get("margin_left", 2.54),
+            "right": config.get("margin_right", 2.54),
+        }
         if "margins_cm" in config and isinstance(config["margins_cm"], dict):
-            margins_cm = config["margins_cm"]
-        else:
-            margins_cm = {
-                "top": config.get("margin_top", 2.54),
-                "bottom": config.get("margin_bottom", 2.54),
-                "left": config.get("margin_left", 2.54),
-                "right": config.get("margin_right", 2.54),
-            }
+            for side in ("top", "bottom", "left", "right"):
+                if config["margins_cm"].get(side) is not None:
+                    margins_cm[side] = config["margins_cm"][side]
         font_name = config.get("font_family") or config.get("font_name", "Times New Roman")
         font_size = config.get("font_size_pt") or config.get("font_size", 12)
         heading_sizes = config.get("heading_sizes_pt") or config.get("heading_sizes", None)
