@@ -503,9 +503,15 @@ Devuelve el Documento Intermedio (DI) en su versión **original** (extraída) y 
         ],
         "hints": {
           "all_bold": true,
+          "is_all_caps": true,
           "size_ratio": 1.45,
           "words": 3,
-          "ends_with_period": false
+          "ends_with_period": false,
+          "alignment": "left",
+          "blank_lines_before": 0,
+          "blank_lines_after": 1,
+          "tab_count": 0,
+          "has_key_value_pattern": false
         }
       },
       {
@@ -516,8 +522,9 @@ Devuelve el Documento Intermedio (DI) en su versión **original** (extraída) y 
           { "text": "• Ventas en la región norte: incremento anual del 15%." }
         ],
         "hints": {
-          "starts_with_glyph": "•",
-          "indent_level": 0
+          "starts_with_glyph": true,
+          "indent_level": 0,
+          "has_key_value_pattern": true
         }
       },
       {
@@ -533,7 +540,8 @@ Devuelve el Documento Intermedio (DI) en su versión **original** (extraída) y 
       },
       {
         "id": "b4",
-        "type": "keep"
+        "type": "keep",
+        "keep_kind": "image"
       }
     ]
   },
@@ -590,7 +598,8 @@ Devuelve el Documento Intermedio (DI) en su versión **original** (extraída) y 
 - `src`: lista de IDs de bloques del DI original que dieron origen a este bloque estructurado (`["b1"]`, `["b2"]`).
 - `level`: nivel jerárquico para `heading` (0 = Título, 1 = H1, 2 = H2, 3 = H3) o nivel de anidación para `list_item` (0 a 2).
 - `runs`: lista de fragmentos de texto con propiedades de estilo (`bold`, `italic`, `underline`).
-- `keep`: bloques intactos de imágenes, tablas originales o secciones que no fueron alterados.
+- `table`: incluye `header_row` (booleano, por defecto `true` para fila de encabezado repetible `w:tblHeader`) y `rows` rectangulares.
+- `keep`: bloques intactos de imágenes, tablas originales o secciones que no fueron alterados (en `original`, incluyen `keep_kind`: `"image" | "table" | "section_break" | "empty" | "drawing" | "field" | "footnote" | "hyperlink" | "track_changes" | "other"`). Los `keep` con `keep_kind: "empty"` pueden omitirse en `proposed` para delegar el espaciado a la plantilla.
 
 **Errores posibles:**
 - `NOT_FOUND` (404): el documento no existe.
@@ -1250,3 +1259,4 @@ Las siguientes funcionalidades no forman parte del alcance del Sprint 3 y se con
 |---|---|---|---|
 | 1.0 | 08/10/2026 | Versión inicial del contrato para Sprint 2 (formateo visual determinístico síncrono sin IA). | Alfonso Maron Fernandez Garibay (frontend), Luis Dorian Ferreira Calderon (backend) |
 | 1.1 | 09/11/2026 | Actualización para Sprint 3: soporte de `use_ai: true` con sub-objeto `ai` en configuración; procesamiento asíncrono con respuesta `202 Accepted` en `POST /format/`; incorporación del estado `review`, campo `progress`, `ai_summary` y `error_code` en `GET /documents/{id}/`; nuevos endpoints `GET /documents/{id}/structure/` y `POST /documents/{id}/review/`; nuevos códigos de error (`AI_NOT_CONFIGURED`, `AI_UNAVAILABLE`, `AI_RATE_LIMIT`, `DOCUMENT_TOO_LARGE_FOR_AI`, `INVALID_STATE`); y catálogo completo de mocks para frontend. | Pendiente de aprobación por PR (Frontend & Backend) |
+| 1.1.1 | 20/11/2026 | Enriquecimiento retrocompatible del Documento Intermedio (`di.v1`): nuevos campos opcionales en `hints` (`is_all_caps`, `alignment`, `blank_lines_before`, `blank_lines_after`, `tab_count`, `has_key_value_pattern`), clasificación `keep_kind` en bloques `keep` del DI original, y `header_row` opcional (default `true`) en bloques `table` del DI propuesto. Sin cambios rupturistas en endpoints ni respuestas existentes. | Backend (compatible con Frontend v1.1) |

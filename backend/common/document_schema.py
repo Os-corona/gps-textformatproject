@@ -96,6 +96,7 @@ class Hints(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     all_bold: bool = False
+    is_all_caps: bool = False
     size_ratio: float = Field(default=1.0, gt=0)
     words: int = Field(default=0, ge=0)
     ends_with_period: bool = False
@@ -103,6 +104,14 @@ class Hints(BaseModel):
     manual_numbering: bool = False
     indent_level: int = Field(default=0, ge=0)
     indent_cm: float = 0.0
+    alignment: Optional[Literal["left", "center", "right", "justify"]] = Field(
+        default=None,
+        description="Alineación horizontal efectiva del párrafo ('left', 'center', 'right', 'justify')",
+    )
+    blank_lines_before: int = Field(default=0, ge=0, description="Párrafos vacíos consecutivos inmediatamente antes")
+    blank_lines_after: int = Field(default=0, ge=0, description="Párrafos vacíos consecutivos inmediatamente después")
+    tab_count: int = Field(default=0, ge=0, description="Cantidad de tabuladores dentro del párrafo")
+    has_key_value_pattern: bool = Field(default=False, description="Indica si el párrafo sigue un patrón 'Clave: valor'")
     is_native_list: bool = False
     style_name: Optional[str] = Field(default=None, description="Nombre del estilo original en el documento de Word")
     suggested_type: Optional[str] = Field(default=None, description="Tipo sugerido por extractor o IA (e.g. 'heading')")
@@ -151,6 +160,20 @@ class SourceBlock(BaseModel):
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Identificador único del bloque de origen")
     type: str = Field(..., description="Tipo de bloque: 'paragraph', 'heading', 'list_item', 'table', 'image', 'keep'")
+    keep_kind: Optional[
+        Literal[
+            "table",
+            "image",
+            "section_break",
+            "empty",
+            "drawing",
+            "field",
+            "footnote",
+            "hyperlink",
+            "track_changes",
+            "other",
+        ]
+    ] = Field(default=None, description="Clasificación semántica ligera de un bloque opaco 'keep' para contexto de IA")
     xml: Optional[str] = Field(default=None, description="XML original de un bloque opaco, sin transformar")
     opaque_reasons: List[str] = Field(default_factory=list, description="Motivos por los que el bloque debe conservarse intacto")
     text: Optional[str] = Field(default=None, description="Texto plano consolidado del bloque")
@@ -283,6 +306,7 @@ class TableOutBlock(BaseModel):
     type: Literal["table"] = "table"
     id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()), description="ID único del bloque")
     src: List[str] = Field(default_factory=list)
+    header_row: bool = Field(default=True, description="True si la primera fila actúa como encabezado repetible (w:tblHeader)")
     rows: List[List[TableCell]] = Field(..., min_length=1, description="Filas de la tabla")
     hints: Optional[Hints] = Field(default=None, description="Pistas opcionales de formato de tabla")
 
