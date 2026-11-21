@@ -36,9 +36,9 @@ function isItemActive(path: string) {
     :class="{ expanded }"
   >
     <div class="d-flex align-items-center justify-content-between p-3 border-bottom">
-      <span v-if="expanded" class="fw-bold fs-5 text-primary">PrettyDocs</span>
+      <span v-if="expanded" class="fw-bold fs-5 text-primary sidebar-brand">PrettyDocs</span>
       <button
-        class="btn btn-sm btn-light"
+        class="btn btn-sm btn-light sidebar-toggle"
         @click="emit('toggle')"
         :title="expanded ? 'Colapsar' : 'Expandir'"
       >
@@ -59,11 +59,11 @@ function isItemActive(path: string) {
         @click="navigate(item.path)"
       >
         <span class="fs-5">{{ item.icon }}</span>
-        <span v-if="expanded" class="fw-medium">{{ item.label }}</span>
+        <span v-if="expanded" class="fw-medium nav-label">{{ item.label }}</span>
       </button>
     </nav>
 
-    <div v-if="expanded" class="p-3 border-top small text-secondary">
+    <div v-if="expanded" class="p-3 border-top small text-secondary sidebar-footer">
       v0.1.0 · Front-end only
     </div>
   </aside>
@@ -83,5 +83,20 @@ function isItemActive(path: string) {
 .nav-item-btn {
   white-space: nowrap;
   overflow: hidden;
+}
+
+/* Keep the navigation compact on phones so the review content keeps a
+   readable width. The sidebar never grows past the icon rail on small screens. */
+@media (max-width: 767.98px) {
+  .sidebar.expanded {
+    width: 72px;
+  }
+
+  .sidebar.expanded .sidebar-brand,
+  .sidebar.expanded .nav-label,
+  .sidebar.expanded .sidebar-footer,
+  .sidebar .sidebar-toggle {
+    display: none;
+  }
 }
 </style>
