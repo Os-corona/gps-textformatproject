@@ -154,3 +154,14 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
+
+# Configuración de Proveedor de IA (OpenRouter)
+AI_PROVIDER = env('AI_PROVIDER', default='openrouter')
+AI_API_KEY = env('AI_API_KEY', default='')
+AI_MODEL = env('AI_MODEL', default='google/gemini-2.0-flash-001')
+AI_TIMEOUT_S = env.float('AI_TIMEOUT_S', default=30.0)
+AI_BASE_URL = env('AI_BASE_URL', default='https://openrouter.ai/api/v1')
+AI_TEMPERATURE = env.float('AI_TEMPERATURE', default=0.1)
+AI_SITE_URL = env('AI_SITE_URL', default='')
+AI_APP_NAME = env('AI_APP_NAME', default='PrettyDocs')
+
