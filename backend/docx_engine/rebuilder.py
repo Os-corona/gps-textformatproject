@@ -59,6 +59,10 @@ def _keep_ids(block):
     return block.src or [block.id]
 
 
+def _is_empty_paragraph_keep(source_block) -> bool:
+    return source_block.type == "keep" and source_block.opaque_reasons == ["empty_paragraph"]
+
+
 def _check_keep_references(blocks, originals, source_di):
     seen = []
     for block in blocks:
@@ -70,9 +74,14 @@ def _check_keep_references(blocks, originals, source_di):
             if source_id in seen:
                 raise ValueError(f"keep duplicado: {source_id}.")
             seen.append(source_id)
+    # Los bloques empty_paragraph no contienen tokens; la IA puede omitirlos
+    # para evitar huecos redundantes, pero cualquier otro bloque opaco (imágenes,
+    # tablas, saltos de sección, campos, etc.) es estrictamente obligatorio en orden.
     required = [
         block.id for block in source_di.blocks
-        if block.type == "keep" and originals[block.id].tag != qn("w:sectPr")
+        if block.type == "keep"
+        and originals[block.id].tag != qn("w:sectPr")
+        and not _is_empty_paragraph_keep(block)
     ]
     if [source_id for source_id in seen if source_id in required] != required:
         raise ValueError("Los bloques opacos deben aparecer una vez y en su orden original.")
@@ -109,12 +118,44 @@ def _add_structured_runs(paragraph, runs):
                 setattr(run, attribute, value)
 
 
+def _configure_table_layout(table):
+    """Aplica ancho 100%, márgenes internos de celda (tblCellMar) y cantSplit en filas."""
+    tbl_pr = table._tbl.tblPr
+    if tbl_pr is None:
+        tbl_pr = OxmlElement("w:tblPr")
+        table._tbl.insert(0, tbl_pr)
+
+    # Ancho 100% (5000 en quintos de porcentaje según OOXML)
+    for existing in tbl_pr.findall(qn("w:tblW")):
+        tbl_pr.remove(existing)
+    tbl_w = OxmlElement("w:tblW")
+    tbl_w.set(qn("w:w"), "5000")
+    tbl_w.set(qn("w:type"), "pct")
+    tbl_pr.append(tbl_w)
+
+    # Márgenes internos de celda para aire visual (en twips/dxa)
+    for existing in tbl_pr.findall(qn("w:tblCellMar")):
+        tbl_pr.remove(existing)
+    cell_mar = OxmlElement("w:tblCellMar")
+    for side, value in (("top", "60"), ("left", "108"), ("bottom", "60"), ("right", "108")):
+        node = OxmlElement(f"w:{side}")
+        node.set(qn("w:w"), value)
+        node.set(qn("w:type"), "dxa")
+        cell_mar.append(node)
+    tbl_pr.append(cell_mar)
+
+
 def _add_structured_table(document, block):
     width = sum(cell.h_span for cell in block.rows[0])
     table = document.add_table(rows=len(block.rows), cols=width)
-    header = OxmlElement("w:tblHeader")
-    table.rows[0]._tr.get_or_add_trPr().append(header)
+    _configure_table_layout(table)
+    if getattr(block, "header_row", True):
+        header = OxmlElement("w:tblHeader")
+        table.rows[0]._tr.get_or_add_trPr().append(header)
     for row_index, row in enumerate(block.rows):
+        tr_pr = table.rows[row_index]._tr.get_or_add_trPr()
+        if tr_pr.find(qn("w:cantSplit")) is None:
+            tr_pr.append(OxmlElement("w:cantSplit"))
         column = 0
         for source in row:
             if source.v_merge is not None:
@@ -130,12 +171,15 @@ def _add_structured_table(document, block):
     return table
 
 
-def rebuild_document(original_path, structured_di) -> DocumentObject:
+def rebuild_document(original_path, structured_di, *, collapse_empty_paragraphs: bool = False) -> DocumentObject:
     """Reconstruye sobre una copia del paquete original y valida el resultado.
 
     Acepta el DI del extractor, un AIChunkOutput, un diccionario con blocks o
     una lista de bloques. keep resuelve src (o id) exclusivamente contra el
     body original; conserva las relaciones del paquete sin archivos temporales.
+
+    Si collapse_empty_paragraphs=True, omite bloques keep cuya única razón sea
+    'empty_paragraph' (sin tokens) para delegar el espaciado a la plantilla.
     """
     if isinstance(original_path, DocumentObject):
         buffer = BytesIO()
@@ -143,10 +187,18 @@ def rebuild_document(original_path, structured_di) -> DocumentObject:
         buffer.seek(0)
         document = Document(buffer)
     else:
+        if hasattr(original_path, "seek"):
+            original_path.seek(0)
         document = Document(fspath(original_path) if isinstance(original_path, PathLike) else original_path)
     originals = {f"b{index}": element for index, element in enumerate(document.element.body)}
     source_di = extract_document(document)
+    empty_keep_ids = {block.id for block in source_di.blocks if _is_empty_paragraph_keep(block)}
     blocks = _normalize_blocks(structured_di)
+    if collapse_empty_paragraphs:
+        blocks = [
+            block for block in blocks
+            if not (block.type == "keep" and all(sid in empty_keep_ids for sid in _keep_ids(block)))
+        ]
     _check_keep_references(blocks, originals, source_di)
     expected = _expected_text(blocks, originals)
 

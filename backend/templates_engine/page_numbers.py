@@ -26,7 +26,10 @@ def apply_page_numbers(doc, enabled=False):
                 break
 
         if not has_page:
-            p = header.paragraphs[0] if header.paragraphs else header.add_paragraph()
+            if header.paragraphs and not header.paragraphs[0].text.strip():
+                p = header.paragraphs[0]
+            else:
+                p = header.add_paragraph()
             p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
             run = p.add_run()
             fld_xml = f'<w:fldSimple {nsdecls("w")} w:instr="PAGE"/>'

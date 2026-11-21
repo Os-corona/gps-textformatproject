@@ -176,7 +176,8 @@ def test_new_tables_preserve_spans_runs_header_and_body_order():
     assert len(table.rows[0]._tr.tc_lst) == 2
     assert table.cell(0, 0)._tc.tcPr.gridSpan.val == 2
     assert table.rows[0]._tr.trPr.find(qn("w:tblHeader")) is not None
-    assert table.rows[1]._tr.trPr is None
+    assert table.rows[1]._tr.trPr.find(qn("w:tblHeader")) is None
+    assert table.rows[1]._tr.trPr.find(qn("w:cantSplit")) is not None
     assert table.cell(1, 0).paragraphs[0].runs[0].underline is True
     assert [p.text for p in result.paragraphs] == ["Antes", "Después"]
 
@@ -258,3 +259,62 @@ def test_ai_output_models_preserve_src_callout_keep_and_ordered_alias():
     assert [p.text for p in rebuild_document(Document(), restored).paragraphs] == ["Título", "Elemento", "Nota"]
     with pytest.raises(ValidationError):
         KeepOutBlock()
+
+
+def test_empty_paragraph_keeps_can_be_omitted_or_collapsed():
+    original = Document()
+    original.add_paragraph("Título")
+    original.add_paragraph("")
+    original.add_paragraph("")
+    original.add_paragraph("Cuerpo")
+    original.add_table(rows=1, cols=1).cell(0, 0).text = "Dato"
+
+    di = extract_document(original)
+    # 1) Omitir empty_paragraph (b1, b2) conservando la tabla opaca (b4) es válido
+    without_blanks = [
+        {"type": "heading", "level": 1, "src": ["b0"], "runs": [{"text": "Título"}]},
+        {"type": "paragraph", "src": ["b3"], "runs": [{"text": "Cuerpo"}]},
+        {"type": "keep", "src": ["b4"]},
+    ]
+    rebuilt = rebuild_document(original, without_blanks)
+    assert [p.text for p in rebuilt.paragraphs] == ["Título", "Cuerpo"]
+    assert len(rebuilt.tables) == 1
+
+    # 2) collapse_empty_paragraphs=True limpia empty_paragraph automáticamente sobre el DI completo
+    collapsed = rebuild_document(original, di, collapse_empty_paragraphs=True)
+    assert [p.text for p in collapsed.paragraphs] == ["Título", "Cuerpo"]
+    assert len(collapsed.tables) == 1
+
+
+def test_structured_table_header_row_flag_and_editorial_layout():
+    table_with_header = {
+        "type": "table",
+        "header_row": True,
+        "rows": [
+            [{"text": "Clave"}, {"text": "Valor"}],
+            [{"text": "Ventas"}, {"text": "15%"}],
+        ],
+    }
+    table_without_header = {
+        "type": "table",
+        "header_row": False,
+        "rows": [
+            [{"text": "A"}, {"text": "1"}],
+            [{"text": "B"}, {"text": "2"}],
+        ],
+    }
+
+    result = rebuild_document(Document(), [table_with_header, table_without_header])
+    assert len(result.tables) == 2
+
+    t1, t2 = result.tables
+    assert t1.rows[0]._tr.xpath("./w:trPr/w:tblHeader")
+    assert not t2.rows[0]._tr.xpath("./w:trPr/w:tblHeader")
+
+    for tbl in (t1, t2):
+        tbl_w = tbl._tbl.xpath("./w:tblPr/w:tblW")
+        assert tbl_w and tbl_w[0].get(qn("w:w")) == "5000" and tbl_w[0].get(qn("w:type")) == "pct"
+        assert tbl._tbl.xpath("./w:tblPr/w:tblCellMar")
+        for row in tbl.rows:
+            assert row._tr.xpath("./w:trPr/w:cantSplit")
+

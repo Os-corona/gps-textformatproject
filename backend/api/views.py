@@ -81,7 +81,9 @@ def upload_document_view(request):
         "document_id": document.id,
         "job_id": job.id,
         "status": job.status,
-        "original_name": document.original_name
+        "original_name": document.original_name,
+        "size_bytes": document.size_bytes,
+        "uploaded_at": document.uploaded_at,
     }, status=status.HTTP_201_CREATED)
 
 
@@ -115,35 +117,43 @@ def format_document_view(request, id):
         return Response({"error": "INVALID_CONFIG", "message": f"El preset '{preset_id}' no existe."}, status=status.HTTP_400_BAD_REQUEST)
 
     job.config = config.model_dump()
+    job.use_ai = config.use_ai
     job.status = 'processing'
+    job.error_message = None
     job.started_at = timezone.now()
     job.save()
 
     try:
-        document.original_file.seek(0)
-        doc_obj = DocxDocument(document.original_file)
-        
+        with document.original_file.open('rb') as orig_fh:
+            doc_obj = DocxDocument(io.BytesIO(orig_fh.read()))
+
         for step in PIPELINE:
             doc_obj = step(doc_obj, job)
-            
+
         temp_io = io.BytesIO()
         doc_obj.save(temp_io)
         temp_io.seek(0)
-        
+
         try:
             DocxDocument(temp_io)
             temp_io.seek(0)
         except Exception:
             raise Exception("El documento resultante quedó corrupto tras el formateo.")
-            
+
         filename = f"result_{job.id}.docx"
         job.result_file.save(filename, ContentFile(temp_io.read()))
-        
+
         job.status = 'done'
         job.finished_at = timezone.now()
         job.save()
-        
-        return Response({"status": job.status}, status=status.HTTP_200_OK)
+
+        return Response({
+            "document_id": document.id,
+            "job_id": job.id,
+            "status": job.status,
+            "config": job.config,
+            "finished_at": job.finished_at,
+        }, status=status.HTTP_200_OK)
 
     except Exception as e:
         job.status = 'error'

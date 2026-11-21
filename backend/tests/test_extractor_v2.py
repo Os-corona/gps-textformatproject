@@ -329,3 +329,46 @@ def test_empty_document_has_a_valid_baseline_and_preserves_final_section():
     assert di.stats.text_blocks == 0
     assert di.stats.opaque_blocks == di.stats.total_blocks == 1
     assert di.blocks[0].opaque_reasons == ["section_properties"]
+    assert di.blocks[0].keep_kind == "section_break"
+
+
+def test_enriched_hints_caps_alignment_blanks_tabs_kv_and_keep_kind():
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+    doc = Document()
+    doc.add_paragraph("")
+    title = doc.add_paragraph("RESUMEN EJECUTIVO")
+    title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    doc.add_paragraph("")
+    doc.add_paragraph("")
+    kv = doc.add_paragraph("Región Norte: incremento del 15%")
+    kv.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    tabbed = doc.add_paragraph("Col A\tCol B\tCol C")
+    doc.add_table(rows=1, cols=2)
+
+    di = extract_document(stream(doc))
+
+    assert di.blocks[0].type == "keep"
+    assert di.blocks[0].keep_kind == "empty"
+
+    title_block = di.blocks[1]
+    assert title_block.hints.is_all_caps is True
+    assert title_block.hints.alignment == "center"
+    assert title_block.hints.blank_lines_before == 1
+    assert title_block.hints.blank_lines_after == 2
+    assert title_block.hints.has_key_value_pattern is False
+
+    kv_block = di.blocks[4]
+    assert kv_block.hints.is_all_caps is False
+    assert kv_block.hints.alignment == "justify"
+    assert kv_block.hints.blank_lines_before == 2
+    assert kv_block.hints.blank_lines_after == 0
+    assert kv_block.hints.has_key_value_pattern is True
+
+    tab_block = di.blocks[5]
+    assert tab_block.hints.tab_count == 2
+
+    table_block = di.blocks[6]
+    assert table_block.type == "keep"
+    assert table_block.keep_kind == "table"
+

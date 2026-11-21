@@ -8,6 +8,7 @@ from os import PathLike
 import docx
 from lxml import etree
 from docx.document import Document
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn
 from docx.oxml.text.paragraph import CT_P
 from docx.oxml.table import CT_Tbl
@@ -24,6 +25,56 @@ MANUAL_NUMBERING_RE = re.compile(
     r"^\s*(?:\d+(?:\.\d+)+[.)]?|\d+[.)]|\(\d+(?:\.\d+)*\)|"
     r"[A-Za-z][.)]|\([A-Za-z]\)|[IVXLCDMivxlcdm]+[.)])\s+"
 )
+KEY_VALUE_RE = re.compile(r"^\s*(?!https?://)[^:\n]{2,40}:\s+\S+")
+
+_ALIGNMENT_TO_STR = {
+    WD_ALIGN_PARAGRAPH.LEFT: "left",
+    WD_ALIGN_PARAGRAPH.CENTER: "center",
+    WD_ALIGN_PARAGRAPH.RIGHT: "right",
+    WD_ALIGN_PARAGRAPH.JUSTIFY: "justify",
+    WD_ALIGN_PARAGRAPH.JUSTIFY_MED: "justify",
+    WD_ALIGN_PARAGRAPH.JUSTIFY_HI: "justify",
+    WD_ALIGN_PARAGRAPH.JUSTIFY_LOW: "justify",
+    WD_ALIGN_PARAGRAPH.DISTRIBUTE: "justify",
+}
+
+
+def _is_all_caps(text: str) -> bool:
+    letters = [ch for ch in text if ch.isalpha()]
+    return len(letters) >= 2 and all(ch.isupper() for ch in letters)
+
+
+def _paragraph_alignment(paragraph) -> str | None:
+    align = paragraph.alignment
+    if align is None:
+        style = paragraph.style
+        seen = set()
+        while style is not None and id(style) not in seen:
+            seen.add(id(style))
+            if getattr(style, "paragraph_format", None) is not None and style.paragraph_format.alignment is not None:
+                align = style.paragraph_format.alignment
+                break
+            style = getattr(style, "base_style", None)
+    return _ALIGNMENT_TO_STR.get(align)
+
+
+def _has_key_value_pattern(text: str) -> bool:
+    return bool(KEY_VALUE_RE.match(text))
+
+
+def _classify_keep_kind(reasons: list[str], element) -> str:
+    if element.tag == qn("w:sectPr") or "section_break" in reasons or "section_properties" in reasons:
+        return "section_break"
+    if "table" in reasons or element.tag == qn("w:tbl"):
+        return "table"
+    if reasons == ["empty_paragraph"]:
+        return "empty"
+    if "tracked_change" in reasons or "track_changes" in reasons:
+        return "track_changes"
+    for key in ("image", "drawing", "field", "footnote", "hyperlink"):
+        if key in reasons:
+            return key
+    return "other"
 
 
 # ---------- Imágenes ----------
@@ -265,6 +316,8 @@ def extract_document(path) -> DI:
     if isinstance(path, Document):
         document = path
     else:
+        if hasattr(path, "seek"):
+            path.seek(0)
         document = docx.Document(os.fspath(path) if isinstance(path, PathLike) else path)
 
     default_size = _default_font_size(document)
@@ -297,26 +350,43 @@ def extract_document(path) -> DI:
     indent_levels = {value: level for level, value in enumerate(sorted(indents), start=1)}
     blocks = []
     opaque_reasons = {}
-    for index, element, paragraph, reasons in records:
+    total_records = len(records)
+    for rec_pos, (index, element, paragraph, reasons) in enumerate(records):
         block_id = f"b{index}"
         if reasons:
             opaque_reasons[block_id] = reasons
             blocks.append(SourceBlock(
-                id=block_id, type="keep", opaque_reasons=reasons,
+                id=block_id, type="keep",
+                keep_kind=_classify_keep_kind(reasons, element),
+                opaque_reasons=reasons,
                 xml=etree.tostring(element, encoding="unicode", with_tail=False),
                 text=paragraph.text if paragraph is not None else None,
             ))
             continue
+
+        blank_before = 0
+        cursor = rec_pos - 1
+        while cursor >= 0 and records[cursor][3] == ["empty_paragraph"]:
+            blank_before += 1
+            cursor -= 1
+
+        blank_after = 0
+        cursor = rec_pos + 1
+        while cursor < total_records and records[cursor][3] == ["empty_paragraph"]:
+            blank_after += 1
+            cursor += 1
 
         text = paragraph.text
         runs = [run for run in paragraph.runs if run.text]
         text_runs = [run for run in runs if run.text.strip()]
         list_info = detect_list_info(paragraph, document.part)
         indent = _left_indent_twips(paragraph)
+        tab_count = max(text.count("\t"), len(element.findall(".//" + qn("w:tab"))))
         hints = Hints(
             all_bold=bool(text_runs) and all(
                 bool(_effective_font_value(run, paragraph, "bold", False)) for run in text_runs
             ),
+            is_all_caps=_is_all_caps(text),
             size_ratio=max(_run_size(run, paragraph, default_size) for run in runs) / base_size,
             words=len(text.split()),
             ends_with_period=text.rstrip().endswith("."),
@@ -324,6 +394,11 @@ def extract_document(path) -> DI:
             manual_numbering=bool(MANUAL_NUMBERING_RE.match(text)),
             indent_level=indent_levels.get(indent, 0),
             indent_cm=indent * 2.54 / 1440,
+            alignment=_paragraph_alignment(paragraph),
+            blank_lines_before=blank_before,
+            blank_lines_after=blank_after,
+            tab_count=tab_count,
+            has_key_value_pattern=_has_key_value_pattern(text),
             style_name=paragraph.style.name,
             is_native_list=list_info["is_list"],
             is_list=list_info["is_list"],

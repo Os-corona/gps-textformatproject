@@ -9,6 +9,11 @@
           "title": "All Bold",
           "type": "boolean"
         },
+        "is_all_caps": {
+          "default": false,
+          "title": "Is All Caps",
+          "type": "boolean"
+        },
         "size_ratio": {
           "default": 1.0,
           "exclusiveMinimum": 0,
@@ -46,6 +51,52 @@
           "default": 0.0,
           "title": "Indent Cm",
           "type": "number"
+        },
+        "alignment": {
+          "anyOf": [
+            {
+              "enum": [
+                "left",
+                "center",
+                "right",
+                "justify"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Alineación horizontal efectiva del párrafo ('left', 'center', 'right', 'justify')",
+          "title": "Alignment"
+        },
+        "blank_lines_before": {
+          "default": 0,
+          "description": "Párrafos vacíos consecutivos inmediatamente antes",
+          "minimum": 0,
+          "title": "Blank Lines Before",
+          "type": "integer"
+        },
+        "blank_lines_after": {
+          "default": 0,
+          "description": "Párrafos vacíos consecutivos inmediatamente después",
+          "minimum": 0,
+          "title": "Blank Lines After",
+          "type": "integer"
+        },
+        "tab_count": {
+          "default": 0,
+          "description": "Cantidad de tabuladores dentro del párrafo",
+          "minimum": 0,
+          "title": "Tab Count",
+          "type": "integer"
+        },
+        "has_key_value_pattern": {
+          "default": false,
+          "description": "Indica si el párrafo sigue un patrón 'Clave: valor'",
+          "title": "Has Key Value Pattern",
+          "type": "boolean"
         },
         "is_native_list": {
           "default": false,
@@ -313,6 +364,31 @@
           "description": "Tipo de bloque: 'paragraph', 'heading', 'list_item', 'table', 'image', 'keep'",
           "title": "Type",
           "type": "string"
+        },
+        "keep_kind": {
+          "anyOf": [
+            {
+              "enum": [
+                "table",
+                "image",
+                "section_break",
+                "empty",
+                "drawing",
+                "field",
+                "footnote",
+                "hyperlink",
+                "track_changes",
+                "other"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Clasificación semántica ligera de un bloque opaco 'keep' para contexto de IA",
+          "title": "Keep Kind"
         },
         "xml": {
           "anyOf": [
