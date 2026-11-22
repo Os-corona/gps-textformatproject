@@ -1,0 +1,113 @@
+{
+  "fixture_id": "01_reporte_plano",
+  "scenario": "Reporte completamente plano",
+  "golden_version": "1.0",
+  "document": "document.docx",
+  "options": {
+    "emphasis": "none",
+    "detect_headings": true,
+    "detect_lists": true,
+    "detect_tables": true
+  },
+  "schema_version": "di.v1",
+  "chunk_id": "golden-01",
+  "blocks": [
+    {
+      "type": "paragraph",
+      "id": "b0",
+      "src": [
+        "b0"
+      ],
+      "runs": [
+        {
+          "text": "Durante noviembre de 2026, el equipo registró 48 solicitudes de mantenimiento."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "id": "b1",
+      "src": [
+        "b1"
+      ],
+      "runs": [
+        {
+          "text": "Se resolvieron 36 solicitudes y quedaron 12 pendientes de seguimiento."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "id": "b2",
+      "src": [
+        "b2"
+      ],
+      "runs": [
+        {
+          "text": "El presupuesto utilizado fue de $12,500.00 y representó el 25% del fondo disponible."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "id": "b3",
+      "src": [
+        "b3"
+      ],
+      "runs": [
+        {
+          "text": "La atención se realizó en las zonas norte y sur sin suspender el servicio."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "id": "b4",
+      "src": [
+        "b4"
+      ],
+      "runs": [
+        {
+          "text": "El siguiente corte de información está previsto para el 2026-11-30."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "id": "b5",
+      "src": [
+        "b5"
+      ],
+      "runs": [
+        {
+          "text": "Este reporte contiene únicamente párrafos y no requiere encabezados, listas ni tablas."
+        }
+      ]
+    },
+    {
+      "type": "keep",
+      "id": "b6",
+      "src": [
+        "b6"
+      ]
+    }
+  ],
+  "expected_tables": [],
+  "expected_keep_kinds": {
+    "b6": "section_break"
+  },
+  "invariants": {
+    "section_count": 1,
+    "image_count": 0,
+    "no_new_structure": true
+  },
+  "review": {
+    "status": "approved",
+    "designated_reviewer": "Os-corona",
+    "reviewer": "Os-corona",
+    "reviewed_at": "2026-11-22T17:36:00-06:00",
+    "evidence_url": "https://github.com/Os-corona/gps-textformatproject/pull/53#pullrequestreview-1",
+    "reviewed_content_sha256": "d6087e156481681fd23ac08745fc089a8c9ff6d1e9234e9314bafc70c1a4b027"
+  },
+  "source_sha256": "d98e34a835f66f36b7542ab2c4bf84604fe0a5e98c137165aae562d289aadcd3"
+}

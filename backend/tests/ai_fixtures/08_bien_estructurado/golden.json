@@ -1,0 +1,258 @@
+{
+  "fixture_id": "08_bien_estructurado",
+  "scenario": "Documento con título, H1/H2, listas nativas y tabla ya correctos",
+  "golden_version": "1.0",
+  "document": "document.docx",
+  "options": {
+    "emphasis": "none",
+    "detect_headings": true,
+    "detect_lists": true,
+    "detect_tables": true
+  },
+  "schema_version": "di.v1",
+  "chunk_id": "golden-08",
+  "blocks": [
+    {
+      "type": "heading",
+      "id": "b0",
+      "src": [
+        "b0"
+      ],
+      "level": 0,
+      "runs": [
+        {
+          "text": "Informe de seguimiento"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "id": "b1",
+      "src": [
+        "b1"
+      ],
+      "runs": [
+        {
+          "text": "Este documento ya utiliza estilos y listas nativas de Word."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "id": "b2",
+      "src": [
+        "b2"
+      ],
+      "level": 1,
+      "runs": [
+        {
+          "text": "Alcance"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "id": "b3",
+      "src": [
+        "b3"
+      ],
+      "runs": [
+        {
+          "text": "La revisión cubre las actividades del equipo durante noviembre de 2026."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "id": "b4",
+      "src": [
+        "b4"
+      ],
+      "level": 2,
+      "runs": [
+        {
+          "text": "Actividades"
+        }
+      ]
+    },
+    {
+      "type": "list_item",
+      "id": "b5",
+      "src": [
+        "b5"
+      ],
+      "level": 0,
+      "is_numbered": false,
+      "runs": [
+        {
+          "text": "Preparar insumos."
+        }
+      ]
+    },
+    {
+      "type": "list_item",
+      "id": "b6",
+      "src": [
+        "b6"
+      ],
+      "level": 1,
+      "is_numbered": false,
+      "runs": [
+        {
+          "text": "Revisar existencias."
+        }
+      ]
+    },
+    {
+      "type": "list_item",
+      "id": "b7",
+      "src": [
+        "b7"
+      ],
+      "level": 2,
+      "is_numbered": false,
+      "runs": [
+        {
+          "text": "Confirmar cantidades."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "id": "b8",
+      "src": [
+        "b8"
+      ],
+      "level": 2,
+      "runs": [
+        {
+          "text": "Validación"
+        }
+      ]
+    },
+    {
+      "type": "list_item",
+      "id": "b9",
+      "src": [
+        "b9"
+      ],
+      "level": 0,
+      "is_numbered": true,
+      "runs": [
+        {
+          "text": "Comprobar contenido."
+        }
+      ]
+    },
+    {
+      "type": "list_item",
+      "id": "b10",
+      "src": [
+        "b10"
+      ],
+      "level": 1,
+      "is_numbered": true,
+      "runs": [
+        {
+          "text": "Revisar cifras."
+        }
+      ]
+    },
+    {
+      "type": "list_item",
+      "id": "b11",
+      "src": [
+        "b11"
+      ],
+      "level": 2,
+      "is_numbered": true,
+      "runs": [
+        {
+          "text": "Verificar trazabilidad."
+        }
+      ]
+    },
+    {
+      "type": "keep",
+      "id": "b12",
+      "src": [
+        "b12"
+      ]
+    },
+    {
+      "type": "heading",
+      "id": "b13",
+      "src": [
+        "b13"
+      ],
+      "level": 1,
+      "runs": [
+        {
+          "text": "Cierre"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "id": "b14",
+      "src": [
+        "b14"
+      ],
+      "runs": [
+        {
+          "text": "No se requieren cambios de contenido ni una nueva organización de los bloques."
+        }
+      ]
+    },
+    {
+      "type": "keep",
+      "id": "b15",
+      "src": [
+        "b15"
+      ]
+    }
+  ],
+  "expected_tables": [
+    {
+      "mode": "keep",
+      "block_id": "b12",
+      "src": [
+        "b12"
+      ],
+      "header_row": true,
+      "rows": [
+        [
+          "Concepto",
+          "Valor"
+        ],
+        [
+          "Presupuesto",
+          "$2,400.00"
+        ],
+        [
+          "Avance",
+          "80%"
+        ]
+      ]
+    }
+  ],
+  "expected_keep_kinds": {
+    "b12": "table",
+    "b15": "section_break"
+  },
+  "invariants": {
+    "section_count": 1,
+    "image_count": 0,
+    "native_table_count": 1,
+    "preserve_existing_structure": true
+  },
+  "review": {
+    "status": "approved",
+    "designated_reviewer": "Os-corona",
+    "reviewer": "Os-corona",
+    "reviewed_at": "2026-11-22T17:36:00-06:00",
+    "evidence_url": "https://github.com/Os-corona/gps-textformatproject/pull/53#pullrequestreview-1",
+    "reviewed_content_sha256": "5d3e469ddc61813b21b93c6bb1cf06f804cc76b36b49eb3d4b4bf574ae97d6b8"
+  },
+  "source_sha256": "d6021dbf998fdc5dce5d88f98a09d487fa2e55dcfffa844fccd5d3f275fff814"
+}
