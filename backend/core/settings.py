@@ -175,3 +175,7 @@ AI_MAX_HEADING_WORDS = env.int('AI_MAX_HEADING_WORDS', default=20)
 AI_MIN_TOKEN_RETENTION = env.float('AI_MIN_TOKEN_RETENTION', default=0.95)
 AI_MAX_ADDED_TOKEN_RATIO = env.float('AI_MAX_ADDED_TOKEN_RATIO', default=0.05)
 AI_MAX_GENERATED_HEADING_WORDS = env.int('AI_MAX_GENERATED_HEADING_WORDS', default=6)
+
+# sync para pruebas; thread para desarrollo/demo.
+JOB_RUNNER = env('JOB_RUNNER', default='thread')
+JOB_RUNNER_MAX_WORKERS = env.int('JOB_RUNNER_MAX_WORKERS', default=2)

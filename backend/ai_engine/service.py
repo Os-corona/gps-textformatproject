@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 from collections import Counter
+from dataclasses import asdict
 from typing import Any
 
 from django.conf import settings
@@ -21,9 +22,13 @@ class StructureResult(BaseModel):
     chunks: list[AIChunkOutput] = Field(default_factory=list)
     reports: list[IntegrityReport] = Field(default_factory=list)
     summary: dict[str, Any] = Field(default_factory=dict)
+    usage: dict[str, Any] = Field(default_factory=lambda: {
+        "input_tokens": 0, "output_tokens": 0, "total_tokens": 0, "calls": 0,
+        "attempts": 0, "models": [], "providers": [],
+    })
 
 
-def structure_document(di, options=None, provider=None) -> StructureResult:
+def structure_document(di, options=None, provider=None, *, on_progress=None) -> StructureResult:
     """Return accepted/fallback blocks, attempt reports and counts for the whole DI.
 
     Guardrail and size settings are application configuration, never document options.
@@ -39,6 +44,12 @@ def structure_document(di, options=None, provider=None) -> StructureResult:
         "chunks_total": len(chunks), "chunks_ai": 0, "chunks_retried": 0,
         "chunks_heuristic": 0, "blocks_by_type": {}, "generated_elements": 0,
     })
+
+    def progress(stage, done):
+        if on_progress is not None:
+            on_progress(stage, done, len(chunks))
+
+    progress("structuring", 0)
     provider_error = None
     if provider is None and chunks:
         try:
@@ -46,17 +57,27 @@ def structure_document(di, options=None, provider=None) -> StructureResult:
         except ProviderError as exc:
             provider_error = exc
 
-    for chunk in chunks:
+    for index, chunk in enumerate(chunks):
         chunk.metadata["ai_options"] = options
         feedback, accepted = None, None
         for attempt in range(2):
             if attempt:
                 result.summary["chunks_retried"] += 1
             try:
+                progress("structuring", index)
                 if provider_error is not None:
                     raise provider_error
+                result.usage["calls"] += 1
                 response = provider.structure(chunk.model_copy(deep=True), feedback=feedback)
+                usage = asdict(response.usage) if hasattr(response, "usage") else {}
+                for name in ("input_tokens", "output_tokens", "total_tokens", "attempts"):
+                    result.usage[name] += usage.get(name, 0)
+                for name, destination in (("model", "models"), ("provider", "providers")):
+                    value = usage.get(name)
+                    if value and value not in result.usage[destination]:
+                        result.usage[destination].append(value)
                 output = AIChunkOutput.model_validate(response.output)
+                progress("validating", index)
                 report = validate_chunk(chunk.blocks, output.blocks)
                 if output.chunk_id != chunk.chunk_id:
                     report.is_valid = False
@@ -70,7 +91,10 @@ def structure_document(di, options=None, provider=None) -> StructureResult:
                     is_valid=False, violations=[{
                         "type": "PROVIDER_OUTPUT", "src": [b.id for b in chunk.blocks],
                         "message": str(exc),
-                    }], errors=[str(exc)], metadata={"chunk_id": chunk.chunk_id},
+                    }], errors=[str(exc)], metadata={
+                        "chunk_id": chunk.chunk_id,
+                        "error_code": getattr(exc, "error_code", "AI_UNAVAILABLE"),
+                    },
                 )
             report.metadata = {**(report.metadata or {}), "chunk_id": chunk.chunk_id, "attempt": attempt + 1}
             result.reports.append(report)
@@ -84,6 +108,7 @@ def structure_document(di, options=None, provider=None) -> StructureResult:
             result.summary["chunks_heuristic"] += 1
         result.chunks.append(accepted)
         result.blocks.extend(accepted.blocks)
+        progress("validating", index + 1)
 
     result.summary["blocks_by_type"] = dict(Counter(b.type for b in result.blocks))
     result.summary["generated_elements"] = sum(

@@ -77,7 +77,12 @@ fragmentos restantes. Los reintentos de transporte internos del proveedor son
 independientes del único reintento de integridad.
 
 `StructureResult` contiene `blocks`, las salidas finales en `chunks`, los reportes
-de cada intento de IA en `reports` y `summary`:
+de cada intento de IA en `reports`, `usage` y `summary`. Desde S3T19, el callback
+opcional `on_progress(stage, done, total)` permite persistir el avance sin acoplar
+el servicio a la base de datos. `usage` agrega el consumo de todas las respuestas,
+incluidos los reintentos; el [orquestador](job-orchestrator.md) lo guarda en el job.
+
+Campos de `summary`:
 
 | Campo del resumen | Significado |
 | --- | --- |
