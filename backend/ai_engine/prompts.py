@@ -307,7 +307,7 @@ def build_system_prompt(options: Optional[Mapping[str, Any]] = None) -> str:
         "   - Todo bloque de entrada con \"type\": \"keep\" (imágenes, tablas nativas, saltos de sección, campos) "
         "es INTOCABLE. Devuélvelo intacto en la misma posición como {\"type\": \"keep\", \"id\": \"<id>\", \"src\": [\"<id>\"]}.\n"
         "6. ELEMENTOS GENERADOS (\"generated\": true):\n"
-        "   - Si creas un subtítulo ('heading') o un encabezado de tabla ('table' / celdas de 'header_row') "
+        "   - Si creas un subtítulo ('heading') o un encabezado de tabla (solo celdas de 'header_row', nunca el bloque 'table') "
         "que no existía en el texto original, DEBES marcarlo con \"generated\": true.\n"
         "   - Los párrafos normales (\"type\": \"paragraph\") NUNCA llevan el campo \"generated\" y jamás "
         "pueden contener texto inventado.\n"

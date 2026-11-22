@@ -168,3 +168,10 @@ AI_MAX_CHUNK_CHARS = env.int('AI_MAX_CHUNK_CHARS', default=8000)
 AI_MAX_DOC_CHARS = env.int('AI_MAX_DOC_CHARS', default=60000)
 
 
+
+# Guardrails de integridad (S3T18)
+AI_MAX_BOLD_RATIO = env.float('AI_MAX_BOLD_RATIO', default=0.30)
+AI_MAX_HEADING_WORDS = env.int('AI_MAX_HEADING_WORDS', default=20)
+AI_MIN_TOKEN_RETENTION = env.float('AI_MIN_TOKEN_RETENTION', default=0.95)
+AI_MAX_ADDED_TOKEN_RATIO = env.float('AI_MAX_ADDED_TOKEN_RATIO', default=0.05)
+AI_MAX_GENERATED_HEADING_WORDS = env.int('AI_MAX_GENERATED_HEADING_WORDS', default=6)

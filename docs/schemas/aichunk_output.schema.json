@@ -1,6 +1,11 @@
 {
   "$defs": {
     "CalloutOutBlock": {
+      "not": {
+        "required": [
+          "generated"
+        ]
+      },
       "properties": {
         "type": {
           "const": "callout",
@@ -110,17 +115,10 @@
           "type": "array"
         },
         "generated": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
+          "default": false,
           "description": "True si el subtítulo fue creado por la IA y no existía en el texto original",
-          "title": "Generated"
+          "title": "Generated",
+          "type": "boolean"
         },
         "hints": {
           "anyOf": [
@@ -400,6 +398,11 @@
     },
     "ImageOutBlock": {
       "description": "Bloque de imagen preservada.",
+      "not": {
+        "required": [
+          "generated"
+        ]
+      },
       "properties": {
         "type": {
           "const": "image",
@@ -463,6 +466,11 @@
     },
     "KeepOutBlock": {
       "description": "Referencia al XML del original; nunca acepta XML suministrado por la IA.",
+      "not": {
+        "required": [
+          "generated"
+        ]
+      },
       "properties": {
         "type": {
           "const": "keep",
@@ -495,6 +503,11 @@
     },
     "ListItemOutBlock": {
       "description": "Elemento de lista (viñeta o numerada) con nivel de anidamiento entre 0 y 8.",
+      "not": {
+        "required": [
+          "generated"
+        ]
+      },
       "properties": {
         "type": {
           "const": "list_item",
@@ -582,6 +595,11 @@
     },
     "ParagraphOutBlock": {
       "description": "Párrafo normal de texto procesado.",
+      "not": {
+        "required": [
+          "generated"
+        ]
+      },
       "properties": {
         "type": {
           "const": "paragraph",
@@ -778,17 +796,10 @@
           "title": "V Merge"
         },
         "generated": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
+          "default": false,
           "description": "True si la celda de encabezado fue generada por la IA y no existía en el texto original",
-          "title": "Generated"
+          "title": "Generated",
+          "type": "boolean"
         },
         "hints": {
           "anyOf": [
@@ -808,6 +819,11 @@
     },
     "TableOutBlock": {
       "description": "Tabla rectangular de celdas considerando la propiedad h_span.",
+      "not": {
+        "required": [
+          "generated"
+        ]
+      },
       "properties": {
         "type": {
           "const": "table",
@@ -839,19 +855,6 @@
           "description": "True si la primera fila actúa como encabezado repetible (w:tblHeader)",
           "title": "Header Row",
           "type": "boolean"
-        },
-        "generated": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "True si la fila de encabezado de la tabla fue creada por la IA y no existía en el texto original",
-          "title": "Generated"
         },
         "rows": {
           "description": "Filas de la tabla",

@@ -18,6 +18,7 @@ from .document_schema import (
     AIChunkInput,
     AIChunkOutput,
     IntegrityReport,
+    IntegrityViolation,
 )
 
 __all__ = [
@@ -40,5 +41,6 @@ __all__ = [
     "AIChunkInput",
     "AIChunkOutput",
     "IntegrityReport",
+    "IntegrityViolation",
 ]
 

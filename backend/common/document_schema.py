@@ -11,7 +11,7 @@ import os
 import uuid
 from pathlib import Path
 from typing import Annotated, Any, Dict, List, Literal, Optional, Union
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
 
 # ---------------------------------------------------------------------------
 # 1. Versión del Esquema
@@ -148,8 +148,8 @@ class TableCell(BaseModel):
     runs: Optional[List[Run]] = Field(default=None, description="Runs detallados con formato dentro de la celda")
     h_span: int = Field(default=1, ge=1, description="Extensión horizontal (column span / gridSpan)")
     v_merge: Optional[str] = Field(default=None, description="Fusión vertical ('restart', 'continue' o None)")
-    generated: Optional[bool] = Field(
-        default=None,
+    generated: bool = Field(
+        default=False,
         description="True si la celda de encabezado fue generada por la IA y no existía en el texto original",
     )
     hints: Optional[Hints] = Field(default=None, description="Pistas opcionales sobre la celda")
@@ -236,7 +236,18 @@ DI = DocumentIntermediate
 # ---------------------------------------------------------------------------
 # 6. OutBlock: Bloques de Salida (Unión discriminada por 'type')
 # ---------------------------------------------------------------------------
-class ParagraphOutBlock(BaseModel):
+class _NonGeneratedBlock(BaseModel):
+    model_config = ConfigDict(json_schema_extra={"not": {"required": ["generated"]}})
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_generated(cls, value):
+        if isinstance(value, dict) and "generated" in value:
+            raise ValueError("generated solo se permite en heading y celdas de encabezado.")
+        return value
+
+
+class ParagraphOutBlock(_NonGeneratedBlock):
     """Párrafo normal de texto procesado."""
     model_config = ConfigDict(extra="ignore")
 
@@ -261,8 +272,8 @@ class HeadingOutBlock(BaseModel):
     src: List[str] = Field(default_factory=list)
     level: int = Field(..., ge=0, le=6, description="0 = Title; 1–6 = Heading 1–6")
     runs: List[Run] = Field(..., min_length=1, description="Runs de texto que forman el título")
-    generated: Optional[bool] = Field(
-        default=None,
+    generated: bool = Field(
+        default=False,
         description="True si el subtítulo fue creado por la IA y no existía en el texto original",
     )
     hints: Optional[Hints] = Field(default=None, description="Pistas opcionales")
@@ -280,7 +291,7 @@ class HeadingOutBlock(BaseModel):
         return validate_runs_list(v)
 
 
-class ListItemOutBlock(BaseModel):
+class ListItemOutBlock(_NonGeneratedBlock):
     """Elemento de lista (viñeta o numerada) con nivel de anidamiento entre 0 y 8."""
     model_config = ConfigDict(extra="ignore")
 
@@ -307,7 +318,7 @@ class ListItemOutBlock(BaseModel):
         return validate_runs_list(v)
 
 
-class TableOutBlock(BaseModel):
+class TableOutBlock(_NonGeneratedBlock):
     """Tabla rectangular de celdas considerando la propiedad h_span."""
     model_config = ConfigDict(extra="ignore")
 
@@ -315,12 +326,15 @@ class TableOutBlock(BaseModel):
     id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()), description="ID único del bloque")
     src: List[str] = Field(default_factory=list)
     header_row: bool = Field(default=True, description="True si la primera fila actúa como encabezado repetible (w:tblHeader)")
-    generated: Optional[bool] = Field(
-        default=None,
-        description="True si la fila de encabezado de la tabla fue creada por la IA y no existía en el texto original",
-    )
     rows: List[List[TableCell]] = Field(..., min_length=1, description="Filas de la tabla")
     hints: Optional[Hints] = Field(default=None, description="Pistas opcionales de formato de tabla")
+
+    @model_validator(mode="after")
+    def check_generated_cells(self):
+        for index, row in enumerate(self.rows):
+            if any(cell.generated for cell in row) and not (self.header_row and index == 0):
+                raise ValueError("generated solo se permite en las celdas de header_row.")
+        return self
 
     @field_validator("rows")
     @classmethod
@@ -328,7 +342,7 @@ class TableOutBlock(BaseModel):
         return validate_rectangular_table(v)
 
 
-class ImageOutBlock(BaseModel):
+class ImageOutBlock(_NonGeneratedBlock):
     """Bloque de imagen preservada."""
     model_config = ConfigDict(extra="ignore")
 
@@ -344,7 +358,7 @@ class CalloutOutBlock(ParagraphOutBlock):
     kind: Literal["quote", "note", "warning"] = "quote"
 
 
-class KeepOutBlock(BaseModel):
+class KeepOutBlock(_NonGeneratedBlock):
     """Referencia al XML del original; nunca acepta XML suministrado por la IA."""
 
     type: Literal["keep"] = "keep"
@@ -421,12 +435,26 @@ class AIChunkOutput(BaseModel):
 # ---------------------------------------------------------------------------
 # 8. IntegrityReport
 # ---------------------------------------------------------------------------
+class IntegrityViolation(BaseModel):
+    """Error bloqueante con trazabilidad a los bloques de origen."""
+    type: str
+    src: List[str] = Field(default_factory=list)
+    message: str
+
+
 class IntegrityReport(BaseModel):
     """Reporte de integridad para verificar que la IA no alteró ni destruyó contenido crítico."""
     model_config = ConfigDict(extra="allow")
 
     schema_version: str = Field(default=SCHEMA_VERSION, description="Versión del esquema")
-    is_valid: bool = Field(..., description="True si el documento supera todas las reglas de integridad")
+    is_valid: bool = Field(..., validation_alias=AliasChoices("is_valid", "ok"), description="True si el documento supera todas las reglas de integridad")
+    violations: List[IntegrityViolation] = Field(default_factory=list)
+
+    @computed_field
+    @property
+    def ok(self) -> bool:
+        return self.is_valid and not self.violations
+
     total_source_blocks: int = Field(default=0, ge=0, description="Total de bloques de origen analizados")
     total_out_blocks: int = Field(default=0, ge=0, description="Total de bloques de salida generados")
     source_characters: int = Field(default=0, ge=0, description="Total de caracteres en los bloques de origen")

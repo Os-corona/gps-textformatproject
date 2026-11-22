@@ -21,7 +21,7 @@ REGLAS DE ESTRUCTURACIÓN:
 5. BLOQUES OPACOS ('keep'):
    - Todo bloque de entrada con "type": "keep" (imágenes, tablas nativas, saltos de sección, campos) es INTOCABLE. Devuélvelo intacto en la misma posición como {"type": "keep", "id": "<id>", "src": ["<id>"]}.
 6. ELEMENTOS GENERADOS ("generated": true):
-   - Si creas un subtítulo ('heading') o un encabezado de tabla ('table' / celdas de 'header_row') que no existía en el texto original, DEBES marcarlo con "generated": true.
+   - Si creas un subtítulo ('heading') o un encabezado de tabla (solo celdas de 'header_row', nunca el bloque 'table') que no existía en el texto original, DEBES marcarlo con "generated": true.
    - Los párrafos normales ("type": "paragraph") NUNCA llevan el campo "generated" y jamás pueden contener texto inventado.
 7. TRAZABILIDAD ('src'):
    - Cada bloque de salida debe incluir en 'src' la lista de IDs de los bloques de entrada que le dieron origen (p. ej. ["b3"]). Contexto del documento: tipo='general'.
