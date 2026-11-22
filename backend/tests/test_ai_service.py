@@ -1,4 +1,5 @@
 """Provider calls, feedback, fallback and document-level summaries without network."""
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -6,9 +7,16 @@ import pytest
 from django.test import override_settings
 
 from ai_engine.chunker import DocumentTooLargeForAI
-from ai_engine.providers.base import InvalidModelOutputError, ProviderUnavailableError
+from ai_engine.providers.base import (
+    AINotConfiguredError,
+    InvalidModelOutputError,
+    ProviderAuthError,
+    ProviderUnavailableError,
+)
+from ai_engine.providers.fake import FakeProvider
 from ai_engine.service import structure_document
 from common.document_schema import DocumentIntermediate, SourceBlock
+from docx_engine.extractor import extract_document
 
 
 def document(text="Total $10."):
@@ -116,6 +124,31 @@ def test_provider_initialization_failure_uses_fallback(monkeypatch):
     monkeypatch.setattr("ai_engine.service.get_provider", Mock(side_effect=ProviderUnavailableError("Unavailable")))
     result = structure_document(document())
     assert result.summary["chunks_heuristic"] == 1
+    assert result.summary["chunks_retried"] == 0
+
+
+@pytest.mark.parametrize("exc_cls", [AINotConfiguredError, ProviderAuthError])
+def test_auth_and_configuration_errors_propagate_immediately(monkeypatch, exc_cls):
+    monkeypatch.setattr("ai_engine.service.get_provider", Mock(side_effect=exc_cls("Auth/Config error")))
+    with pytest.raises(exc_cls):
+        structure_document(document())
+
+
+def test_provider_auth_error_during_call_propagates_without_retry():
+    provider = Mock()
+    provider.structure.side_effect = ProviderAuthError("401 Unauthorized")
+    with pytest.raises(ProviderAuthError):
+        structure_document(document(), {}, provider)
+    provider.structure.assert_called_once()
+
+
+def test_fake_provider_passes_all_real_docx_fixtures():
+    fixtures_dir = Path(__file__).resolve().parent / "fixtures"
+    for docx_path in sorted(fixtures_dir.glob("*.docx")):
+        di = extract_document(docx_path)
+        result = structure_document(di, {}, FakeProvider())
+        assert result.summary["chunks_heuristic"] == 0, f"{docx_path.name} fell back to heuristic"
+        assert result.summary["chunks_ai"] == result.summary["chunks_total"]
 
 
 def test_generated_header_cells_counted_individually():

@@ -13,28 +13,37 @@ una violación `INVALID_SCHEMA`.
   Un subtítulo generado puede referenciar un origen sin reemplazar su contenido.
 - Los `keep` se devuelven exactamente una vez, en su posición relativa entre los
   bloques originales. La salida referencia el original; nunca sustituye su XML.
+  Los `keep` con `keep_kind="empty"` pueden omitirse en la salida para delegar
+  el espaciado a la plantilla.
 - Números con signos, decimales, porcentajes y símbolos Unicode de moneda se
-  comparan como una secuencia exacta. También se comprueba el texto generado:
-  marcarlo no autoriza inventar cifras.
+  comparan como una secuencia exacta (normalizando el espacio antes de `%`).
+  También se comprueba el texto generado: marcarlo no autoriza inventar cifras.
+  En tablas pivoteadas, los datos críticos se comparan tras deduplicar las claves
+  promovidas a encabezado.
 - `SequenceMatcher(autojunk=False)` compara tokens por grupos de procedencia,
   conservando el orden. Solo se ignora el cambio de caja al inicio de un bloque
   o de las cláusulas que se convierten en viñetas. Se verifica la retención por
   bloque o registro para evitar que uno largo oculte la omisión de otro corto.
-- Se permite quitar glifos en listas y prefijos de numeración manual en listas
-  ordenadas. El signo de un importe negativo nunca se trata como un glifo.
-- Al dividir un párrafo en listas se permite quitar `,`, `;`, `y`, `e`, `o`.
-  En tablas se permiten separadores `:`, `|`, tabuladores. Las claves repetidas
-  pueden pasar al encabezado cuando todos los registros tienen las mismas claves
-  en el mismo orden; sus valores permanecen en orden de lectura.
+- Se permite quitar glifos en listas y prefijos de numeración manual (de 1 a 3
+  dígitos, evitando años de 4 dígitos) en listas ordenadas. El signo de un
+  importe negativo nunca se trata como un glifo.
+- Al dividir un párrafo en listas se permite quitar `,`, `;`, `y`, `e`, `o` (sin
+  sensibilidad a mayúsculas). En tablas se permiten separadores `:`, `|`,
+  tabuladores. Las claves repetidas pueden pasar al encabezado cuando todos los
+  registros tienen las mismas claves en el mismo orden; sus valores permanecen
+  en orden de lectura.
 - Solo los subtítulos H1–H3 y las celdas de la primera fila con `header_row=true`
   pueden llevar `generated=true`. El valor por defecto es `false`. No se admite
-  el campo en párrafos, listas, `keep` ni en el bloque completo de una tabla.
-  Los encabezados generados no entran en el presupuesto de palabras nuevas, pero
-  sí tienen un límite propio de longitud. Los párrafos no pueden ganar texto
-  inventado, aunque quepa en el presupuesto general.
+  el campo en párrafos, listas, `callout`, `keep` ni en el bloque completo de
+  una tabla. Los encabezados generados no entran en el presupuesto de palabras
+  nuevas, pero tienen límite propio de longitud y de cantidad por fragmento. Los
+  párrafos y bloques `callout` no pueden ganar texto inventado, aunque quepa en
+  el presupuesto general.
 - Los títulos no terminan en punto y se restringen a Title y H1–H3. Las tablas
   deben tener al menos dos filas y dos columnas, considerando `h_span`, con ancho
-  uniforme. El porcentaje de negrita se verifica por bloque y por celda.
+  uniforme. El porcentaje de negrita se verifica por bloque y por celda sobre las
+  negritas añadidas respecto al bloque de origen, preservando las negritas
+  originales del documento.
 
 Los cambios estructurales permitidos se registran como advertencias, no errores.
 

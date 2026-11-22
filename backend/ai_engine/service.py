@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field, ValidationError
 from common.document_schema import AIChunkOutput, DocumentIntermediate, IntegrityReport, IntegrityViolation, OutBlock
 from . import heuristic
 from .chunker import AI_MAX_CHUNK_CHARS, AI_MAX_DOC_CHARS, chunk_document
-from .providers.base import ProviderError
+from .providers.base import AINotConfiguredError, ProviderAuthError, ProviderError
 from .providers.registry import get_provider
 from .validator import validate_chunk
 
@@ -43,13 +43,16 @@ def structure_document(di, options=None, provider=None) -> StructureResult:
     if provider is None and chunks:
         try:
             provider = get_provider()
+        except (AINotConfiguredError, ProviderAuthError):
+            raise
         except ProviderError as exc:
             provider_error = exc
 
     for chunk in chunks:
         chunk.metadata["ai_options"] = options
         feedback, accepted = None, None
-        for attempt in range(2):
+        max_attempts = 1 if provider_error is not None else 2
+        for attempt in range(max_attempts):
             if attempt:
                 result.summary["chunks_retried"] += 1
             try:
@@ -65,6 +68,8 @@ def structure_document(di, options=None, provider=None) -> StructureResult:
                         message="El proveedor devolvió un chunk_id distinto.",
                     ))
                     report.errors.append("El proveedor devolvió un chunk_id distinto.")
+            except (AINotConfiguredError, ProviderAuthError):
+                raise
             except (ProviderError, ValidationError) as exc:
                 report = IntegrityReport(
                     is_valid=False, violations=[{
