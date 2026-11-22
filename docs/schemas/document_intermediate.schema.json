@@ -619,6 +619,19 @@
           "description": "Fusión vertical ('restart', 'continue' o None)",
           "title": "V Merge"
         },
+        "generated": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "True si la celda de encabezado fue generada por la IA y no existía en el texto original",
+          "title": "Generated"
+        },
         "hints": {
           "anyOf": [
             {

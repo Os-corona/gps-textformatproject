@@ -148,6 +148,10 @@ class TableCell(BaseModel):
     runs: Optional[List[Run]] = Field(default=None, description="Runs detallados con formato dentro de la celda")
     h_span: int = Field(default=1, ge=1, description="Extensión horizontal (column span / gridSpan)")
     v_merge: Optional[str] = Field(default=None, description="Fusión vertical ('restart', 'continue' o None)")
+    generated: Optional[bool] = Field(
+        default=None,
+        description="True si la celda de encabezado fue generada por la IA y no existía en el texto original",
+    )
     hints: Optional[Hints] = Field(default=None, description="Pistas opcionales sobre la celda")
 
 
@@ -257,6 +261,10 @@ class HeadingOutBlock(BaseModel):
     src: List[str] = Field(default_factory=list)
     level: int = Field(..., ge=0, le=6, description="0 = Title; 1–6 = Heading 1–6")
     runs: List[Run] = Field(..., min_length=1, description="Runs de texto que forman el título")
+    generated: Optional[bool] = Field(
+        default=None,
+        description="True si el subtítulo fue creado por la IA y no existía en el texto original",
+    )
     hints: Optional[Hints] = Field(default=None, description="Pistas opcionales")
 
     @field_validator("level")
@@ -307,6 +315,10 @@ class TableOutBlock(BaseModel):
     id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()), description="ID único del bloque")
     src: List[str] = Field(default_factory=list)
     header_row: bool = Field(default=True, description="True si la primera fila actúa como encabezado repetible (w:tblHeader)")
+    generated: Optional[bool] = Field(
+        default=None,
+        description="True si la fila de encabezado de la tabla fue creada por la IA y no existía en el texto original",
+    )
     rows: List[List[TableCell]] = Field(..., min_length=1, description="Filas de la tabla")
     hints: Optional[Hints] = Field(default=None, description="Pistas opcionales de formato de tabla")
 
@@ -371,6 +383,10 @@ class AIChunkInput(BaseModel):
     schema_version: str = Field(default=SCHEMA_VERSION, description="Versión del esquema de documento intermedio")
     chunk_id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Identificador único del chunk")
     document_id: Optional[Union[int, str]] = Field(default=None, description="ID del documento original")
+    heading_path: List[str] = Field(
+        default_factory=list,
+        description="Ruta de títulos acumulada hasta este fragmento para mantener coherencia jerárquica",
+    )
     blocks: List[SourceBlock] = Field(default_factory=list, description="Bloques de origen contenidos en el chunk")
     hints: Optional[Hints] = Field(default=None, description="Pistas globales o contextuales para la IA")
     metadata: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Metadatos auxiliares de ejecución")

@@ -109,6 +109,19 @@
           "title": "Runs",
           "type": "array"
         },
+        "generated": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "True si el subtítulo fue creado por la IA y no existía en el texto original",
+          "title": "Generated"
+        },
         "hints": {
           "anyOf": [
             {
@@ -764,6 +777,19 @@
           "description": "Fusión vertical ('restart', 'continue' o None)",
           "title": "V Merge"
         },
+        "generated": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "True si la celda de encabezado fue generada por la IA y no existía en el texto original",
+          "title": "Generated"
+        },
         "hints": {
           "anyOf": [
             {
@@ -813,6 +839,19 @@
           "description": "True si la primera fila actúa como encabezado repetible (w:tblHeader)",
           "title": "Header Row",
           "type": "boolean"
+        },
+        "generated": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "True si la fila de encabezado de la tabla fue creada por la IA y no existía en el texto original",
+          "title": "Generated"
         },
         "rows": {
           "description": "Filas de la tabla",

@@ -164,4 +164,7 @@ AI_BASE_URL = env('AI_BASE_URL', default='https://openrouter.ai/api/v1')
 AI_TEMPERATURE = env.float('AI_TEMPERATURE', default=0.1)
 AI_SITE_URL = env('AI_SITE_URL', default='')
 AI_APP_NAME = env('AI_APP_NAME', default='PrettyDocs')
+AI_MAX_CHUNK_CHARS = env.int('AI_MAX_CHUNK_CHARS', default=8000)
+AI_MAX_DOC_CHARS = env.int('AI_MAX_DOC_CHARS', default=60000)
+
 
