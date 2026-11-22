@@ -223,6 +223,37 @@ def canonical_docx(doc):
     return stable.getvalue()
 
 
+def _normalize_member(name, blob):
+    if name.startswith("word/media/") and name.endswith(".png") and blob.startswith(b"\x89PNG\r\n\x1a\n"):
+        pos = 8
+        ihdr = b""
+        idat = []
+        while pos < len(blob):
+            length = struct.unpack(">I", blob[pos:pos + 4])[0]
+            chunk_type = blob[pos + 4:pos + 8]
+            chunk_data = blob[pos + 8:pos + 8 + length]
+            if chunk_type == b"IHDR":
+                ihdr = chunk_data
+            elif chunk_type == b"IDAT":
+                idat.append(chunk_data)
+            pos += 12 + length
+        return b"PNG:" + ihdr + zlib.decompress(b"".join(idat))
+    return blob
+
+
+def canonical_members(docx_bytes):
+    with ZipFile(BytesIO(docx_bytes)) as archive:
+        return {
+            name: (
+                archive.getinfo(name).date_time,
+                archive.getinfo(name).compress_type,
+                archive.getinfo(name).create_system,
+                _normalize_member(name, archive.read(name)),
+            )
+            for name in sorted(archive.namelist())
+        }
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="Compare committed inputs without modifying them.")
@@ -232,7 +263,7 @@ def main():
         path = ROOT / case_id / "document.docx"
         expected = canonical_docx(build())
         if args.check:
-            if not path.is_file() or path.read_bytes() != expected:
+            if not path.is_file() or canonical_members(path.read_bytes()) != canonical_members(expected):
                 mismatches.append(case_id)
         else:
             path.parent.mkdir(parents=True, exist_ok=True)

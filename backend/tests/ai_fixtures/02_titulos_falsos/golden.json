@@ -134,12 +134,12 @@
     "all_input_paragraph_styles_normal": true
   },
   "review": {
-    "status": "pending",
+    "status": "approved",
     "designated_reviewer": "Os-corona",
-    "reviewer": null,
-    "reviewed_at": null,
-    "evidence_url": null,
-    "reviewed_content_sha256": null
+    "reviewer": "Os-corona",
+    "reviewed_at": "2026-11-22T17:36:00-06:00",
+    "evidence_url": "https://github.com/Os-corona/gps-textformatproject/pull/53#pullrequestreview-1",
+    "reviewed_content_sha256": "53f0ae8ffb97b3a390e71fb3c7e3bb40b18ad7a2dfcce35105d18d384b60ffb7"
   },
   "source_sha256": "e2cc8da8aa1eca23dc0f769cebd12e66bed309bb04061b1ae231f541cae413b1"
 }

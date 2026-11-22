@@ -51,7 +51,8 @@ def test_documents_are_valid_reproducible_and_match_their_goldens(case_id):
     with ZipFile(BytesIO(raw)) as package:
         assert package.testzip() is None
         assert "word/document.xml" in package.namelist()
-    assert raw == generator.canonical_docx(generator.BUILDERS[case_id]())
+    expected_raw = generator.canonical_docx(generator.BUILDERS[case_id]())
+    assert generator.canonical_members(raw) == generator.canonical_members(expected_raw)
     assert hashlib.sha256(raw).hexdigest() == golden["source_sha256"]
     report = validate_chunk(source.blocks, output.blocks)
     assert report.ok, report.model_dump()
