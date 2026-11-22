@@ -1,0 +1,145 @@
+{
+  "fixture_id": "02_titulos_falsos",
+  "scenario": "Títulos falsos con formato directo de tamaño y negrita",
+  "golden_version": "1.0",
+  "document": "document.docx",
+  "options": {
+    "emphasis": "none",
+    "detect_headings": true,
+    "detect_lists": true,
+    "detect_tables": true
+  },
+  "schema_version": "di.v1",
+  "chunk_id": "golden-02",
+  "blocks": [
+    {
+      "type": "heading",
+      "id": "b0",
+      "src": [
+        "b0"
+      ],
+      "level": 1,
+      "runs": [
+        {
+          "text": "Balance operativo",
+          "bold": true
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "id": "b1",
+      "src": [
+        "b1"
+      ],
+      "runs": [
+        {
+          "text": "El equipo revisó el desempeño mensual y confirmó la continuidad de todas las operaciones programadas."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "id": "b2",
+      "src": [
+        "b2"
+      ],
+      "level": 2,
+      "runs": [
+        {
+          "text": "Resultados del periodo",
+          "bold": true
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "id": "b3",
+      "src": [
+        "b3"
+      ],
+      "runs": [
+        {
+          "text": "Se completaron 24 entregas de las 30 previstas, con un avance del 80% y sin incidencias críticas."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "id": "b4",
+      "src": [
+        "b4"
+      ],
+      "level": 3,
+      "runs": [
+        {
+          "text": "Seguimiento de entregas",
+          "bold": true
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "id": "b5",
+      "src": [
+        "b5"
+      ],
+      "runs": [
+        {
+          "text": "Las 6 entregas restantes se revisarán con las personas responsables durante la siguiente sesión de seguimiento."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "id": "b6",
+      "src": [
+        "b6"
+      ],
+      "level": 1,
+      "runs": [
+        {
+          "text": "Próximas acciones",
+          "bold": true
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "id": "b7",
+      "src": [
+        "b7"
+      ],
+      "runs": [
+        {
+          "text": "La coordinación mantendrá el calendario vigente y comunicará cualquier ajuste antes del cierre del periodo."
+        }
+      ]
+    },
+    {
+      "type": "keep",
+      "id": "b8",
+      "src": [
+        "b8"
+      ]
+    }
+  ],
+  "expected_tables": [],
+  "expected_keep_kinds": {
+    "b8": "section_break"
+  },
+  "invariants": {
+    "section_count": 1,
+    "image_count": 0,
+    "all_input_paragraph_styles_normal": true
+  },
+  "review": {
+    "status": "pending",
+    "designated_reviewer": "Os-corona",
+    "reviewer": null,
+    "reviewed_at": null,
+    "evidence_url": null,
+    "reviewed_content_sha256": null
+  },
+  "source_sha256": "e2cc8da8aa1eca23dc0f769cebd12e66bed309bb04061b1ae231f541cae413b1"
+}

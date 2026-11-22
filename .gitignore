@@ -69,5 +69,6 @@ htmlcov/
 *.docx
 !backend/tests/fixtures/**/*.docx
 !backend/tests/fixtures/*.docx
+!backend/tests/ai_fixtures/**/*.docx
 .postman/
 postman/

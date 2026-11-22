@@ -1,0 +1,158 @@
+{
+  "fixture_id": "04_clave_valor_tabla",
+  "scenario": "Registros clave-valor convertidos en tabla con claves deduplicadas",
+  "golden_version": "1.0",
+  "document": "document.docx",
+  "options": {
+    "emphasis": "none",
+    "detect_headings": true,
+    "detect_lists": true,
+    "detect_tables": true
+  },
+  "schema_version": "di.v1",
+  "chunk_id": "golden-04",
+  "blocks": [
+    {
+      "type": "paragraph",
+      "id": "b0",
+      "src": [
+        "b0"
+      ],
+      "runs": [
+        {
+          "text": "Los siguientes registros describen la asignación de recursos del equipo."
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "id": "recursos",
+      "src": [
+        "b1",
+        "b2",
+        "b3"
+      ],
+      "header_row": true,
+      "rows": [
+        [
+          {
+            "text": "Nombre"
+          },
+          {
+            "text": "Área"
+          },
+          {
+            "text": "Estado"
+          },
+          {
+            "text": "Presupuesto"
+          }
+        ],
+        [
+          {
+            "text": "Ana Rivera"
+          },
+          {
+            "text": "Operaciones"
+          },
+          {
+            "text": "Activo"
+          },
+          {
+            "text": "$12,500.00"
+          }
+        ],
+        [
+          {
+            "text": "Luis Torres"
+          },
+          {
+            "text": "Soporte"
+          },
+          {
+            "text": "Activo"
+          },
+          {
+            "text": "$8,750.00"
+          }
+        ],
+        [
+          {
+            "text": "Marta Solís"
+          },
+          {
+            "text": "Calidad"
+          },
+          {
+            "text": "Pendiente"
+          },
+          {
+            "text": "$3,200.00"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "keep",
+      "id": "b4",
+      "src": [
+        "b4"
+      ]
+    }
+  ],
+  "expected_tables": [
+    {
+      "mode": "created",
+      "block_id": "recursos",
+      "src": [
+        "b1",
+        "b2",
+        "b3"
+      ],
+      "header_row": true,
+      "rows": [
+        [
+          "Nombre",
+          "Área",
+          "Estado",
+          "Presupuesto"
+        ],
+        [
+          "Ana Rivera",
+          "Operaciones",
+          "Activo",
+          "$12,500.00"
+        ],
+        [
+          "Luis Torres",
+          "Soporte",
+          "Activo",
+          "$8,750.00"
+        ],
+        [
+          "Marta Solís",
+          "Calidad",
+          "Pendiente",
+          "$3,200.00"
+        ]
+      ]
+    }
+  ],
+  "expected_keep_kinds": {
+    "b4": "section_break"
+  },
+  "invariants": {
+    "section_count": 1,
+    "image_count": 0,
+    "native_table_count": 0
+  },
+  "review": {
+    "status": "pending",
+    "designated_reviewer": "Os-corona",
+    "reviewer": null,
+    "reviewed_at": null,
+    "evidence_url": null,
+    "reviewed_content_sha256": null
+  },
+  "source_sha256": "624cfd69a0ae42e6eef6971c03a74f441ff794e80b59aec5fdc9f80910026ade"
+}

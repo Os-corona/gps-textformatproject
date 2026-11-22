@@ -1,0 +1,181 @@
+{
+  "fixture_id": "03_listas_tres_niveles",
+  "scenario": "Glifos y numeración manual en tres niveles",
+  "golden_version": "1.0",
+  "document": "document.docx",
+  "options": {
+    "emphasis": "none",
+    "detect_headings": true,
+    "detect_lists": true,
+    "detect_tables": true
+  },
+  "schema_version": "di.v1",
+  "chunk_id": "golden-03",
+  "blocks": [
+    {
+      "type": "paragraph",
+      "id": "b0",
+      "src": [
+        "b0"
+      ],
+      "runs": [
+        {
+          "text": "Herramientas disponibles."
+        }
+      ]
+    },
+    {
+      "type": "list_item",
+      "id": "b1",
+      "src": [
+        "b1"
+      ],
+      "level": 0,
+      "is_numbered": false,
+      "runs": [
+        {
+          "text": "Preparar el entorno"
+        }
+      ]
+    },
+    {
+      "type": "list_item",
+      "id": "b2",
+      "src": [
+        "b2"
+      ],
+      "level": 1,
+      "is_numbered": false,
+      "runs": [
+        {
+          "text": "Instalar dependencias"
+        }
+      ]
+    },
+    {
+      "type": "list_item",
+      "id": "b3",
+      "src": [
+        "b3"
+      ],
+      "level": 2,
+      "is_numbered": false,
+      "runs": [
+        {
+          "text": "Verificar versiones"
+        }
+      ]
+    },
+    {
+      "type": "list_item",
+      "id": "b4",
+      "src": [
+        "b4"
+      ],
+      "level": 0,
+      "is_numbered": false,
+      "runs": [
+        {
+          "text": "Ejecutar la aplicación"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "id": "b5",
+      "src": [
+        "b5"
+      ],
+      "runs": [
+        {
+          "text": "Secuencia de validación."
+        }
+      ]
+    },
+    {
+      "type": "list_item",
+      "id": "b6",
+      "src": [
+        "b6"
+      ],
+      "level": 0,
+      "is_numbered": true,
+      "runs": [
+        {
+          "text": "Revisar el documento"
+        }
+      ]
+    },
+    {
+      "type": "list_item",
+      "id": "b7",
+      "src": [
+        "b7"
+      ],
+      "level": 1,
+      "is_numbered": true,
+      "runs": [
+        {
+          "text": "Comprobar títulos"
+        }
+      ]
+    },
+    {
+      "type": "list_item",
+      "id": "b8",
+      "src": [
+        "b8"
+      ],
+      "level": 2,
+      "is_numbered": true,
+      "runs": [
+        {
+          "text": "Validar niveles"
+        }
+      ]
+    },
+    {
+      "type": "list_item",
+      "id": "b9",
+      "src": [
+        "b9"
+      ],
+      "level": 0,
+      "is_numbered": true,
+      "runs": [
+        {
+          "text": "Registrar resultados"
+        }
+      ]
+    },
+    {
+      "type": "keep",
+      "id": "b10",
+      "src": [
+        "b10"
+      ]
+    }
+  ],
+  "expected_tables": [],
+  "expected_keep_kinds": {
+    "b10": "section_break"
+  },
+  "invariants": {
+    "section_count": 1,
+    "image_count": 0,
+    "manual_list_levels": [
+      0,
+      1,
+      2
+    ]
+  },
+  "review": {
+    "status": "pending",
+    "designated_reviewer": "Os-corona",
+    "reviewer": null,
+    "reviewed_at": null,
+    "evidence_url": null,
+    "reviewed_content_sha256": null
+  },
+  "source_sha256": "e6b7a8cb11b6111cfb2ad4b886553ec670b5e0642a8db8551453b988defc5bdc"
+}
