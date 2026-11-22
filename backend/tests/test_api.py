@@ -685,4 +685,54 @@ class DocumentAPITests(APITestCase):
         result_doc = DocxDocument(io.BytesIO(dl_bytes))
         self.assertEqual(result_doc.styles["Normal"].font.name, "Times New Roman")
 
+    def test_review_accept_invalid_job_state_returns_409_not_400(self):
+        """
+        InvalidJobState hereda de ValueError; POST /review/ debe devolver
+        409 INVALID_STATE (y no 400 INVALID_CONFIG) si la propuesta falta
+        o el job perdió el estado review durante la finalización.
+        """
+        doc_id = self._upload_fixture("01_planos.docx")
+        job = ProcessingJob.objects.filter(document_id=doc_id).last()
+        ProcessingJob.objects.filter(pk=job.pk).update(
+            status="review",
+            structure_original=None,
+            structure_proposed=None,
+        )
+
+        resp = self.client.post(
+            f"/api/documents/{doc_id}/review/",
+            {"action": "accept", "revert": []},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(resp.data.get("error"), "INVALID_STATE")
+
+    def test_structure_fallback_counts_bold_runs_inside_tables(self):
+        """
+        Si ai_summary no trae bold_emphasis_applied, /structure/ debe contar
+        también los runs en negrita dentro de celdas de tabla.
+        """
+        doc_id = self._upload_fixture("01_planos.docx")
+        job = ProcessingJob.objects.filter(document_id=doc_id).last()
+        ProcessingJob.objects.filter(pk=job.pk).update(
+            status="review",
+            ai_summary={},
+            structure_original={"schema_version": "di.v1", "blocks": [{"id": "b0", "type": "paragraph", "text": "A: 1"}]},
+            structure_proposed={
+                "schema_version": "di.v1",
+                "blocks": [{
+                    "type": "table",
+                    "src": ["b0"],
+                    "header_row": True,
+                    "rows": [
+                        [{"text": "Clave", "runs": [{"text": "Clave", "bold": True}]}, {"text": "Valor"}],
+                        [{"text": "A"}, {"text": "1"}],
+                    ],
+                }],
+            },
+        )
+        resp = self.client.get(f"/api/documents/{doc_id}/structure/")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data["summary"]["bold_emphasis_applied"], 1)
+
 

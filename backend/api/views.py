@@ -343,6 +343,15 @@ def _build_structure_response_payload(document: Document, job: ProcessingJob) ->
             for b in proposed_blocks
             for r in (b.get("runs") or [])
             if isinstance(r, dict)
+        ) + sum(
+            int(bool(r.get("bold")))
+            for b in proposed_blocks
+            for row in (b.get("rows") or [])
+            if isinstance(row, list)
+            for cell in row
+            if isinstance(cell, dict)
+            for r in (cell.get("runs") or [])
+            if isinstance(r, dict)
         ),
     )
 
@@ -445,15 +454,15 @@ def review_document_view(request, id):
             revert_ids = []
         try:
             finalized = finalize_job(job, revert_ids)
-        except ValueError as exc:
-            return Response(
-                {"error": "INVALID_CONFIG", "message": str(exc)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
         except InvalidJobState as exc:
             return Response(
                 {"error": "INVALID_STATE", "message": str(exc)},
                 status=status.HTTP_409_CONFLICT,
+            )
+        except ValueError as exc:
+            return Response(
+                {"error": "INVALID_CONFIG", "message": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         if finalized.status == "error":
