@@ -11,7 +11,9 @@ from ai_engine.providers.base import (
     AINotConfiguredError,
     InvalidModelOutputError,
     ProviderAuthError,
+    ProviderResult,
     ProviderUnavailableError,
+    TokenUsage,
 )
 from ai_engine.providers.fake import FakeProvider
 from ai_engine.service import structure_document
@@ -182,3 +184,23 @@ def test_provider_cannot_mutate_the_validation_reference():
     assert di.blocks[0].text == "Total $10."
     assert result.summary["chunks_heuristic"] == 1
     assert "".join(r.text for r in result.blocks[0].runs) == "Total $10."
+
+
+def test_progress_callback_and_usage_include_both_integrity_attempts():
+    from common.document_schema import AIChunkOutput
+
+    usage = TokenUsage(input_tokens=10, output_tokens=5, model="offline", provider="fake", attempts=2)
+    provider = Mock()
+    provider.structure.side_effect = [
+        ProviderResult(output=AIChunkOutput.model_validate(response("Total $99.").output), usage=usage),
+        ProviderResult(output=AIChunkOutput.model_validate(response().output), usage=usage),
+    ]
+    progress = Mock()
+    result = structure_document(document(), {}, provider, on_progress=progress)
+    assert result.usage == {
+        "input_tokens": 20, "output_tokens": 10, "total_tokens": 30,
+        "calls": 2, "attempts": 4, "models": ["offline"], "providers": ["fake"],
+    }
+    assert progress.call_args_list[0].args == ("structuring", 0, 1)
+    assert progress.call_args_list[-1].args == ("validating", 1, 1)
+    assert all(call.args[1] == 0 for call in progress.call_args_list[:-1])

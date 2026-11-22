@@ -14,6 +14,7 @@ from rest_framework.response import Response
 from documents.models import Document, ProcessingJob
 from docx_engine.extractor import extract_structure
 from orchestrator.pipeline import PIPELINE
+from orchestrator.runner import enqueue
 from templates_engine.config import TemplateConfig, list_presets, load_preset
 from .serializers import DocumentUploadSerializer
 
@@ -121,7 +122,31 @@ def format_document_view(request, id):
     job.status = 'processing'
     job.error_message = None
     job.started_at = timezone.now()
-    job.save()
+    claimed = ProcessingJob.objects.filter(pk=job.pk).exclude(status="processing").update(
+        config=job.config, use_ai=job.use_ai, status="processing", started_at=job.started_at,
+        finished_at=None, error_code=None, error_message=None, result_file=None,
+        progress_stage="queued" if job.use_ai else "building", progress_done=0,
+        progress_total=0 if job.use_ai else 1,
+        ai_summary=None, ai_usage=None, structure_original=None, structure_proposed=None, ai_suggestions=None,
+    )
+    if not claimed:
+        return Response({"error": "INVALID_STATE", "message": "El documento ya está siendo procesado."}, status=status.HTTP_409_CONFLICT)
+
+    if job.use_ai:
+        try:
+            enqueue(job.pk)
+        except Exception:
+            ProcessingJob.objects.filter(pk=job.pk, status="processing").update(
+                status="error", error_code="PROCESSING_ERROR",
+                error_message="No se pudo iniciar el procesamiento.", finished_at=timezone.now(),
+            )
+            return Response({"error": "PROCESSING_ERROR", "message": "No se pudo iniciar el procesamiento."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({
+            "document_id": document.id, "job_id": job.id, "status": "processing",
+            "message": "Documento encolado para estructuración con IA.",
+        }, status=status.HTTP_202_ACCEPTED)
+
+    job.refresh_from_db()
 
     try:
         with document.original_file.open('rb') as orig_fh:
@@ -144,6 +169,7 @@ def format_document_view(request, id):
         job.result_file.save(filename, ContentFile(temp_io.read()))
 
         job.status = 'done'
+        job.progress_done = job.progress_total
         job.finished_at = timezone.now()
         job.save()
 
@@ -155,11 +181,13 @@ def format_document_view(request, id):
             "finished_at": job.finished_at,
         }, status=status.HTTP_200_OK)
 
-    except Exception as e:
+    except Exception:
         job.status = 'error'
-        job.error_message = str(e)
+        job.error_code = 'PROCESSING_ERROR'
+        job.error_message = 'No se pudo procesar el documento.'
+        job.finished_at = timezone.now()
         job.save()
-        return Response({"error": "PROCESSING_ERROR", "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error": "PROCESSING_ERROR", "message": job.error_message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])
@@ -181,6 +209,14 @@ def document_status_view(request, id):
             "size_bytes": document.size_bytes,
             "uploaded_at": document.uploaded_at,
             "use_ai": job.use_ai,
+            "progress": (
+                None
+                if job.status in ("pending", "error") or not job.progress_stage
+                else {"stage": job.progress_stage, "done": job.progress_done, "total": job.progress_total}
+            ),
+            "ai_summary": job.ai_summary,
+            "ai_usage": job.ai_usage,
+            "error_code": job.error_code,
             "error_message": job.error_message,
             "started_at": job.started_at,
             "finished_at": job.finished_at,

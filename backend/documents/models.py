@@ -31,6 +31,14 @@ class ProcessingJob(models.Model):
     finished_at = models.DateTimeField(null=True, blank=True)
     use_ai = models.BooleanField(default=False)
     ai_suggestions = models.JSONField(null=True, blank=True)
+    progress_stage = models.CharField(max_length=30, blank=True, default="")
+    progress_done = models.PositiveIntegerField(default=0)
+    progress_total = models.PositiveIntegerField(default=0)
+    ai_summary = models.JSONField(null=True, blank=True)
+    ai_usage = models.JSONField(null=True, blank=True)
+    error_code = models.CharField(max_length=64, null=True, blank=True)
+    structure_original = models.JSONField(null=True, blank=True)
+    structure_proposed = models.JSONField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
