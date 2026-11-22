@@ -46,7 +46,7 @@ from common.document_schema import (
 )
 
 SNAPSHOT_FILE = Path(__file__).resolve().parent / "snapshots" / "prompt_v1.0.txt"
-EXPECTED_PROMPT_V1_SHA256 = "2c26bd443a155dc9edf24cd854cf4423bddaa6837bbb5d89400a862c375572f5"
+EXPECTED_PROMPT_V1_SHA256 = "a31280273ee0b4ad53f16d77790a9885231db11595135e3bd1ecc989715cc9c2"
 
 
 def _word_count(text: str) -> int:

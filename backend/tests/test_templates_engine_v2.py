@@ -264,9 +264,16 @@ class PresetsV2RebuilderIntegrationTests(SimpleTestCase):
             if p.style and p.style.name == "Normal":
                 self.assertEqual(p.alignment, WD_ALIGN_PARAGRAPH.JUSTIFY)
 
-        # Verificar tabla sombreada
-        header_cell_xml = doc.tables[0].rows[0].cells[0]._tc.xml
-        self.assertIn("D9E1F2", header_cell_xml)
+        # Verificar tabla sombreada, bordes OOXML y callout destacado
+        table_xml = doc.tables[0]._tbl.xml
+        self.assertIn("D9E1F2", table_xml)
+        self.assertIn("tblBorders", table_xml)
+        self.assertIn("F7F9FC", table_xml)
+        quote_p = next(p for p in doc.paragraphs if p.style and "Quote" in p.style.name)
+        self.assertIn("F2F5F9", quote_p._p.xml)
+        self.assertIn("pBdr", quote_p._p.xml)
+        h1_p = next(p for p in doc.paragraphs if p.style and "Heading 1" in p.style.name)
+        self.assertIn("pBdr", h1_p._p.xml)
 
     def test_tesis_preset_rebuilt_document(self):
         config_tesis = load_preset("tesis")
@@ -393,5 +400,30 @@ class TemplateConfigAITests(SimpleTestCase):
         self.assertIn("PAGE", doc.sections[0].header._element.xml)
         self.assertEqual(doc.styles["Title"].font.name, "Arial")
         self.assertEqual(doc.styles["Title"].font.size, Pt(16.5))
+
+    def test_color_themes_apply_real_palette_colors_to_docx_xml(self):
+        blocks = create_sample_structure_blocks()
+
+        for theme_id, expected_primary, expected_header_fill in (
+            ("esmeralda", "0F5132", "D1E7DD"),
+            ("borgona", "6B1D2F", "F2D7DD"),
+            ("indigo", "312E81", "E0E7FF"),
+        ):
+            base = load_preset("reporte").model_dump()
+            base["color_theme"] = theme_id
+            base["show_dividers"] = True
+            cfg = TemplateConfig(**base)
+            doc = rebuild_from_structure(blocks, config=cfg)
+
+            h1 = next(p for p in doc.paragraphs if p.style and "Heading 1" in p.style.name)
+            self.assertIn(expected_primary, h1._p.xml)
+            self.assertIn("pBdr", h1._p.xml)
+
+            table_xml = doc.tables[0]._tbl.xml
+            self.assertIn(expected_header_fill, table_xml)
+            self.assertIn("tblBorders", table_xml)
+
+            quote_p = next(p for p in doc.paragraphs if p.style and "Quote" in p.style.name)
+            self.assertIn(expected_primary, quote_p._p.xml)
 
 

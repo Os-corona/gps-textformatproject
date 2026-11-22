@@ -4,6 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useFlowStore } from '@/stores/flowStore'
 import { getDocument, getStructure, submitReview } from '@/services/api'
 import ReviewBlock from '@/components/review/ReviewBlock.vue'
+import FlowStepper from '@/components/FlowStepper.vue'
+import { getDocumentTheme, defaultThemeForPreset } from '@/constants/documentThemes'
 import {
   blockPlainText,
   blockSources,
@@ -76,12 +78,49 @@ const proposedBlocks = computed<any[]>(() =>
   Array.isArray(structure.value?.proposed?.blocks) ? structure.value.proposed.blocks : []
 )
 
+function isBlankOrSectionKeep(block: any, origLookup?: Map<string, any>): boolean {
+  if (!block || block.type !== 'keep') return false
+  const kind =
+    block.keep_kind ||
+    (origLookup && Array.isArray(block.src) && block.src[0] ? origLookup.get(block.src[0])?.keep_kind : null)
+  return kind === 'empty' || kind === 'section_break'
+}
+
 const originalById = computed(() => {
   const map = new Map<string, any>()
   for (const block of originalBlocks.value) {
     if (block && typeof block.id === 'string') map.set(block.id, block)
   }
   return map
+})
+
+const visibleOriginalBlocks = computed<any[]>(() =>
+  originalBlocks.value.filter((block) => !isBlankOrSectionKeep(block))
+)
+
+const normalizedBlankCount = computed<number>(() =>
+  originalBlocks.value.filter((block) => block?.type === 'keep' && block?.keep_kind === 'empty').length
+)
+
+const activeDocTheme = computed(() => {
+  const cfg = flowStore.config || documentData.value?.config || {}
+  const themeId = cfg.color_theme || defaultThemeForPreset(cfg.preset_id)
+  return getDocumentTheme(themeId)
+})
+
+const proposedThemeStyle = computed(() => {
+  const cfg = flowStore.config || documentData.value?.config || {}
+  const t = activeDocTheme.value
+  const useDividers = cfg.show_dividers !== false && cfg.preset_id !== 'apa7'
+  return {
+    '--doc-primary': t.primary,
+    '--doc-secondary': t.secondary,
+    '--doc-divider': useDividers ? t.secondary : 'transparent',
+    '--doc-header-fill': t.headerFill,
+    '--doc-zebra-fill': t.zebraFill,
+    '--doc-callout-fill': t.calloutFill,
+    fontFamily: cfg.font_family ? `'${cfg.font_family}', sans-serif` : undefined
+  }
 })
 
 const revertibleIds = computed(() => {
@@ -217,6 +256,7 @@ const renderUnits = computed<RenderUnit[]>(() => {
 
   proposedBlocks.value.forEach((block, index) => {
     if (!block || typeof block !== 'object') return
+    if (isBlankOrSectionKeep(block, originalById.value)) return
 
     if (block.type === 'list_item' && !isReverted(block)) {
       const ordered = isOrderedList(block)
@@ -405,28 +445,7 @@ function goHome(): void {
 
 <template>
   <div class="container-fluid px-0 review-view">
-    <!-- Stepper indicator -->
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 pb-3 border-bottom review-stepper">
-      <div class="d-flex align-items-center gap-2 text-success">
-        <span class="badge rounded-circle bg-success text-white p-2">✓</span>
-        <span>Subir Documento</span>
-      </div>
-      <div class="text-muted">→</div>
-      <div class="d-flex align-items-center gap-2 text-success">
-        <span class="badge rounded-circle bg-success text-white p-2">✓</span>
-        <span>Configurar</span>
-      </div>
-      <div class="text-muted">→</div>
-      <div class="d-flex align-items-center gap-2 fw-semibold text-primary">
-        <span class="badge rounded-circle bg-primary text-white p-2">3</span>
-        <span>Revisión con IA</span>
-      </div>
-      <div class="text-muted">→</div>
-      <div class="d-flex align-items-center gap-2 text-secondary">
-        <span class="badge rounded-circle bg-secondary text-white p-2">4</span>
-        <span>Resultado</span>
-      </div>
-    </div>
+    <FlowStepper :current="3" />
 
     <!-- Active document banner -->
     <div class="card border-0 shadow-sm mb-4">
@@ -560,7 +579,13 @@ function goHome(): void {
             Sin IA efectiva
           </span>
           <span class="small text-secondary">
-            {{ originalBlocks.length }} bloques originales · {{ proposedBlocks.length }} bloques propuestos
+            {{ visibleOriginalBlocks.length }} bloques de contenido · Paleta: <strong>{{ activeDocTheme.name }}</strong>
+          </span>
+          <span
+            v-if="normalizedBlankCount > 0"
+            class="badge rounded-pill text-bg-light border text-secondary"
+          >
+            {{ normalizedBlankCount }} saltos de línea vacíos normalizados automáticamente
           </span>
         </div>
       </div>
@@ -595,11 +620,11 @@ function goHome(): void {
                 <h2 class="h6 fw-semibold text-dark mb-0">Texto original</h2>
                 <span class="text-secondary small">Extraído del documento, sin formato</span>
               </div>
-              <span class="badge text-bg-light border text-secondary">{{ originalBlocks.length }} bloques</span>
+              <span class="badge text-bg-light border text-secondary">{{ visibleOriginalBlocks.length }} bloques</span>
             </div>
             <div class="card-body compare-body original-column" data-column="original" tabindex="0">
               <div
-                v-for="(block, index) in originalBlocks"
+                v-for="(block, index) in visibleOriginalBlocks"
                 :key="block?.id || index"
                 class="original-block"
                 :data-original-id="block?.id"
@@ -608,7 +633,7 @@ function goHome(): void {
                 <p v-if="blockPlainText(block)" class="original-text">{{ blockPlainText(block) }}</p>
                 <p v-else class="original-empty">Sin texto visible</p>
               </div>
-              <p v-if="originalBlocks.length === 0" class="text-secondary small mb-0">
+              <p v-if="visibleOriginalBlocks.length === 0" class="text-secondary small mb-0">
                 El documento no contiene bloques originales para mostrar.
               </p>
             </div>
@@ -621,11 +646,21 @@ function goHome(): void {
             <div class="card-header bg-white d-flex justify-content-between align-items-start gap-2">
               <div>
                 <h2 class="h6 fw-semibold text-dark mb-0">Propuesta estructurada</h2>
-                <span class="text-secondary small">Etiquetas discretas indican el tipo de cada bloque</span>
+                <span class="text-secondary small">Previsualización con la paleta {{ activeDocTheme.name }}</span>
               </div>
-              <span class="badge text-bg-light border text-secondary">{{ proposedBlocks.length }} bloques</span>
+              <span
+                class="badge rounded-pill border"
+                :style="{ backgroundColor: activeDocTheme.headerFill, color: activeDocTheme.primary }"
+              >
+                {{ activeDocTheme.name }}
+              </span>
             </div>
-            <div class="card-body compare-body preview-column" data-column="proposed" tabindex="0">
+            <div
+              class="card-body compare-body preview-column"
+              data-column="proposed"
+              tabindex="0"
+              :style="proposedThemeStyle"
+            >
               <div v-if="proposedBlocks.length === 0" class="alert alert-info mb-0" role="status">
                 La IA no propuso bloques para este documento. Puedes descartar la IA y aplicar solo la plantilla.
               </div>

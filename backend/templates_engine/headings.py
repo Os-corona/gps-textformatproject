@@ -4,8 +4,13 @@ Aplica tamaño, negrita, alineación, espaciado anterior/posterior, color
 y regla keep_with_next en títulos y estilos Heading.
 """
 
+import re
 from docx.shared import Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml import parse_xml
+from docx.oxml.ns import nsdecls
+
+_HEX_COLOR_RE = re.compile(r"^[0-9A-Fa-f]{6}$")
 
 ALIGN_MAP = {
     "left": WD_ALIGN_PARAGRAPH.LEFT,
@@ -108,4 +113,33 @@ def apply_headings(doc, headings_config=None, heading_sizes=None):
                 if rgb is not None:
                     for r in p.runs:
                         r.font.color.rgb = rgb
+
+                # Línea divisoria inferior o barra lateral izquierda (opcional)
+                bottom_border = item_cfg.get("bottom_border")
+                left_border = item_cfg.get("left_border")
+                hex_bottom = str(bottom_border).lstrip("#").strip() if bottom_border else ""
+                hex_left = str(left_border).lstrip("#").strip() if left_border else ""
+                has_bottom = bool(hex_bottom and _HEX_COLOR_RE.match(hex_bottom))
+                has_left = bool(hex_left and _HEX_COLOR_RE.match(hex_left))
+                if has_bottom or has_left:
+                    pPr = p._p.get_or_add_pPr()
+                    for old_bdr in pPr.xpath("./w:pBdr"):
+                        pPr.remove(old_bdr)
+                    parts = [f'<w:pBdr {nsdecls("w")}>']
+                    if has_bottom:
+                        sz = "12" if key == "title" else "6"
+                        parts.append(f'<w:bottom w:val="single" w:sz="{sz}" w:space="4" w:color="{hex_bottom}"/>')
+                    if has_left:
+                        parts.append(f'<w:left w:val="single" w:sz="18" w:space="8" w:color="{hex_left}"/>')
+                    parts.append("</w:pBdr>")
+                    pPr.append(parse_xml("".join(parts)))
+
+                fill_color = item_cfg.get("fill")
+                if fill_color:
+                    hex_fill = str(fill_color).lstrip("#").strip()
+                    if _HEX_COLOR_RE.match(hex_fill):
+                        pPr = p._p.get_or_add_pPr()
+                        for old_shd in pPr.xpath("./w:shd"):
+                            pPr.remove(old_shd)
+                        pPr.append(parse_xml(f'<w:shd {nsdecls("w")} w:fill="{hex_fill}"/>'))
 

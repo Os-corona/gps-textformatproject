@@ -283,7 +283,19 @@ def build_system_prompt(options: Optional[Mapping[str, Any]] = None) -> str:
         "   - Identifica títulos falsos: párrafos breves (≤ 20 palabras), sin punto final "
         "('ends_with_period': false), con tamaño mayor ('size_ratio' >= 1.2), negrita completa "
         "('all_bold': true) o mayúsculas sostenidas ('is_all_caps': true).\n"
-        "   - Asigna 'level' entre 0 y 3 (0 = Título principal del documento, 1 = H1, 2 = H2, 3 = H3).\n"
+        "   - En documentos totalmente planos (donde 'size_ratio' es 1.0 y 'all_bold' es false), "
+        "identifica igualmente el título principal del documento (nivel 0) y los encabezados de "
+        "sección (niveles 1–3): líneas breves (≤ 12 palabras) sin punto final (incluyendo etiquetas "
+        "cortas que terminan en ':' como 'Bosses:' o 'Combate:') o con numeración jerárquica "
+        "('1.', '1.1', 'I.', 'Capítulo', 'Sección') seguidas de párrafos normales, o títulos "
+        "temáticos claros (p. ej. Resumen Ejecutivo, Introducción, Objetivos, Metodología, "
+        "Resultados, Análisis, Conclusiones, Recomendaciones).\n"
+        "   - Si el documento plano consiste en bloques temáticos largos del tipo 'Tema: explicación...' "
+        "que carecen de un título separado, inserta antes de cada bloque temático principal un "
+        "subtítulo breve (1 a 4 palabras, nivel 1 o 2) marcado con \"generated\": true y referenciando "
+        "el 'src' de ese bloque, para dividir visualmente el documento en secciones claras.\n"
+        "   - Asigna 'level' entre 0 y 3 (0 = Título principal del documento, 1 = H1, 2 = H2, 3 = H3). "
+        "En bloques 'heading' NO pongas \"bold\": true en sus runs (la plantilla aplica la negrita y el color).\n"
         "   - Respeta 'heading_path' (ruta de títulos acumulada en fragmentos anteriores) para mantener "
         "la jerarquía coherente y nunca saltar niveles (no pases de nivel 1 a nivel 3 sin nivel 2).\n"
         "2. LISTAS ('list_item'):\n"
@@ -291,6 +303,10 @@ def build_system_prompt(options: Optional[Mapping[str, Any]] = None) -> str:
         "conviértelo en 'list_item' con 'is_numbered': false y QUITA únicamente el glifo inicial del texto.\n"
         "   - Si un párrafo inicia con numeración manual (1., 1.1, a), (1), I., etc. o 'manual_numbering': true), "
         "conviértelo en 'list_item' con 'is_numbered': true y QUITA únicamente el prefijo de numeración manual.\n"
+        "   - En documentos planos de notas o propuestas, si una serie de ≥ 2 párrafos consecutivos "
+        "enumeran sub-puntos, características o variantes bajo un mismo tema (p. ej. 'Historia...', "
+        "'Tienda...', 'Misiones...'), conviértelos en 'list_item' ('is_numbered': false, 'level': 0) "
+        "y resalta en negrita sus primeras palabras clave.\n"
         "   - Asigna el nivel de anidamiento ('level' de 0 a 8, típicamente 0 a 2) según el glifo, "
         "la subnumeración o 'indent_level'.\n"
         "3. TABLAS ('table'):\n"
@@ -300,18 +316,26 @@ def build_system_prompt(options: Optional[Mapping[str, Any]] = None) -> str:
         "   - La tabla debe tener ≥ 2 filas y ≥ 2 columnas, y todas sus filas deben ser rectangulares "
         "(igual suma de 'h_span'). Quita solo los separadores estructurales (':', '|', '\\t') convertidos "
         "en celdas, conservando todas las palabras y números en el mismo orden de lectura.\n"
-        "4. NEGRITAS Y ÉNFASIS ('emphasis'):\n"
+        "   - Si los registros clave-valor no traen fila de encabezado en el texto original, agrega "
+        "una primera fila ('header_row': true) con celdas cortas marcadas con \"generated\": true "
+        "(p. ej. 'Indicador' y 'Valor', o 'Concepto' y 'Detalle').\n"
+        "4. BLOQUES DESTACADOS ('callout'):\n"
+        "   - Si un párrafo es una nota aclaratoria, advertencia, punto crítico o conclusión destacada "
+        "(p. ej. inicia con 'Nota:', 'Importante:', 'Advertencia:', 'Atención:', 'Conclusión' o contiene "
+        "'(IMPORTANTE!)'), conviértelo en {\"type\": \"callout\", \"kind\": \"note\" | \"warning\" | \"quote\"} "
+        "conservando intacto su texto.\n"
+        "5. NEGRITAS Y ÉNFASIS ('emphasis'):\n"
         f"   - {emphasis_rule}\n"
         "   - Nunca apliques negrita a más del 30% de las palabras de un párrafo.\n"
-        "5. BLOQUES OPACOS ('keep'):\n"
+        "6. BLOQUES OPACOS ('keep'):\n"
         "   - Todo bloque de entrada con \"type\": \"keep\" (imágenes, tablas nativas, saltos de sección, campos) "
         "es INTOCABLE. Devuélvelo intacto en la misma posición como {\"type\": \"keep\", \"id\": \"<id>\", \"src\": [\"<id>\"]}.\n"
-        "6. ELEMENTOS GENERADOS (\"generated\": true):\n"
+        "7. ELEMENTOS GENERADOS (\"generated\": true):\n"
         "   - Si creas un subtítulo ('heading') o un encabezado de tabla (solo celdas de 'header_row', nunca el bloque 'table') "
         "que no existía en el texto original, DEBES marcarlo con \"generated\": true.\n"
         "   - Los párrafos normales (\"type\": \"paragraph\") NUNCA llevan el campo \"generated\" y jamás "
         "pueden contener texto inventado.\n"
-        "7. TRAZABILIDAD ('src'):\n"
+        "8. TRAZABILIDAD ('src'):\n"
         "   - Cada bloque de salida debe incluir en 'src' la lista de IDs de los bloques de entrada "
         f"que le dieron origen (p. ej. [\"b3\"]). Contexto del documento: tipo='{doc_type}'."
         f"{detection_overrides}\n\n"
@@ -353,6 +377,10 @@ def build_user_prompt(
     )
 
     payload_dict = chunk_obj.model_dump(exclude_none=True)
+    for b in payload_dict.get("blocks", []):
+        if isinstance(b, dict):
+            b.pop("xml", None)
+            b.pop("opaque_reasons", None)
     payload_dict["heading_path"] = effective_heading_path
     if options:
         payload_dict.setdefault("doc_context", dict(options))

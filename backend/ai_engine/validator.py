@@ -192,9 +192,15 @@ def validate_chunk(input_blocks, output_blocks) -> IntegrityReport:
         if kind != "keep":
             for item in prose:
                 runs = item.get("runs", [])
-                total = len(_WORD.findall(_text(item)))
+                item_text = _text(item)
+                total = len(_WORD.findall(item_text))
                 bold = sum(len(_WORD.findall(r["text"])) for r in runs if r.get("bold"))
                 added_bold = max(0, bold - orig_bold) if kind != "table" else bold
+                # Permitir prefijo corto 'Etiqueta:' en negrita cuando le sigue texto sin negrita
+                if added_bold and bold < total and ":" in item_text:
+                    prefix_words = len(_WORD.findall(item_text.split(":", 1)[0]))
+                    if 0 < prefix_words <= 6 and added_bold <= prefix_words:
+                        added_bold = 0
                 if total and added_bold / total > threshold("AI_MAX_BOLD_RATIO"):
                     fail("BOLD_RATIO", refs, "Se supera el porcentaje máximo de negritas.")
 

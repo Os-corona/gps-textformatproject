@@ -24,6 +24,7 @@ interface ReviewBlockData {
   id?: string
   type: string
   level?: number
+  generated?: boolean
   ordered?: boolean
   is_numbered?: boolean
   runs?: Run[]
@@ -203,6 +204,12 @@ const keepText = computed(() => {
     <div class="block-meta">
       <span class="block-kind">{{ label }}</span>
       <span
+        v-if="block?.generated"
+        class="badge rounded-pill generated-badge"
+      >
+        ✦ Sugerido por IA
+      </span>
+      <span
         v-if="reverted"
         class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle"
       >
@@ -378,24 +385,37 @@ const keepText = computed(() => {
   text-decoration: none;
 }
 
+.generated-badge {
+  background: #ede9fe;
+  color: #5b21b6;
+  border: 1px solid #ddd6fe;
+  font-size: 0.66rem;
+  font-weight: 600;
+}
+
 .preview-heading {
-  margin: 0.1rem 0 0.25rem;
-  color: var(--bs-body-color);
+  margin: 0.1rem 0 0.35rem;
+  color: var(--doc-primary, var(--bs-body-color));
   font-weight: 700;
   line-height: 1.25;
   overflow-wrap: anywhere;
 }
 
 h1.preview-heading {
-  font-size: 1.55rem;
+  font-size: 1.45rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 2px solid var(--doc-divider, transparent);
 }
 
 h2.preview-heading {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
+  color: var(--doc-secondary, var(--bs-body-color));
+  padding-left: 0.5rem;
+  border-left: 3px solid var(--doc-divider, transparent);
 }
 
 h3.preview-heading {
-  font-size: 1.12rem;
+  font-size: 1.05rem;
 }
 
 .preview-paragraph {
@@ -410,16 +430,22 @@ h3.preview-heading {
 }
 
 .preview-table th {
-  background: var(--bs-light);
+  background: var(--doc-header-fill, var(--bs-light));
+  color: var(--doc-primary, var(--bs-body-color));
+}
+
+.preview-table tbody tr:nth-child(even) td {
+  background: var(--doc-zebra-fill, transparent);
 }
 
 .preview-callout {
   margin: 0.25rem 0 0;
   padding: 0.7rem 0.9rem;
-  border-left: 0.25rem solid var(--bs-primary);
+  border-left: 0.28rem solid var(--doc-primary, var(--bs-primary));
   border-radius: 0.25rem;
-  background: var(--bs-primary-bg-subtle);
+  background: var(--doc-callout-fill, var(--bs-primary-bg-subtle));
   font-size: 0.95rem;
+  font-style: italic;
   overflow-wrap: anywhere;
 }
 

@@ -292,9 +292,13 @@ def _opaque_reasons(element, field_depth=0):
     )} | {"{http://schemas.openxmlformats.org/markup-compatibility/2006}AlternateContent"}):
         reasons.append("unknown_element")
     if not reasons:
-        paragraph_children = {qn(name) for name in ("w:pPr", "w:r")}
+        paragraph_children = {qn(name) for name in (
+            "w:pPr", "w:r", "w:proofErr", "w:bookmarkStart", "w:bookmarkEnd",
+            "w:permStart", "w:permEnd", "w:commentRangeStart", "w:commentRangeEnd",
+        )}
         run_children = {qn(name) for name in (
             "w:rPr", "w:t", "w:tab", "w:br", "w:cr", "w:lastRenderedPageBreak",
+            "w:noBreakHyphen", "w:softHyphen", "w:commentReference", "w:annotationRef",
         )}
         if any(child.tag not in paragraph_children for child in element) or any(
             child.tag not in run_children

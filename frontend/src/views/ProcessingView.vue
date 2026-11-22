@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useFlowStore } from '@/stores/flowStore'
 import { getDocument, formatDocument } from '@/services/api'
+import FlowStepper from '@/components/FlowStepper.vue'
 
 // ─── Router & Store ───────────────────────────────────────────────────────────
 const route = useRoute()
@@ -30,29 +31,54 @@ const STAGES = [
   'Aplicación de estilos y formato'
 ] as const
 
+const STAGE_LABELS: Record<string, string> = {
+  queued: 'En cola de procesamiento',
+  extracting: 'Extracción y análisis de contenido',
+  structuring: 'Identificación de jerarquías, listas y tablas con IA',
+  validating: 'Validación de integridad del contenido',
+  building: 'Aplicación de estilos y formato'
+}
+
 const currentChunkInternal = ref(1)
 const totalChunksInternal = ref(4)
 
-const currentChunk = computed(() => {
-  if (docData.value?.current_chunk != null) return Number(docData.value.current_chunk)
-  if (docData.value?.chunk != null) return Number(docData.value.chunk)
-  return currentChunkInternal.value
-})
-
 const totalChunks = computed(() => {
+  const progressTotal = Number(docData.value?.progress?.total)
+  if (Number.isFinite(progressTotal) && progressTotal > 0) return progressTotal
   if (docData.value?.total_chunks != null) return Number(docData.value.total_chunks)
   if (docData.value?.chunks != null) return Number(docData.value.chunks)
   return totalChunksInternal.value
 })
 
+const currentChunk = computed(() => {
+  const progressTotal = Number(docData.value?.progress?.total)
+  const progressDone = Number(docData.value?.progress?.done)
+  if (Number.isFinite(progressTotal) && progressTotal > 0 && Number.isFinite(progressDone)) {
+    return Math.min(Math.max(progressDone || 1, 1), progressTotal)
+  }
+  if (docData.value?.current_chunk != null) return Number(docData.value.current_chunk)
+  if (docData.value?.chunk != null) return Number(docData.value.chunk)
+  return currentChunkInternal.value
+})
+
 const currentStage = computed(() => {
   if (docData.value?.stage) return docData.value.stage
+  const rawStage = docData.value?.progress?.stage
+  if (typeof rawStage === 'string' && rawStage.trim()) {
+    return STAGE_LABELS[rawStage] || rawStage
+  }
   const idx = Math.min(Math.max(currentChunk.value - 1, 0), STAGES.length - 1)
   return STAGES[idx]
 })
 
 const progressPercent = computed(() => {
-  if (docData.value?.status === 'done') return 100
+  if (docData.value?.status === 'done' || docData.value?.status === 'review') return 100
+  const progressTotal = Number(docData.value?.progress?.total)
+  const progressDone = Number(docData.value?.progress?.done)
+  if (Number.isFinite(progressTotal) && progressTotal > 0 && Number.isFinite(progressDone)) {
+    const ratio = Math.min(Math.max(progressDone / progressTotal, 0.1), 0.95)
+    return Math.round(ratio * 100)
+  }
   const ratio = Math.min(currentChunk.value / Math.max(totalChunks.value, 1), 0.95)
   return Math.round(ratio * 100)
 })
@@ -64,6 +90,10 @@ const errorMessage = ref<string>('')
 const isRetrying = ref(false)
 
 const ERROR_MESSAGES: Record<string, string> = {
+  AI_NOT_CONFIGURED: 'El servicio de estructuración con IA no está configurado o las credenciales fueron rechazadas.',
+  AI_UNAVAILABLE: 'El proveedor de inteligencia artificial no responde en este momento. Intenta más tarde o formatea sin IA.',
+  DOCUMENT_TOO_LARGE_FOR_AI: 'El documento supera el límite de 60,000 caracteres permitido para estructuración con IA.',
+  INVALID_STATE: 'La operación solicitada no es válida para el estado actual del documento.',
   AI_PROVIDER_ERROR: 'El proveedor de inteligencia artificial no respondió o no se encuentra disponible.',
   AI_TIMEOUT: 'Se agotó el tiempo de espera con el servicio de IA. Intenta de nuevo más tarde.',
   AI_TOKEN_LIMIT: 'El documento supera la longitud máxima de procesamiento permitida por la IA.',
@@ -214,28 +244,7 @@ async function retryWithoutAi() {
 
 <template>
   <div class="container-fluid max-w-900 px-0">
-    <!-- Stepper indicator -->
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
-      <div class="d-flex align-items-center gap-2 text-success">
-        <span class="badge rounded-circle bg-success text-white p-2">✓</span>
-        <span>Subir Documento</span>
-      </div>
-      <div class="text-muted">→</div>
-      <div class="d-flex align-items-center gap-2 text-success">
-        <span class="badge rounded-circle bg-success text-white p-2">✓</span>
-        <span>Configurar</span>
-      </div>
-      <div class="text-muted">→</div>
-      <div class="d-flex align-items-center gap-2 fw-semibold text-primary">
-        <span class="badge rounded-circle bg-primary text-white p-2">3</span>
-        <span>Procesando</span>
-      </div>
-      <div class="text-muted">→</div>
-      <div class="d-flex align-items-center gap-2 text-secondary">
-        <span class="badge rounded-circle bg-secondary text-white p-2">4</span>
-        <span>Resultado</span>
-      </div>
-    </div>
+    <FlowStepper :current="3" />
 
     <!-- Active document header (survives reload) -->
     <div class="card border-0 shadow-sm mb-4">

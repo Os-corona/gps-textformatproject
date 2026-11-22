@@ -7,6 +7,59 @@ PRESETS_DIR = os.path.join(os.path.dirname(__file__), 'presets')
 ALLOWED_FONTS = ["Times New Roman", "Arial", "Calibri", "Cambria", "Georgia", "Verdana"]
 PRESET_ORDER = ["apa7", "reporte", "personalizado"]
 
+COLOR_THEMES: Dict[str, Dict[str, str]] = {
+    "azul_ejecutivo": {
+        "name": "Azul Ejecutivo",
+        "primary": "1F497D",
+        "secondary": "2F5496",
+        "accent": "B4C6E7",
+        "header_fill": "D9E1F2",
+        "zebra_fill": "F7F9FC",
+        "callout_fill": "F2F5F9",
+        "border": "BFBFBF",
+    },
+    "esmeralda": {
+        "name": "Esmeralda Corporativo",
+        "primary": "0F5132",
+        "secondary": "198754",
+        "accent": "A3CFBB",
+        "header_fill": "D1E7DD",
+        "zebra_fill": "F4FAF7",
+        "callout_fill": "EDF7F2",
+        "border": "B8D4C5",
+    },
+    "borgona": {
+        "name": "Borgoña Directivo",
+        "primary": "6B1D2F",
+        "secondary": "8C2D41",
+        "accent": "DFB0BA",
+        "header_fill": "F2D7DD",
+        "zebra_fill": "FCF6F7",
+        "callout_fill": "FAF0F2",
+        "border": "D8B8C0",
+    },
+    "indigo": {
+        "name": "Índigo Tecnológico",
+        "primary": "312E81",
+        "secondary": "4F46E5",
+        "accent": "C7D2FE",
+        "header_fill": "E0E7FF",
+        "zebra_fill": "F6F7FF",
+        "callout_fill": "EEF2FF",
+        "border": "C4C9E8",
+    },
+    "grafito": {
+        "name": "Grafito Minimalista",
+        "primary": "1F2937",
+        "secondary": "4B5563",
+        "accent": "CBD5E1",
+        "header_fill": "E5E7EB",
+        "zebra_fill": "F9FAFB",
+        "callout_fill": "F3F4F6",
+        "border": "9CA3AF",
+    },
+}
+
 
 # ---------------------------------------------------------------------------
 # Submodelos para Templates Engine v2 (S3T12)
@@ -115,6 +168,8 @@ class TemplateConfig(BaseModel):
     tables: Optional[TablesConfig] = None
     callout: Optional[CalloutConfig] = None
     page_numbers: Optional[bool] = False
+    color_theme: Optional[str] = None
+    show_dividers: Optional[bool] = None
     ai: Optional[AIConfig] = None
 
     @model_validator(mode='before')
@@ -203,6 +258,107 @@ class TemplateConfig(BaseModel):
                     h_dict[k] = {"size_pt": float(v)}
             if h_dict:
                 data["headings"] = h_dict
+
+        # Aplicar paleta cromática ejecutiva al documento Word si se especificó color_theme
+        theme_key = data.get("color_theme")
+        show_dividers = data.get("show_dividers")
+        if isinstance(theme_key, str) and theme_key.strip().lower() in COLOR_THEMES:
+            theme_key = theme_key.strip().lower()
+            data["color_theme"] = theme_key
+            palette = COLOR_THEMES[theme_key]
+            use_dividers = True if show_dividers is None else bool(show_dividers)
+            base_size = float(data.get("font_size") or 11.0)
+
+            def _as_dict(val):
+                if val is None:
+                    return {}
+                return val.model_dump() if hasattr(val, "model_dump") else dict(val)
+
+            headings_map = _as_dict(data.get("headings"))
+            default_sizes = {
+                "title": round(base_size * 1.8 * 2) / 2,
+                "h1": round(base_size * 1.45 * 2) / 2,
+                "h2": round(base_size * 1.2 * 2) / 2,
+                "h3": round(base_size * 1.05 * 2) / 2,
+            }
+            for level_key, default_sz in default_sizes.items():
+                item = _as_dict(headings_map.get(level_key))
+                item.setdefault("size_pt", default_sz)
+                item.setdefault("bold", True)
+                item.setdefault("align", "left")
+                if level_key == "title":
+                    item["color"] = palette["primary"]
+                    item.setdefault("space_before_pt", 0.0)
+                    item.setdefault("space_after_pt", 12.0)
+                    if use_dividers:
+                        item["bottom_border"] = palette["primary"]
+                    else:
+                        item.pop("bottom_border", None)
+                elif level_key == "h1":
+                    item["color"] = palette["primary"]
+                    item.setdefault("space_before_pt", 16.0)
+                    item.setdefault("space_after_pt", 6.0)
+                    if use_dividers:
+                        item["bottom_border"] = palette["secondary"]
+                    else:
+                        item.pop("bottom_border", None)
+                elif level_key == "h2":
+                    item["color"] = palette["secondary"]
+                    item.setdefault("space_before_pt", 12.0)
+                    item.setdefault("space_after_pt", 4.0)
+                    if use_dividers:
+                        item["left_border"] = palette["secondary"]
+                    else:
+                        item.pop("left_border", None)
+                else:
+                    item["color"] = palette["primary"]
+                    item.setdefault("space_before_pt", 8.0)
+                    item.setdefault("space_after_pt", 2.0)
+                headings_map[level_key] = item
+            data["headings"] = headings_map
+
+            tables_map = _as_dict(data.get("tables"))
+            tables_map["header_bold"] = True
+            tables_map["header_fill"] = palette["header_fill"]
+            tables_map["header_text_color"] = palette["primary"]
+            tables_map["zebra_fill"] = palette["zebra_fill"]
+            tables_map.setdefault("border_style", "grid")
+            tables_map["border_color"] = palette["border"]
+            tables_map.setdefault("cell_line_spacing", 1.0)
+            data["tables"] = tables_map
+
+            callout_map = _as_dict(data.get("callout"))
+            callout_map.setdefault("italic", True)
+            callout_map.setdefault("left_indent_cm", 0.9)
+            callout_map["fill"] = palette["callout_fill"]
+            callout_map["border_color"] = palette["primary"]
+            data["callout"] = callout_map
+
+            paragraph_map = _as_dict(data.get("paragraph"))
+            if use_dividers:
+                paragraph_map["accent_border_color"] = palette["accent"]
+            else:
+                paragraph_map.pop("accent_border_color", None)
+            data["paragraph"] = paragraph_map
+        elif show_dividers is False:
+            # Permitir desactivar barras divisorias incluso sin cambiar color_theme
+            headings_map = data.get("headings")
+            if isinstance(headings_map, dict):
+                cleaned_h = {}
+                for k, v in headings_map.items():
+                    if isinstance(v, dict):
+                        item = dict(v)
+                        item.pop("bottom_border", None)
+                        item.pop("left_border", None)
+                        cleaned_h[k] = item
+                    else:
+                        cleaned_h[k] = v
+                data["headings"] = cleaned_h
+            paragraph_map = data.get("paragraph")
+            if isinstance(paragraph_map, dict):
+                p_copy = dict(paragraph_map)
+                p_copy.pop("accent_border_color", None)
+                data["paragraph"] = p_copy
 
         return data
 

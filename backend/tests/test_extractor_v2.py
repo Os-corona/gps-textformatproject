@@ -372,3 +372,16 @@ def test_enriched_hints_caps_alignment_blanks_tabs_kv_and_keep_kind():
     assert table_block.type == "keep"
     assert table_block.keep_kind == "table"
 
+
+def test_word_proof_errors_and_bookmarks_do_not_make_text_paragraphs_opaque():
+    doc = Document()
+    p = doc.add_paragraph("Texto con corrector ortográfico de Word")
+    p._p.insert(1, parse_xml(f'<w:proofErr {nsdecls("w")} w:type="spellStart"/>'))
+    p._p.append(parse_xml(f'<w:proofErr {nsdecls("w")} w:type="spellEnd"/>'))
+    p._p.append(parse_xml(f'<w:bookmarkStart {nsdecls("w")} w:id="0" w:name="_GoBack"/>'))
+    p._p.append(parse_xml(f'<w:bookmarkEnd {nsdecls("w")} w:id="0"/>'))
+
+    di = extract_document(stream(doc))
+    assert di.blocks[0].type == "paragraph"
+    assert di.blocks[0].text == "Texto con corrector ortográfico de Word"
+

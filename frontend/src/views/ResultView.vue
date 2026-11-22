@@ -3,6 +3,8 @@ import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFlowStore } from '@/stores/flowStore'
 import { formatDocument, downloadUrl, getDocument, getPresets } from '@/services/api'
+import FlowStepper from '@/components/FlowStepper.vue'
+import { getDocumentTheme, defaultThemeForPreset, recordHistoryItem } from '@/constants/documentThemes'
 
 // ─── Router & Store ───────────────────────────────────────────────────────────
 const router = useRouter()
@@ -81,21 +83,30 @@ const aiSummary = computed<Record<string, any> | null>(() => {
  */
 const restructuredBlocks = computed<number>(() => {
   const summary = aiSummary.value
-  if (!summary || !usedAi.value) return 0
+  const reviewSummary = flowStore.result?.summary
+  if ((!summary && !reviewSummary) || !usedAi.value) return 0
 
   const explicit = numericOr(
-    summary.restructured_blocks_count ??
-      summary.blocks_restructured ??
-      summary.structured_blocks_count,
+    summary?.restructured_blocks_count ??
+      summary?.blocks_restructured ??
+      summary?.structured_blocks_count,
     NaN
   )
   if (!Number.isNaN(explicit)) return explicit
 
-  return (
-    numericOr(summary.headings_detected, 0) +
-    numericOr(summary.lists_detected, 0) +
-    numericOr(summary.tables_detected, 0)
+  const headings = numericOr(
+    summary?.headings_applied ?? reviewSummary?.headings_applied ?? summary?.headings_detected,
+    0
   )
+  const lists = numericOr(
+    summary?.lists_applied ?? reviewSummary?.lists_applied ?? summary?.lists_detected,
+    0
+  )
+  const tables = numericOr(
+    summary?.tables_applied ?? reviewSummary?.tables_applied ?? summary?.tables_detected,
+    0
+  )
+  return headings + lists + tables
 })
 
 const revertedBlocks = computed<number>(() => {
@@ -121,13 +132,30 @@ const templateName = computed<string>(() => {
 
 const aiBreakdown = computed(() => {
   const summary = aiSummary.value || {}
+  const reviewSummary = flowStore.result?.summary || {}
   return {
-    headings: numericOr(summary.headings_detected, 0),
-    lists: numericOr(summary.lists_detected, 0),
-    tables: numericOr(summary.tables_detected, 0),
+    headings: numericOr(
+      summary.headings_applied ?? reviewSummary.headings_applied ?? summary.headings_detected,
+      0
+    ),
+    lists: numericOr(
+      summary.lists_applied ?? reviewSummary.lists_applied ?? summary.lists_detected,
+      0
+    ),
+    tables: numericOr(
+      summary.tables_applied ?? reviewSummary.tables_applied ?? summary.tables_detected,
+      0
+    ),
     bold: numericOr(summary.bold_emphasis_applied, 0),
     fallbackOnly: Boolean(summary.fallback_only ?? false)
   }
+})
+
+const activeDocTheme = computed(() => {
+  const themeId =
+    configValue('color_theme') ??
+    defaultThemeForPreset(String(configValue('preset_id') ?? ''))
+  return getDocumentTheme(String(themeId))
 })
 
 async function loadSummaryData(id: number): Promise<void> {
@@ -187,6 +215,19 @@ onMounted(async () => {
     } catch {
       // Intencionalmente silencioso.
     }
+    recordHistoryItem({
+      document_id: id,
+      original_name:
+        documentData.value?.original_name ||
+        flowStore.document?.original_name ||
+        flowStore.file?.name ||
+        `Documento #${id}`,
+      size_bytes: documentData.value?.size_bytes ?? flowStore.document?.size_bytes ?? flowStore.file?.size ?? 0,
+      preset_name: templateName.value,
+      color_theme: activeDocTheme.value.id,
+      use_ai: usedAi.value,
+      restructured_blocks: restructuredBlocks.value
+    })
   }
 })
 
@@ -208,23 +249,7 @@ function formatAnother() {
 <template>
   <div class="container-fluid max-w-900 px-0">
 
-    <!-- Stepper indicator -->
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
-      <div class="d-flex align-items-center gap-2 text-success">
-        <span class="badge rounded-circle bg-success text-white p-2">✓</span>
-        <span>Subir Documento</span>
-      </div>
-      <div class="text-muted">→</div>
-      <div class="d-flex align-items-center gap-2 text-success">
-        <span class="badge rounded-circle bg-success text-white p-2">✓</span>
-        <span>Configurar</span>
-      </div>
-      <div class="text-muted">→</div>
-      <div class="d-flex align-items-center gap-2 fw-semibold text-primary">
-        <span class="badge rounded-circle bg-primary text-white p-2">3</span>
-        <span>Resultado</span>
-      </div>
-    </div>
+    <FlowStepper :current="4" />
 
     <!-- ═══════════════════════════════════════
          ESTADO: PROCESANDO
@@ -320,9 +345,17 @@ function formatAnother() {
 
         <div class="row g-3">
           <div class="col-12">
-            <div class="config-item p-3 rounded-3 bg-light h-100">
-              <div class="text-uppercase text-secondary small fw-semibold mb-1 letter-spacing">Plantilla aplicada</div>
-              <div class="fw-medium text-dark" data-stat="template-name">{{ templateName }}</div>
+            <div class="config-item p-3 rounded-3 bg-light h-100 d-flex flex-wrap align-items-center justify-content-between gap-2">
+              <div>
+                <div class="text-uppercase text-secondary small fw-semibold mb-1 letter-spacing">Plantilla aplicada</div>
+                <div class="fw-medium text-dark" data-stat="template-name">{{ templateName }}</div>
+              </div>
+              <span
+                class="badge rounded-pill px-3 py-2 border"
+                :style="{ backgroundColor: activeDocTheme.headerFill, color: activeDocTheme.primary }"
+              >
+                Paleta: {{ activeDocTheme.name }}
+              </span>
             </div>
           </div>
 

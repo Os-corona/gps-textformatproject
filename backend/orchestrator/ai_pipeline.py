@@ -183,7 +183,7 @@ def finalize_job(job, revert_ids):
     saved_name = None
     try:
         with job.document.original_file.open("rb") as original:
-            rebuilt = rebuild_document(BytesIO(original.read()), structured)
+            rebuilt = rebuild_document(BytesIO(original.read()), structured, collapse_empty_paragraphs=True)
         expected = _element_text(rebuilt.element.body)
         apply_template(rebuilt, job.config)
         buffer = BytesIO()

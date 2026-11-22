@@ -67,7 +67,7 @@ def apply_paragraphs(doc, paragraph_config=None, callout_config=None):
             continue
 
         if _is_callout(paragraph) and c_cfg:
-            # Formato de callout / cita
+            # Formato de callout / cita destacada
             if c_cfg.get("italic"):
                 for r in paragraph.runs:
                     r.italic = True
@@ -76,15 +76,35 @@ def apply_paragraphs(doc, paragraph_config=None, callout_config=None):
             if left_indent_cm is not None:
                 paragraph.paragraph_format.left_indent = Inches(left_indent_cm / 2.54)
 
+            right_indent_cm = c_cfg.get("right_indent_cm", 0.5)
+            if right_indent_cm is not None:
+                paragraph.paragraph_format.right_indent = Inches(right_indent_cm / 2.54)
+
+            paragraph.paragraph_format.space_before = Pt(c_cfg.get("space_before_pt", 8.0))
+            paragraph.paragraph_format.space_after = Pt(c_cfg.get("space_after_pt", 8.0))
+
+            pPr = paragraph._p.get_or_add_pPr()
             fill_color = c_cfg.get("fill")
             if fill_color:
                 hex_fill = str(fill_color).lstrip("#").strip()
                 if _HEX_COLOR_RE.match(hex_fill):
-                    pPr = paragraph._p.get_or_add_pPr()
                     for old_shd in pPr.xpath("./w:shd"):
                         pPr.remove(old_shd)
                     shd = parse_xml(f'<w:shd {nsdecls("w")} w:fill="{hex_fill}"/>')
                     pPr.append(shd)
+
+            border_color = c_cfg.get("border_color")
+            if border_color:
+                hex_border = str(border_color).lstrip("#").strip()
+                if _HEX_COLOR_RE.match(hex_border):
+                    for old_bdr in pPr.xpath("./w:pBdr"):
+                        pPr.remove(old_bdr)
+                    bdr = parse_xml(
+                        f'<w:pBdr {nsdecls("w")}>'
+                        f'<w:left w:val="single" w:sz="24" w:space="10" w:color="{hex_border}"/>'
+                        f'</w:pBdr>'
+                    )
+                    pPr.append(bdr)
             continue
 
         if _is_list(paragraph):
@@ -106,4 +126,18 @@ def apply_paragraphs(doc, paragraph_config=None, callout_config=None):
 
         if space_before_pt is not None:
             paragraph.paragraph_format.space_before = Pt(space_before_pt)
+
+        # Si el párrafo inicia con un término/etiqueta en negrita ('Concepto: ...') y el preset
+        # define accent_border_color, añadir una barra lateral sutil para separar bloques temáticos.
+        accent_border = p_cfg.get("accent_border_color")
+        if accent_border and paragraph.runs and paragraph.runs[0].bold and ":" in paragraph.runs[0].text:
+            hex_accent = str(accent_border).lstrip("#").strip()
+            if _HEX_COLOR_RE.match(hex_accent):
+                pPr = paragraph._p.get_or_add_pPr()
+                if not pPr.xpath("./w:pBdr"):
+                    pPr.append(parse_xml(
+                        f'<w:pBdr {nsdecls("w")}>'
+                        f'<w:left w:val="single" w:sz="12" w:space="8" w:color="{hex_accent}"/>'
+                        f'</w:pBdr>'
+                    ))
 
