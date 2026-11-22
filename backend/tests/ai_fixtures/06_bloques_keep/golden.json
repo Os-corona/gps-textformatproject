@@ -1,0 +1,153 @@
+{
+  "fixture_id": "06_bloques_keep",
+  "scenario": "Dos imágenes, tabla nativa y dos secciones con distinta orientación",
+  "golden_version": "1.0",
+  "document": "document.docx",
+  "options": {
+    "emphasis": "none",
+    "detect_headings": true,
+    "detect_lists": true,
+    "detect_tables": true
+  },
+  "schema_version": "di.v1",
+  "chunk_id": "golden-06",
+  "blocks": [
+    {
+      "type": "heading",
+      "id": "b0",
+      "src": [
+        "b0"
+      ],
+      "level": 1,
+      "runs": [
+        {
+          "text": "Anexo técnico"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "id": "b1",
+      "src": [
+        "b1"
+      ],
+      "runs": [
+        {
+          "text": "Las ilustraciones y la tabla de este anexo ya existen y deben conservarse."
+        }
+      ]
+    },
+    {
+      "type": "keep",
+      "id": "b2",
+      "src": [
+        "b2"
+      ]
+    },
+    {
+      "type": "keep",
+      "id": "b3",
+      "src": [
+        "b3"
+      ]
+    },
+    {
+      "type": "keep",
+      "id": "b4",
+      "src": [
+        "b4"
+      ]
+    },
+    {
+      "type": "keep",
+      "id": "b5",
+      "src": [
+        "b5"
+      ]
+    },
+    {
+      "type": "heading",
+      "id": "b6",
+      "src": [
+        "b6"
+      ],
+      "level": 2,
+      "runs": [
+        {
+          "text": "Detalle de la segunda sección"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "id": "b7",
+      "src": [
+        "b7"
+      ],
+      "runs": [
+        {
+          "text": "La segunda sección es horizontal y conserva los valores y recursos del anexo."
+        }
+      ]
+    },
+    {
+      "type": "keep",
+      "id": "b8",
+      "src": [
+        "b8"
+      ]
+    }
+  ],
+  "expected_tables": [
+    {
+      "mode": "keep",
+      "block_id": "b4",
+      "src": [
+        "b4"
+      ],
+      "header_row": true,
+      "rows": [
+        [
+          "Equipo",
+          "Unidades",
+          "Costo"
+        ],
+        [
+          "Sensor A",
+          "3",
+          "$450.00"
+        ],
+        [
+          "Sensor B",
+          "2",
+          "$600.00"
+        ]
+      ]
+    }
+  ],
+  "expected_keep_kinds": {
+    "b2": "image",
+    "b3": "image",
+    "b4": "table",
+    "b5": "section_break",
+    "b8": "section_break"
+  },
+  "invariants": {
+    "section_count": 2,
+    "image_count": 2,
+    "native_table_count": 1,
+    "section_orientations": [
+      "portrait",
+      "landscape"
+    ]
+  },
+  "review": {
+    "status": "approved",
+    "designated_reviewer": "Os-corona",
+    "reviewer": "Os-corona",
+    "reviewed_at": "2026-11-22T17:36:00-06:00",
+    "evidence_url": "https://github.com/Os-corona/gps-textformatproject/pull/53#pullrequestreview-1",
+    "reviewed_content_sha256": "a5afc90304da06ad851e47ab884ba539d5a4973306d2bf445bb983c3ac4ceab8"
+  },
+  "source_sha256": "de4095e2d0c0807352ba32536e1925443d717cef5cdec7b6c1a586231b2024d7"
+}
