@@ -585,6 +585,19 @@
           "description": "Fusión vertical ('restart', 'continue' o None)",
           "title": "V Merge"
         },
+        "generated": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "True si la celda de encabezado fue generada por la IA y no existía en el texto original",
+          "title": "Generated"
+        },
         "hints": {
           "anyOf": [
             {
@@ -631,6 +644,14 @@
       "default": null,
       "description": "ID del documento original",
       "title": "Document Id"
+    },
+    "heading_path": {
+      "description": "Ruta de títulos acumulada hasta este fragmento para mantener coherencia jerárquica",
+      "items": {
+        "type": "string"
+      },
+      "title": "Heading Path",
+      "type": "array"
     },
     "blocks": {
       "description": "Bloques de origen contenidos en el chunk",
