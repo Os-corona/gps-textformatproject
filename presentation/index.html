@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PrettyDocs — Presentación del Proyecto (SCG-1009 · ITM)</title>
+  <link rel="icon" type="image/svg+xml" href="assets/prettydocs-mark.svg" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/animations.css" />
+  <script src="js/data.js" defer></script>
+  <script src="js/charts.js" defer></script>
+  <script src="js/deck.js" defer></script>
+</head>
+<body>
+  <main class="deck-viewport" aria-label="Presentación PrettyDocs">
+    <div id="deck-stage" class="deck-stage">
+
+      <!-- ===================================================================
+           DIAPOSITIVA 01 — PORTADA (HERO OSCURO)
+           =================================================================== -->
+      <section class="slide slide--dark is-active" data-title="Portada · PrettyDocs" data-kicker="INICIO">
+        <div class="hero-bg-grid" aria-hidden="true"></div>
+        <div class="hero-bg-glow hero-bg-glow--tr" aria-hidden="true"></div>
+
+        <div class="hero-split">
+          <div class="hero-left">
+            <span class="badge badge--dark reveal" style="--stagger-index: 0;">
+              SCG-1009 · GESTIÓN DE PROYECTOS DE SOFTWARE · ITM
+            </span>
+
+            <div class="hero-brand-row reveal" style="--stagger-index: 1;">
+              <img src="assets/prettydocs-mark.svg" alt="Isotipo PrettyDocs" class="hero-logo" />
+              <h1 class="hero-title">PrettyDocs</h1>
+            </div>
+
+            <p class="hero-subtitle reveal" style="--stagger-index: 2;">
+              Estructuración y formateo automático de documentos <code class="inline-code">.docx</code> asistido por IA.
+            </p>
+
+            <div class="hero-meta reveal" style="--stagger-index: 3;">
+              <div><strong>Equipo:</strong> Oscar A. Arias · Alfonso M. Fernández · Luis D. Ferreira · Luis A. Román · Roberto Cisneros</div>
+              <div><strong>Docente:</strong> Gerardo Suárez · Depto. de Sistemas y Computación · Noviembre 2026</div>
+            </div>
+          </div>
+
+          <div class="hero-visual reveal" style="--stagger-index: 2;">
+            <!-- Ilustración SVG animada: página .docx desordenada -> estructurada tras barrido verde -->
+            <svg viewBox="0 0 430 430" width="415" height="415" role="img" aria-label="Transformación de documento con IA">
+              <defs>
+                <linearGradient id="scan-beam" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#00bd7e" stop-opacity="0"/>
+                  <stop offset="50%" stop-color="#00bd7e" stop-opacity="0.55"/>
+                  <stop offset="100%" stop-color="#00bd7e" stop-opacity="0"/>
+                </linearGradient>
+                <clipPath id="doc-clip">
+                  <rect x="48" y="28" width="334" height="374" rx="18"/>
+                </clipPath>
+              </defs>
+
+              <!-- Sombra de página -->
+              <rect x="60" y="42" width="334" height="374" rx="18" fill="#000000" fill-opacity="0.38"/>
+              <!-- Hoja principal -->
+              <rect x="48" y="28" width="334" height="374" rx="18" fill="#222222" stroke="#343a40" stroke-width="2"/>
+
+              <!-- Encabezado de archivo -->
+              <rect x="74" y="54" width="110" height="24" rx="12" fill="rgba(0,189,126,0.16)" stroke="#00bd7e" stroke-width="1"/>
+              <text x="129" y="70" text-anchor="middle" fill="#00bd7e" font-size="13" font-weight="700" font-family="var(--font-mono)">DOCX · di.v1</text>
+              <circle cx="348" cy="66" r="6" fill="#00bd7e"/>
+              <circle cx="328" cy="66" r="6" fill="#3d556e"/>
+
+              <!-- Título H1 estructurado -->
+              <rect x="74" y="102" width="36" height="20" rx="5" fill="#00bd7e"/>
+              <text x="92" y="116" text-anchor="middle" fill="#181818" font-size="12" font-weight="800" font-family="var(--font-mono)">H1</text>
+              <rect x="120" y="104" width="212" height="16" rx="5" fill="#ffffff" fill-opacity="0.92"/>
+
+              <!-- Párrafo alineado -->
+              <rect x="74" y="138" width="282" height="9" rx="4.5" fill="#ffffff" fill-opacity="0.42"/>
+              <rect x="74" y="155" width="248" height="9" rx="4.5" fill="#ffffff" fill-opacity="0.32"/>
+
+              <!-- Lista nativa con viñetas -->
+              <rect x="74" y="182" width="52" height="18" rx="5" fill="rgba(0,189,126,0.2)"/>
+              <text x="100" y="195" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="700" font-family="var(--font-mono)">LISTA</text>
+              <circle cx="84" cy="216" r="4" fill="#00bd7e"/>
+              <rect x="98" y="211" width="76" height="10" rx="4" fill="#ffffff" fill-opacity="0.88"/>
+              <rect x="180" y="211" width="152" height="10" rx="4" fill="#ffffff" fill-opacity="0.34"/>
+              <circle cx="84" cy="238" r="4" fill="#00bd7e"/>
+              <rect x="98" y="233" width="64" height="10" rx="4" fill="#ffffff" fill-opacity="0.88"/>
+              <rect x="168" y="233" width="136" height="10" rx="4" fill="#ffffff" fill-opacity="0.34"/>
+
+              <!-- Tabla estructurada -->
+              <rect x="74" y="268" width="282" height="102" rx="10" fill="#181818" stroke="#343a40" stroke-width="1.5"/>
+              <rect x="74" y="268" width="282" height="30" rx="10" fill="rgba(0,189,126,0.2)"/>
+              <line x1="74" y1="298" x2="356" y2="298" stroke="#00bd7e" stroke-opacity="0.5"/>
+              <line x1="74" y1="334" x2="356" y2="334" stroke="#343a40"/>
+              <line x1="184" y1="268" x2="184" y2="370" stroke="#343a40"/>
+              <rect x="90" y="279" width="72" height="8" rx="4" fill="#6ee7b7"/>
+              <rect x="200" y="279" width="96" height="8" rx="4" fill="#6ee7b7"/>
+              <rect x="90" y="312" width="66" height="8" rx="4" fill="#ffffff" fill-opacity="0.55"/>
+              <rect x="200" y="312" width="110" height="8" rx="4" fill="#ffffff" fill-opacity="0.4"/>
+              <rect x="90" y="348" width="58" height="8" rx="4" fill="#ffffff" fill-opacity="0.55"/>
+              <rect x="200" y="348" width="88" height="8" rx="4" fill="#ffffff" fill-opacity="0.4"/>
+
+              <!-- Haz luminoso verde de barrido continuo -->
+              <g clip-path="url(#doc-clip)">
+                <g class="hero-scan-beam">
+                  <rect x="48" y="28" width="334" height="58" fill="url(#scan-beam)"/>
+                  <line x1="48" y1="57" x2="382" y2="57" stroke="#00bd7e" stroke-width="2.5"/>
+                </g>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <footer class="slide-footer">
+          <span>PrettyDocs · gps-textformatproject</span>
+          <span class="slide-num">01 / 12</span>
+        </footer>
+      </section>
+
+      <!-- ===================================================================
+           DIAPOSITIVA 02 — PROBLEMA Y USUARIO OBJETIVO
+           =================================================================== -->
+      <section class="slide" data-title="Problema y Usuario Objetivo" data-kicker="01 · PROBLEMA Y USUARIO">
+        <header class="slide-header">
+          <div class="slide-header__text">
+            <span class="slide-kicker">01 · PROBLEMA Y USUARIO</span>
+            <h2 class="slide-title">Formatear documentos consume horas y rompe la estructura</h2>
+          </div>
+          <div class="slide-brand-mini">
+            <img src="assets/prettydocs-mark.svg" alt="" /> PrettyDocs
+          </div>
+        </header>
+
+        <div class="slide-body grid-48-52">
+          <div class="problem-stack">
+            <div class="card reveal" style="--stagger-index: 1;">
+              <div class="section-label section-label--danger">● Problema actual</div>
+              <ul class="bullet-list bullet-list--danger">
+                <li>Los borradores en Word mezclan títulos falsos, listas manuales con glifos y estilos rotos.</li>
+                <li>Aplicar normas como APA 7 o formatos de reporte a mano es lento y propenso a errores.</li>
+              </ul>
+            </div>
+
+            <div class="card reveal" style="--stagger-index: 2;">
+              <div class="section-label section-label--emerald">● Usuario objetivo</div>
+              <ul class="bullet-list">
+                <li><strong>Para quién:</strong> Estudiantes universitarios, docentes, investigadores y redactores técnicos.</li>
+                <li><strong>Necesidad:</strong> Obtener un <code class="inline-code">.docx</code> profesional y navegable sin alterar su contenido.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="compare-panel">
+            <!-- SVG Antes vs. Después -->
+            <svg viewBox="0 0 600 440" width="100%" height="100%" role="img" aria-label="Comparativa antes y después">
+              <!-- Tarjeta ANTES -->
+              <g class="reveal-left" style="--stagger-index: 1;">
+                <rect x="8" y="16" width="256" height="408" rx="16" fill="var(--surface-card)" stroke="#dc2626" stroke-width="2"/>
+                <rect x="26" y="34" width="180" height="28" rx="14" fill="rgba(220,38,38,0.12)"/>
+                <text x="116" y="53" text-anchor="middle" fill="#dc2626" font-size="15" font-weight="800">Documento de entrada</text>
+
+                <!-- Título falso -->
+                <rect x="26" y="84" width="220" height="86" rx="10" fill="var(--surface-alt)" stroke="var(--border-subtle)"/>
+                <text x="38" y="114" fill="var(--text-primary)" font-size="18" font-weight="800">1. RESUMEN</text>
+                <rect x="38" y="128" width="194" height="28" rx="6" fill="rgba(220,38,38,0.12)"/>
+                <text x="135" y="147" text-anchor="middle" fill="#dc2626" font-size="13.5" font-weight="700">Normal + Negrita 18pt (falso)</text>
+
+                <!-- Listas manuales -->
+                <rect x="26" y="188" width="220" height="126" rx="10" fill="var(--surface-alt)" stroke="var(--border-subtle)"/>
+                <text x="38" y="216" fill="var(--text-secondary)" font-size="16">· Punto uno manual</text>
+                <text x="52" y="240" fill="var(--text-secondary)" font-size="16">◦ Subpunto con glifo</text>
+                <text x="38" y="264" fill="var(--text-secondary)" font-size="16">1. Numeración escrita</text>
+                <rect x="38" y="276" width="194" height="28" rx="6" fill="rgba(220,38,38,0.12)"/>
+                <text x="135" y="295" text-anchor="middle" fill="#dc2626" font-size="13.5" font-weight="700">Glifos manuales (·, ◦, 1.)</text>
+
+                <!-- Pie fixture -->
+                <text x="136" y="396" text-anchor="middle" fill="var(--text-secondary)" font-size="13.5" font-family="var(--font-mono)">02_headings_mixto / 05_listas</text>
+              </g>
+
+              <!-- Flecha central animada -->
+              <g>
+                <line x1="274" y1="220" x2="322" y2="220" stroke="#00bd7e" stroke-width="5" stroke-linecap="round"
+                      class="svg-draw" style="--path-len: 70; --draw-delay: 0.45s;"/>
+                <polygon points="320,208 336,220 320,232" fill="#00bd7e" class="reveal" style="--stagger-index: 4;"/>
+              </g>
+
+              <!-- Tarjeta DESPUÉS -->
+              <g class="reveal-right" style="--stagger-index: 3;">
+                <rect x="342" y="16" width="250" height="408" rx="16" fill="var(--surface-card)" stroke="#00bd7e" stroke-width="2.5"/>
+                <rect x="360" y="34" width="194" height="28" rx="14" fill="rgba(0,189,126,0.16)"/>
+                <text x="457" y="53" text-anchor="middle" fill="#009966" font-size="15" font-weight="800">Resultado PrettyDocs</text>
+
+                <!-- Heading nativo -->
+                <rect x="360" y="84" width="214" height="86" rx="10" fill="var(--surface-alt)" stroke="var(--border-subtle)"/>
+                <text x="372" y="114" fill="var(--text-primary)" font-size="19" font-weight="800">1. RESUMEN</text>
+                <rect x="372" y="128" width="190" height="28" rx="6" fill="rgba(0,189,126,0.16)"/>
+                <text x="467" y="147" text-anchor="middle" fill="#009966" font-size="13.5" font-weight="800">Heading 1–3 nativos</text>
+
+                <!-- Listas OOXML -->
+                <rect x="360" y="188" width="214" height="126" rx="10" fill="var(--surface-alt)" stroke="var(--border-subtle)"/>
+                <circle cx="378" cy="211" r="3.5" fill="#00bd7e"/>
+                <text x="390" y="216" fill="var(--text-primary)" font-size="16" font-weight="600">Elemento nivel 0</text>
+                <circle cx="394" cy="235" r="3.5" fill="#00bd7e"/>
+                <text x="406" y="240" fill="var(--text-primary)" font-size="16">Sub-elemento ilvl=1</text>
+                <text x="374" y="264" fill="var(--text-primary)" font-size="16" font-weight="600">1. Lista numerada</text>
+                <rect x="372" y="276" width="190" height="28" rx="6" fill="rgba(0,189,126,0.16)"/>
+                <text x="467" y="295" text-anchor="middle" fill="#009966" font-size="13.5" font-weight="800">Listas OOXML (numPr)</text>
+
+                <!-- Badge plantilla -->
+                <rect x="360" y="332" width="214" height="36" rx="10" fill="#2c3e50"/>
+                <text x="467" y="355" text-anchor="middle" fill="#ffffff" font-size="14.5" font-weight="700">Plantilla APA 7 / Reporte</text>
+                <text x="467" y="396" text-anchor="middle" fill="#009966" font-size="14" font-weight="700">✓ 100 % texto intacto</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <footer class="slide-footer">
+          <span>PrettyDocs · Problema y Usuario</span>
+          <span class="slide-num">02 / 12</span>
+        </footer>
+      </section>
+
+      <!-- ===================================================================
+           DIAPOSITIVA 03 — PROPUESTA DE SOLUCIÓN: DOS MODOS DE OPERACIÓN
+           =================================================================== -->
+      <section class="slide" data-title="Solución · Dos Modos de Operación" data-kicker="02 · SOLUCIÓN">
+        <header class="slide-header">
+          <div class="slide-header__text">
+            <span class="slide-kicker">02 · SOLUCIÓN</span>
+            <h2 class="slide-title">Dos modos de formateo sobre un mismo flujo</h2>
+          </div>
+          <div class="slide-brand-mini">
+            <img src="assets/prettydocs-mark.svg" alt="" /> PrettyDocs
+          </div>
+        </header>
+
+        <div class="slide-body">
+          <div class="grid-2">
+            <!-- Tarjeta A: Modo Plantilla -->
+            <article class="card mode-card reveal-left" style="--stagger-index: 1;">
+              <div>
+                <div class="mode-card__top">
+                  <h3 class="mode-card__title">Modo Plantilla</h3>
+                  <span class="badge badge--indigo"><code class="inline-code">use_ai: false</code></span>
+                </div>
+                <ul class="bullet-list" style="margin-top: 20px;">
+                  <li>Formateo visual síncrono inmediato sobre el <code class="inline-code">.docx</code> original (HTTP 200).</li>
+                  <li>Aplica márgenes, tipografía, interlineado y estilos sin cambiar la estructura.</li>
+                </ul>
+              </div>
+
+              <div class="mode-flow-box">
+                <svg viewBox="0 0 500 72" width="100%" height="72" role="img" aria-label="Flujo Modo Plantilla">
+                  <rect x="6" y="14" width="132" height="44" rx="10" fill="var(--surface-card)" stroke="var(--border-strong)" stroke-width="1.5"/>
+                  <text x="72" y="42" text-anchor="middle" fill="var(--text-primary)" font-size="16" font-weight="700">1. Subir .docx</text>
+                  <line x1="142" y1="36" x2="176" y2="36" stroke="var(--text-secondary)" stroke-width="2.5"/>
+                  <polygon points="174,30 184,36 174,42" fill="var(--text-secondary)"/>
+
+                  <rect x="186" y="14" width="136" height="44" rx="10" fill="#2c3e50"/>
+                  <text x="254" y="42" text-anchor="middle" fill="#ffffff" font-size="16" font-weight="700">2. Plantilla</text>
+                  <line x1="326" y1="36" x2="358" y2="36" stroke="var(--text-secondary)" stroke-width="2.5"/>
+                  <polygon points="356,30 366,36 356,42" fill="var(--text-secondary)"/>
+
+                  <rect x="368" y="14" width="126" height="44" rx="10" fill="var(--surface-card)" stroke="var(--border-strong)" stroke-width="1.5"/>
+                  <text x="431" y="42" text-anchor="middle" fill="var(--text-primary)" font-size="16" font-weight="700">3. Descargar</text>
+                </svg>
+              </div>
+            </article>
+
+            <!-- Tarjeta B: Modo Inteligente -->
+            <article class="card card--emerald mode-card reveal-right" style="--stagger-index: 2;">
+              <div>
+                <div class="mode-card__top">
+                  <h3 class="mode-card__title">Modo Inteligente</h3>
+                  <span class="badge badge--emerald">Sprint 3 · <code class="inline-code">use_ai: true</code></span>
+                </div>
+                <ul class="bullet-list" style="margin-top: 20px;">
+                  <li>Detecta títulos, listas, tablas y énfasis mediante IA (OpenRouter) o respaldo heurístico.</li>
+                  <li>Procesamiento asíncrono (HTTP 202) con vista previa interactiva y reversión por bloque.</li>
+                </ul>
+              </div>
+
+              <div class="mode-flow-box">
+                <svg viewBox="0 0 510 72" width="100%" height="72" role="img" aria-label="Flujo Modo Inteligente">
+                  <rect x="4" y="14" width="78" height="44" rx="9" fill="var(--surface-card)" stroke="var(--border-subtle)"/>
+                  <text x="43" y="41" text-anchor="middle" fill="var(--text-primary)" font-size="14" font-weight="700">Subir</text>
+                  <line x1="84" y1="36" x2="100" y2="36" stroke="#00bd7e" stroke-width="2.5"/>
+
+                  <rect x="102" y="14" width="84" height="44" rx="9" fill="#00bd7e"/>
+                  <text x="144" y="41" text-anchor="middle" fill="#ffffff" font-size="14" font-weight="800">IA / DI</text>
+                  <line x1="188" y1="36" x2="204" y2="36" stroke="#00bd7e" stroke-width="2.5"/>
+
+                  <rect x="206" y="14" width="88" height="44" rx="9" fill="#2c3e50"/>
+                  <text x="250" y="41" text-anchor="middle" fill="#ffffff" font-size="14" font-weight="700">Validar</text>
+                  <line x1="296" y1="36" x2="312" y2="36" stroke="#00bd7e" stroke-width="2.5"/>
+
+                  <rect x="314" y="14" width="90" height="44" rx="9" fill="rgba(0,189,126,0.16)" stroke="#00bd7e" stroke-width="1.8"/>
+                  <text x="359" y="41" text-anchor="middle" fill="#009966" font-size="14" font-weight="800">Revisar</text>
+                  <line x1="406" y1="36" x2="422" y2="36" stroke="#00bd7e" stroke-width="2.5"/>
+
+                  <rect x="424" y="14" width="82" height="44" rx="9" fill="var(--surface-card)" stroke="var(--border-subtle)"/>
+                  <text x="465" y="41" text-anchor="middle" fill="var(--text-primary)" font-size="14" font-weight="700">Word</text>
+                </svg>
+              </div>
+            </article>
+          </div>
+
+          <div class="presets-strip reveal" style="--stagger-index: 4;">
+            <span class="presets-strip__label">Presets estructurales incluidos (<code class="inline-code">templates_engine/presets/</code>):</span>
+            <div class="presets-badges">
+              <span class="badge badge--emerald">APA 7</span>
+              <span class="badge badge--indigo">Reporte</span>
+              <span class="badge badge--indigo">Tesis</span>
+              <span class="badge badge--indigo">Personalizado</span>
+            </div>
+          </div>
+        </div>
+
+        <footer class="slide-footer">
+          <span>PrettyDocs · Dos Modos de Operación</span>
+          <span class="slide-num">03 / 12</span>
+        </footer>
+      </section>
+
+      <!-- ===================================================================
+           DIAPOSITIVA 04 — ARQUITECTURA DEL SISTEMA
+           =================================================================== -->
+      <section class="slide slide--alt" data-title="Arquitectura del Sistema" data-kicker="03 · ARQUITECTURA">
+        <header class="slide-header">
+          <div class="slide-header__text">
+            <span class="slide-kicker">03 · ARQUITECTURA</span>
+            <h2 class="slide-title">Arquitectura modular y desacoplada por capas</h2>
+          </div>
+          <div class="slide-brand-mini">
+            <img src="assets/prettydocs-mark.svg" alt="" /> PrettyDocs
+          </div>
+        </header>
+
+        <div class="slide-body">
+          <div class="arch-canvas">
+            <!-- Diagrama SVG 4 columnas conectadas con flujo animado -->
+            <svg viewBox="0 0 1120 355" width="100%" height="100%" role="img" aria-label="Arquitectura en 4 capas de PrettyDocs">
+              <!-- Conectores animados entre capas -->
+              <line x1="252" y1="175" x2="296" y2="175" stroke="#00bd7e" stroke-width="3" class="svg-flow"/>
+              <polygon points="294,168 306,175 294,182" fill="#00bd7e"/>
+
+              <line x1="538" y1="175" x2="582" y2="175" stroke="#00bd7e" stroke-width="3" class="svg-flow"/>
+              <polygon points="580,168 592,175 580,182" fill="#00bd7e"/>
+
+              <line x1="844" y1="175" x2="888" y2="175" stroke="#00bd7e" stroke-width="3" class="svg-flow"/>
+              <polygon points="886,168 898,175 886,182" fill="#00bd7e"/>
+
+              <!-- Columna 1: Cliente Web -->
+              <g class="reveal" style="--stagger-index: 1;">
+                <rect x="12" y="18" width="240" height="318" rx="16" fill="var(--surface-alt)" stroke="var(--border-strong)" stroke-width="1.5"/>
+                <rect x="12" y="18" width="240" height="44" rx="16" fill="#2c3e50"/>
+                <text x="132" y="46" text-anchor="middle" fill="#ffffff" font-size="16" font-weight="800">1. Cliente Web</text>
+
+                <rect x="28" y="80" width="208" height="46" rx="10" fill="var(--surface-card)" stroke="var(--border-subtle)"/>
+                <text x="132" y="108" text-anchor="middle" fill="var(--text-primary)" font-size="16" font-weight="700">Vue 3 · Vite · Pinia</text>
+
+                <rect x="28" y="140" width="208" height="114" rx="10" fill="var(--surface-card)" stroke="var(--border-subtle)"/>
+                <text x="132" y="166" text-anchor="middle" fill="#009966" font-size="15" font-weight="800">Vistas del flujo</text>
+                <text x="132" y="191" text-anchor="middle" fill="var(--text-secondary)" font-size="15">Home · ConfigView</text>
+                <text x="132" y="214" text-anchor="middle" fill="var(--text-secondary)" font-size="15">Processing · ReviewView</text>
+                <text x="132" y="237" text-anchor="middle" fill="var(--text-secondary)" font-size="15">ResultView</text>
+
+                <rect x="28" y="268" width="208" height="48" rx="10" fill="rgba(0,189,126,0.14)" stroke="#00bd7e"/>
+                <text x="132" y="297" text-anchor="middle" fill="#009966" font-size="15" font-weight="800">Axios + Mocks (Vitest)</text>
+              </g>
+
+              <!-- Columna 2: API y Orquestación -->
+              <g class="reveal" style="--stagger-index: 2;">
+                <rect x="306" y="18" width="232" height="318" rx="16" fill="var(--surface-alt)" stroke="var(--border-strong)" stroke-width="1.5"/>
+                <rect x="306" y="18" width="232" height="44" rx="16" fill="#2c3e50"/>
+                <text x="422" y="46" text-anchor="middle" fill="#ffffff" font-size="16" font-weight="800">2. API y Orquestación</text>
+
+                <rect x="322" y="80" width="200" height="66" rx="10" fill="var(--surface-card)" stroke="var(--border-subtle)"/>
+                <text x="422" y="108" text-anchor="middle" fill="var(--text-primary)" font-size="16" font-weight="700">Django + DRF</text>
+                <text x="422" y="131" text-anchor="middle" fill="var(--text-secondary)" font-size="14" font-family="var(--font-mono)">api-contract v1.1</text>
+
+                <rect x="322" y="162" width="200" height="72" rx="10" fill="var(--surface-card)" stroke="#00bd7e" stroke-width="1.8"/>
+                <text x="422" y="191" text-anchor="middle" fill="#009966" font-size="16" font-weight="800">JobRunner</text>
+                <text x="422" y="216" text-anchor="middle" fill="var(--text-secondary)" font-size="14.5">ThreadPool / Sync</text>
+
+                <rect x="322" y="250" width="200" height="66" rx="10" fill="var(--surface-card)" stroke="var(--border-subtle)"/>
+                <text x="422" y="278" text-anchor="middle" fill="var(--text-primary)" font-size="15" font-weight="700">Estados de Job</text>
+                <text x="422" y="301" text-anchor="middle" fill="var(--text-secondary)" font-size="13.5" font-family="var(--font-mono)">202 · review · done</text>
+              </g>
+
+              <!-- Columna 3: Motores de Dominio -->
+              <g class="reveal" style="--stagger-index: 3;">
+                <rect x="592" y="18" width="252" height="318" rx="16" fill="var(--surface-alt)" stroke="#00bd7e" stroke-width="2"/>
+                <rect x="592" y="18" width="252" height="44" rx="16" fill="#00bd7e"/>
+                <text x="718" y="46" text-anchor="middle" fill="#ffffff" font-size="16" font-weight="800">3. Motores de Dominio</text>
+
+                <rect x="608" y="78" width="220" height="72" rx="10" fill="var(--surface-card)" stroke="var(--border-subtle)"/>
+                <text x="718" y="106" text-anchor="middle" fill="var(--text-primary)" font-size="16" font-weight="800" font-family="var(--font-mono)">docx_engine</text>
+                <text x="718" y="131" text-anchor="middle" fill="var(--text-secondary)" font-size="14.5">Extractor v2 · Rebuilder v2</text>
+
+                <rect x="608" y="164" width="220" height="74" rx="10" fill="var(--surface-card)" stroke="#00bd7e" stroke-width="1.8"/>
+                <text x="718" y="192" text-anchor="middle" fill="#009966" font-size="16" font-weight="800" font-family="var(--font-mono)">ai_engine</text>
+                <text x="718" y="218" text-anchor="middle" fill="var(--text-secondary)" font-size="14">OpenRouter · Heurístico · Chunker</text>
+
+                <rect x="608" y="252" width="220" height="68" rx="10" fill="var(--surface-card)" stroke="var(--border-subtle)"/>
+                <text x="718" y="280" text-anchor="middle" fill="var(--text-primary)" font-size="16" font-weight="800" font-family="var(--font-mono)">templates_engine</text>
+                <text x="718" y="304" text-anchor="middle" fill="var(--text-secondary)" font-size="14.5">Estilos OOXML v2 (4 presets)</text>
+              </g>
+
+              <!-- Columna 4: Contratos y Datos -->
+              <g class="reveal" style="--stagger-index: 4;">
+                <rect x="898" y="18" width="210" height="318" rx="16" fill="var(--surface-alt)" stroke="var(--border-strong)" stroke-width="1.5"/>
+                <rect x="898" y="18" width="210" height="44" rx="16" fill="#2c3e50"/>
+                <text x="1003" y="46" text-anchor="middle" fill="#ffffff" font-size="16" font-weight="800">4. Contratos y Datos</text>
+
+                <rect x="914" y="82" width="178" height="106" rx="10" fill="var(--surface-card)" stroke="#00bd7e" stroke-width="1.5"/>
+                <text x="1003" y="110" text-anchor="middle" fill="#009966" font-size="15" font-weight="800">Esquema DI</text>
+                <text x="1003" y="135" text-anchor="middle" fill="var(--text-primary)" font-size="13.5" font-family="var(--font-mono)">document_schema.py</text>
+                <text x="1003" y="160" text-anchor="middle" fill="var(--text-secondary)" font-size="14">Pydantic v2 · JSON Schema</text>
+
+                <rect x="914" y="206" width="178" height="110" rx="10" fill="var(--surface-card)" stroke="var(--border-subtle)"/>
+                <text x="1003" y="238" text-anchor="middle" fill="var(--text-primary)" font-size="16" font-weight="800">Persistencia</text>
+                <text x="1003" y="266" text-anchor="middle" fill="var(--text-secondary)" font-size="15">PostgreSQL (Jobs)</text>
+                <text x="1003" y="292" text-anchor="middle" fill="var(--text-secondary)" font-size="15">Media / .docx Storage</text>
+              </g>
+            </svg>
+          </div>
+
+          <div class="pillars-row">
+            <div class="pillar-card reveal" style="--stagger-index: 2;">
+              <strong>Frontend Vue 3 + Vite + Pinia</strong>
+              Flujo guiado: Home → Config → Processing → Review → Result.
+            </div>
+            <div class="pillar-card reveal" style="--stagger-index: 3;">
+              <strong>Backend Django + DRF</strong>
+              API REST v1.1 con JobRunner asíncrono por hilos y tests con pytest.
+            </div>
+            <div class="pillar-card reveal" style="--stagger-index: 4;">
+              <strong>Desacoplamiento estricto</strong>
+              <code class="inline-code">ai_engine</code> opera solo con Pydantic, sin importar <code class="inline-code">python-docx</code>.
+            </div>
+          </div>
+        </div>
+
+        <footer class="slide-footer">
+          <span>PrettyDocs · Arquitectura Modular</span>
+          <span class="slide-num">04 / 12</span>
+        </footer>
+      </section>
+
+      <!-- ===================================================================
+           DIAPOSITIVA 05 — PIPELINE INTELIGENTE Y DOCUMENTO INTERMEDIO (DI)
+           =================================================================== -->
+      <section class="slide" data-title="Pipeline Inteligente y Documento Intermedio" data-kicker="04 · MOTOR DOCUMENTAL E IA">
+        <header class="slide-header">
+          <div class="slide-header__text">
+            <span class="slide-kicker">04 · MOTOR DOCUMENTAL E IA</span>
+            <h2 class="slide-title">Del XML de Word al Documento Intermedio</h2>
+          </div>
+          <div class="slide-brand-mini">
+            <img src="assets/prettydocs-mark.svg" alt="" /> PrettyDocs
+          </div>
+        </header>
+
+        <div class="slide-body">
+          <!-- Pipeline horizontal 6 nodos -->
+          <div class="pipeline-strip">
+            <svg viewBox="0 0 1130 74" width="100%" height="66" role="img" aria-label="Pipeline de 6 etapas">
+              <g class="pipe-node" style="--node-i: 0;">
+                <rect x="4" y="9" width="156" height="56" rx="12" fill="var(--surface-card)" stroke="#2c3e50" stroke-width="2"/>
+                <text x="82" y="34" text-anchor="middle" fill="var(--text-primary)" font-size="16" font-weight="800">Extractor v2</text>
+                <text x="82" y="54" text-anchor="middle" fill="var(--text-secondary)" font-size="13">IDs + hints + keep</text>
+              </g>
+              <line x1="164" y1="37" x2="190" y2="37" stroke="#00bd7e" stroke-width="3"/>
+              <polygon points="188,31 198,37 188,43" fill="#00bd7e"/>
+
+              <g class="pipe-node" style="--node-i: 1;">
+                <rect x="200" y="9" width="156" height="56" rx="12" fill="var(--surface-card)" stroke="#2c3e50" stroke-width="2"/>
+                <text x="278" y="34" text-anchor="middle" fill="var(--text-primary)" font-size="16" font-weight="800">Chunker</text>
+                <text x="278" y="54" text-anchor="middle" fill="var(--text-secondary)" font-size="13">~8k chars · contexto</text>
+              </g>
+              <line x1="360" y1="37" x2="386" y2="37" stroke="#00bd7e" stroke-width="3"/>
+              <polygon points="384,31 394,37 384,43" fill="#00bd7e"/>
+
+              <g class="pipe-node" style="--node-i: 2;">
+                <rect x="396" y="9" width="160" height="56" rx="12" fill="#00bd7e"/>
+                <text x="476" y="34" text-anchor="middle" fill="#ffffff" font-size="16" font-weight="800">LLMProvider</text>
+                <text x="476" y="54" text-anchor="middle" fill="#e6fff6" font-size="13">OpenRouter · Schema</text>
+              </g>
+              <line x1="560" y1="37" x2="586" y2="37" stroke="#00bd7e" stroke-width="3"/>
+              <polygon points="584,31 594,37 584,43" fill="#00bd7e"/>
+
+              <g class="pipe-node" style="--node-i: 3;">
+                <rect x="596" y="9" width="152" height="56" rx="12" fill="#2c3e50"/>
+                <text x="672" y="34" text-anchor="middle" fill="#ffffff" font-size="16" font-weight="800">Validador</text>
+                <text x="672" y="54" text-anchor="middle" fill="#cbd5e1" font-size="13">100 % tokens + keep</text>
+              </g>
+              <line x1="752" y1="37" x2="778" y2="37" stroke="#00bd7e" stroke-width="3"/>
+              <polygon points="776,31 786,37 776,43" fill="#00bd7e"/>
+
+              <g class="pipe-node" style="--node-i: 4;">
+                <rect x="788" y="9" width="158" height="56" rx="12" fill="var(--surface-card)" stroke="#2c3e50" stroke-width="2"/>
+                <text x="867" y="34" text-anchor="middle" fill="var(--text-primary)" font-size="16" font-weight="800">Rebuilder v2</text>
+                <text x="867" y="54" text-anchor="middle" fill="var(--text-secondary)" font-size="13">Clon XML + listas</text>
+              </g>
+              <line x1="950" y1="37" x2="976" y2="37" stroke="#00bd7e" stroke-width="3"/>
+              <polygon points="974,31 984,37 974,43" fill="#00bd7e"/>
+
+              <g class="pipe-node" style="--node-i: 5;">
+                <rect x="986" y="9" width="140" height="56" rx="12" fill="rgba(0,189,126,0.16)" stroke="#00bd7e" stroke-width="2"/>
+                <text x="1056" y="34" text-anchor="middle" fill="#009966" font-size="16" font-weight="800">Templates v2</text>
+                <text x="1056" y="54" text-anchor="middle" fill="#009966" font-size="13">APA 7 / Reporte</text>
+              </g>
+            </svg>
+          </div>
+
+          <div class="di-split">
+            <!-- Panel Izquierdo: JSON compacto di.v1 (sin desbordamiento horizontal) -->
+            <div class="card card--code reveal-left" style="--stagger-index: 1; justify-content: space-evenly;">
+              <div>
+                <div class="code-block-title">
+                  <span>Entrada DI (di.v1)</span>
+                  <span>Prompt v1.0</span>
+                </div>
+                <pre class="code-pre">{<span class="tok-key">"id"</span>: <span class="tok-str">"b3"</span>, <span class="tok-key">"text"</span>: <span class="tok-str">"1. RESUMEN"</span>,
+ <span class="tok-key">"hints"</span>: {<span class="tok-key">"size_ratio"</span>: <span class="tok-num">1.45</span>, <span class="tok-key">"all_bold"</span>: <span class="tok-num">true</span>}}
+{<span class="tok-key">"id"</span>: <span class="tok-str">"b5"</span>, <span class="tok-key">"type"</span>: <span class="tok-str">"keep"</span>, <span class="tok-key">"keep_kind"</span>: <span class="tok-str">"image"</span>}</pre>
+              </div>
+
+              <div class="code-divider">↓ Salida validada por Pydantic (trazabilidad src)</div>
+
+              <div>
+                <div class="code-block-title"><span>Salida IA (AIChunkOutput)</span><span>JSON Schema</span></div>
+                <pre class="code-pre">{<span class="tok-key">"type"</span>: <span class="tok-str">"heading"</span>, <span class="tok-key">"level"</span>: <span class="tok-num">1</span>, <span class="tok-key">"src"</span>: [<span class="tok-str">"b3"</span>],
+ <span class="tok-key">"runs"</span>: [{<span class="tok-key">"text"</span>: <span class="tok-str">"1. RESUMEN"</span>}]}
+{<span class="tok-key">"type"</span>: <span class="tok-str">"keep"</span>, <span class="tok-key">"id"</span>: <span class="tok-str">"b5"</span>, <span class="tok-key">"src"</span>: [<span class="tok-str">"b5"</span>]}</pre>
+              </div>
+            </div>
+
+            <!-- Panel Derecho: Notas concisas + Blindaje keep -->
+            <div class="card di-notes-card reveal-right" style="--stagger-index: 2;">
+              <ul class="bullet-list bullet-list--compact">
+                <li><strong>Extractor v2:</strong> IDs estables y pistas (<code class="inline-code">size_ratio</code>, negrita, glifos).</li>
+                <li><strong>Chunker:</strong> fragmentos de ~8k chars con <code class="inline-code">heading_path</code> (máx. 60k).</li>
+                <li><strong>Bloques <code class="inline-code">keep</code>:</strong> clonados intactos desde el XML original.</li>
+              </ul>
+
+              <div class="keep-section">
+                <div class="section-label section-label--emerald" style="margin-bottom: 8px;">Elementos blindados por keep</div>
+                <div class="keep-grid">
+                  <div class="keep-chip"><span class="keep-chip__icon">✓</span> Imágenes</div>
+                  <div class="keep-chip"><span class="keep-chip__icon">✓</span> Tablas previas</div>
+                  <div class="keep-chip"><span class="keep-chip__icon">✓</span> Secciones</div>
+                  <div class="keep-chip"><span class="keep-chip__icon">✓</span> Encabezados y pies</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <footer class="slide-footer">
+          <span>PrettyDocs · Documento Intermedio (di.v1)</span>
+          <span class="slide-num">05 / 12</span>
+        </footer>
+      </section>
+
+      <!-- ===================================================================
+           DIAPOSITIVA 06 — GARANTÍA DE INTEGRIDAD: 0 % ALUCINACIÓN TEXTUAL
+           =================================================================== -->
+      <section class="slide" data-title="Garantía de Integridad Textual" data-kicker="05 · INTEGRIDAD DE CONTENIDO">
+        <header class="slide-header">
+          <div class="slide-header__text">
+            <span class="slide-kicker">05 · INTEGRIDAD DE CONTENIDO</span>
+            <h2 class="slide-title">La IA propone estructura, nunca reescribe tu texto</h2>
+            <p class="slide-subtitle">Un validador determinista compara cada palabra y cifra contra el original antes de aceptar la salida de la IA.</p>
+          </div>
+          <div class="slide-brand-mini">
+            <img src="assets/prettydocs-mark.svg" alt="" /> PrettyDocs
+          </div>
+        </header>
+
+        <div class="slide-body grid-55-45">
+          <!-- Diagrama de decisión SVG -->
+          <div class="card card--soft" style="align-items: center; justify-content: center; padding: 14px;">
+            <svg viewBox="0 0 600 410" width="100%" height="100%" role="img" aria-label="Ciclo de validación de integridad y respaldo heurístico">
+              <!-- Nodo 1: Salida IA -->
+              <g class="reveal" style="--stagger-index: 1;">
+                <rect x="200" y="10" width="200" height="52" rx="12" fill="#2c3e50"/>
+                <text x="300" y="42" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="800">Salida de la IA (JSON)</text>
+              </g>
+              <line x1="300" y1="64" x2="300" y2="96" stroke="#2c3e50" stroke-width="3" class="svg-draw" style="--path-len: 40; --draw-delay: 0.2s;"/>
+              <polygon points="293,94 307,94 300,104" fill="#2c3e50"/>
+
+              <!-- Nodo 2: Validador (rombo estilizado / caja) -->
+              <g class="reveal" style="--stagger-index: 2;">
+                <rect x="135" y="106" width="330" height="66" rx="14" fill="var(--surface-card)" stroke="#00bd7e" stroke-width="2.5"/>
+                <text x="300" y="134" text-anchor="middle" fill="var(--text-primary)" font-size="18" font-weight="800">Validador de Integridad</text>
+                <text x="300" y="158" text-anchor="middle" fill="var(--text-secondary)" font-size="14.5" font-family="var(--font-mono)">tokens (\w+) + puntuación + keep</text>
+              </g>
+
+              <!-- Rama VERDE: OK (izquierda) -->
+              <path d="M 210 172 L 210 218 L 130 218 L 130 260" fill="none" stroke="#00bd7e" stroke-width="3.5"
+                    class="svg-draw" style="--path-len: 180; --draw-delay: 0.35s;"/>
+              <polygon points="123,258 137,258 130,268" fill="#00bd7e"/>
+              <rect x="128" y="204" width="60" height="24" rx="12" fill="#00bd7e"/>
+              <text x="158" y="220" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="800">OK ✓</text>
+
+              <g class="reveal" style="--stagger-index: 3;">
+                <rect x="20" y="270" width="220" height="72" rx="14" fill="rgba(0,189,126,0.16)" stroke="#00bd7e" stroke-width="2"/>
+                <text x="130" y="301" text-anchor="middle" fill="#009966" font-size="18" font-weight="800">Vista previa (review)</text>
+                <text x="130" y="325" text-anchor="middle" fill="var(--text-secondary)" font-size="14.5">El usuario aprueba o revierte</text>
+              </g>
+
+              <!-- Rama ÁMBAR: Falla -> 1 reintento (derecha) -->
+              <path d="M 390 172 L 390 218 L 462 218 L 462 252" fill="none" stroke="#d97706" stroke-width="3.5"
+                    class="svg-draw" style="--path-len: 180; --draw-delay: 0.55s;"/>
+              <polygon points="455,250 469,250 462,260" fill="#d97706"/>
+              <rect x="404" y="204" width="68" height="24" rx="12" fill="#d97706"/>
+              <text x="438" y="220" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="800">Falla 1×</text>
+
+              <g class="reveal" style="--stagger-index: 4;">
+                <rect x="342" y="262" width="240" height="54" rx="12" fill="rgba(217,119,6,0.12)" stroke="#d97706" stroke-width="2"/>
+                <text x="462" y="286" text-anchor="middle" fill="#b45309" font-size="16" font-weight="800">1 reintento con feedback</text>
+                <text x="462" y="305" text-anchor="middle" fill="var(--text-secondary)" font-size="13.5">Indica bloques src afectados</text>
+              </g>
+
+              <!-- Rama ÍNDIGO: Falla 2x -> Heurístico -->
+              <line x1="462" y1="318" x2="462" y2="342" stroke="#2c3e50" stroke-width="3" class="svg-draw" style="--path-len: 30; --draw-delay: 0.75s;"/>
+              <polygon points="455,340 469,340 462,350" fill="#2c3e50"/>
+
+              <g class="reveal" style="--stagger-index: 5;">
+                <rect x="330" y="352" width="256" height="50" rx="12" fill="#2c3e50"/>
+                <text x="458" y="383" text-anchor="middle" fill="#ffffff" font-size="16" font-weight="800">Respaldo: Heurístico local</text>
+              </g>
+
+              <!-- Conexión del heurístico a review -->
+              <path d="M 330 377 L 130 377 L 130 344" fill="none" stroke="#00bd7e" stroke-width="2.5" stroke-dasharray="6 4"/>
+              <polygon points="124,348 136,348 130,338" fill="#00bd7e"/>
+            </svg>
+          </div>
+
+          <!-- Tabla compacta de reglas -->
+          <div style="display:flex; flex-direction:column; justify-content:center;">
+            <table class="pd-table pd-table--compact reveal-right" style="--stagger-index: 2;">
+              <thead>
+                <tr>
+                  <th>Regla del Validador</th>
+                  <th style="width: 165px;">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Secuencia de palabras, números y puntuación</td>
+                  <td><span class="badge badge--emerald">Idéntica (100 %)</span></td>
+                </tr>
+                <tr>
+                  <td>Bloques opacos (<code class="inline-code">keep</code>) en el mismo orden</td>
+                  <td><span class="badge badge--emerald">Obligatorio</span></td>
+                </tr>
+                <tr>
+                  <td>Quitar glifos (<code class="inline-code">·</code>, <code class="inline-code">-</code>) y numeración manual</td>
+                  <td><span class="badge badge--indigo">Permitido</span></td>
+                </tr>
+                <tr>
+                  <td>Guardrails: título ≤ 20 pal., negrita ≤ 30 %</td>
+                  <td><span class="badge badge--emerald">Verificado</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <footer class="slide-footer">
+          <span>PrettyDocs · Integridad de Contenido</span>
+          <span class="slide-num">06 / 12</span>
+        </footer>
+      </section>
+
+      <!-- ===================================================================
+           DIAPOSITIVA 07 — ESTADO DEL PROYECTO CONTRA EL PLAN (SPRINT 3)
+           =================================================================== -->
+      <section class="slide slide--alt" data-title="Estado contra el Plan · Sprint 3" data-kicker="06 · ESTADO CONTRA EL PLAN">
+        <header class="slide-header">
+          <div class="slide-header__text">
+            <span class="slide-kicker">06 · ESTADO CONTRA EL PLAN</span>
+            <h2 class="slide-title">Avance real del Sprint 3 frente a lo planeado</h2>
+          </div>
+          <div class="slide-brand-mini">
+            <img src="assets/prettydocs-mark.svg" alt="" /> PrettyDocs
+          </div>
+        </header>
+
+        <div class="slide-body">
+          <!-- KPIs superiores alimentados por js/data.js -->
+          <div class="kpi-strip">
+            <div class="kpi-card kpi-card--accent reveal" style="--stagger-index: 1;">
+              <div style="display:flex; align-items:baseline; justify-content:space-between;">
+                <span id="kpi-s3-tasks" class="kpi-value">25 / 25</span>
+                <span id="kpi-s3-pct" class="badge badge--emerald">100%</span>
+              </div>
+              <span class="kpi-label">Tareas Jira completadas</span>
+            </div>
+
+            <div class="kpi-card reveal" style="--stagger-index: 2;">
+              <span id="kpi-s3-milestones" class="kpi-value">3</span>
+              <span class="kpi-label">Hitos de entrega cumplidos</span>
+              <span class="kpi-sub">5 nov · 12 nov · 23 nov</span>
+            </div>
+
+            <div class="kpi-card reveal" style="--stagger-index: 3;">
+              <span id="kpi-s3-members" class="kpi-value">5</span>
+              <span class="kpi-label">Integrantes activos en paralelo</span>
+              <span class="kpi-sub">Frontend · Backend · IA · QA</span>
+            </div>
+          </div>
+
+          <!-- Gráficas SVG dinámicas (js/charts.js) -->
+          <div class="grid-2">
+            <div class="chart-card reveal" style="--stagger-index: 2;">
+              <div class="chart-card__head">
+                <h3 class="chart-card__title">Curva acumulada del Sprint 3</h3>
+                <span class="badge badge--emerald">Planeado vs. Real</span>
+              </div>
+              <div id="chart-s3-cumulative" class="chart-host"></div>
+            </div>
+
+            <div class="chart-card reveal" style="--stagger-index: 3;">
+              <div class="chart-card__head">
+                <h3 class="chart-card__title">Distribución de tareas por integrante</h3>
+                <span class="badge badge--indigo">Tablero Jira</span>
+              </div>
+              <div id="chart-s3-members" class="chart-host"></div>
+            </div>
+          </div>
+        </div>
+
+        <footer class="slide-footer">
+          <span>PrettyDocs · Seguimiento del Plan (js/data.js)</span>
+          <span class="slide-num">07 / 12</span>
+        </footer>
+      </section>
+
+      <!-- ===================================================================
+           DIAPOSITIVA 08 — COMPROMETIDO CONTRA TERMINADO
+           =================================================================== -->
+      <section class="slide" data-title="Comprometido vs. Terminado" data-kicker="07 · COMPROMETIDO VS. TERMINADO">
+        <header class="slide-header">
+          <div class="slide-header__text">
+            <span class="slide-kicker">07 · COMPROMETIDO VS. TERMINADO</span>
+            <h2 class="slide-title">Alcance comprometido para hoy frente a alcance diferido</h2>
+          </div>
+          <div class="slide-brand-mini">
+            <img src="assets/prettydocs-mark.svg" alt="" /> PrettyDocs
+          </div>
+        </header>
+
+        <div class="slide-body" style="justify-content: center;">
+          <table class="pd-table">
+            <thead>
+              <tr>
+                <th>Módulo / Entregable</th>
+                <th style="width: 230px;">Compromiso Sprint 3</th>
+                <th style="width: 230px;">Estado al 23 nov</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="reveal" style="--stagger-index: 1;">
+                <td><strong>Motor Documental</strong> (Extractor v2, Rebuilder v2, bloques <code class="inline-code">keep</code>)</td>
+                <td>Must (M)</td>
+                <td><span class="badge badge--emerald">✓ Terminado</span></td>
+              </tr>
+              <tr class="reveal" style="--stagger-index: 2;">
+                <td><strong>Plantillas estructurales</strong> (APA 7, Reporte, Tesis, Personalizado)</td>
+                <td>Must / Could</td>
+                <td><span class="badge badge--emerald">✓ Terminado</span></td>
+              </tr>
+              <tr class="reveal" style="--stagger-index: 3;">
+                <td><strong>Pipeline IA</strong> (OpenRouter, Prompt v1, Chunker, Validador, Heurístico)</td>
+                <td>Must (M)</td>
+                <td><span class="badge badge--emerald">✓ Terminado</span></td>
+              </tr>
+              <tr class="reveal" style="--stagger-index: 4;">
+                <td><strong>API v1.1 + Orquestador asíncrono + Vistas</strong> (<code class="inline-code">ReviewView</code> / <code class="inline-code">ResultView</code>)</td>
+                <td>Must (M)</td>
+                <td><span class="badge badge--emerald">✓ Terminado</span></td>
+              </tr>
+              <tr class="reveal" style="--stagger-index: 5;">
+                <td><strong>Corpus de evaluación y suite automatizada</strong> (S3T23–S3T25)</td>
+                <td>Must / Should</td>
+                <td><span class="badge badge--emerald">✓ Terminado</span></td>
+              </tr>
+              <tr class="reveal" style="--stagger-index: 6;">
+                <td>Celery/Redis, Auth/Historial por usuario y corrección ortográfica</td>
+                <td>Fuera de alcance S3</td>
+                <td><span class="badge badge--amber">Pendiente (Sprint 4)</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <footer class="slide-footer">
+          <span>PrettyDocs · Comprometido vs. Terminado</span>
+          <span class="slide-num">08 / 12</span>
+        </footer>
+      </section>
+
+      <!-- ===================================================================
+           DIAPOSITIVA 09 — CALIDAD, PRUEBAS Y EVALUACIÓN DE IA (PLACEHOLDERS)
+           =================================================================== -->
+      <section class="slide" data-title="Calidad, Pruebas y Evaluación de IA" data-kicker="08 · CALIDAD Y VALIDACIÓN">
+        <header class="slide-header">
+          <div class="slide-header__text">
+            <span class="slide-kicker">08 · CALIDAD Y VALIDACIÓN</span>
+            <h2 class="slide-title">Cobertura de pruebas y evaluación del modelo de IA</h2>
+            <p class="slide-subtitle">Validación sin regresiones sobre la base de 61 pruebas del Sprint 2 más el corpus del Sprint 3.</p>
+          </div>
+          <div class="slide-brand-mini">
+            <img src="assets/prettydocs-mark.svg" alt="" /> PrettyDocs
+          </div>
+        </header>
+
+        <div class="slide-body grid-40-60">
+          <!-- 4 KPI Cards dinámicas desde js/data.js -->
+          <div class="kpi-grid-2x2">
+            <div id="kpi-backend-tests" class="kpi-card reveal" style="--stagger-index: 1;">
+              <span class="kpi-value">241</span>
+              <span class="kpi-label">Pruebas Backend (pytest)</span>
+              <span class="kpi-sub">Base S2: 61 en verde</span>
+            </div>
+
+            <div id="kpi-frontend-tests" class="kpi-card reveal" style="--stagger-index: 2;">
+              <span class="kpi-value">12</span>
+              <span class="kpi-label">Pruebas Frontend (vitest)</span>
+              <span class="kpi-sub">Review / Result / Mocks</span>
+            </div>
+
+            <div id="kpi-coverage" class="kpi-card is-placeholder reveal" style="--stagger-index: 3;">
+              <span class="kpi-value">{{XX}}%</span>
+              <span class="kpi-label">Cobertura crítica</span>
+              <span class="kpi-sub">ai_engine + docx_engine</span>
+            </div>
+
+            <div id="kpi-integrity" class="kpi-card is-placeholder reveal" style="--stagger-index: 4;">
+              <span class="kpi-value">{{100}}%</span>
+              <span class="kpi-label">Integridad textual</span>
+              <span class="kpi-sub">Meta obligatoria: 100 %</span>
+            </div>
+          </div>
+
+          <!-- Gráfica de barras agrupadas SVG -->
+          <div class="chart-card reveal" style="--stagger-index: 2;">
+            <div class="chart-card__head">
+              <h3 class="chart-card__title">Meta Plan S3 vs. Heurístico vs. Modelo IA</h3>
+              <span id="eval-model-badge" class="badge badge--amber">Modelo: {{MODELO_OPENROUTER}}</span>
+            </div>
+            <div id="eval-placeholder-banner" class="placeholder-banner">
+              <span>⚠</span>
+              <span>Datos de evaluación listos para inyectar en <code class="inline-code">js/data.js</code> (<code class="inline-code">isPlaceholder: false</code>)</span>
+            </div>
+            <div id="chart-ai-evaluation" class="chart-host"></div>
+          </div>
+        </div>
+
+        <footer class="slide-footer">
+          <span>PrettyDocs · Calidad y Evaluación (js/data.js)</span>
+          <span class="slide-num">09 / 12</span>
+        </footer>
+      </section>
+
+      <!-- ===================================================================
+           DIAPOSITIVA 10 — GESTIÓN DE RIESGOS Y DECISIONES TÉCNICAS
+           =================================================================== -->
+      <section class="slide slide--alt" data-title="Riesgos y Mitigación" data-kicker="09 · RIESGOS Y MITIGACIÓN">
+        <header class="slide-header">
+          <div class="slide-header__text">
+            <span class="slide-kicker">09 · RIESGOS Y MITIGACIÓN</span>
+            <h2 class="slide-title">Principales riesgos técnicos mitigados en código</h2>
+          </div>
+          <div class="slide-brand-mini">
+            <img src="assets/prettydocs-mark.svg" alt="" /> PrettyDocs
+          </div>
+        </header>
+
+        <div class="slide-body grid-2x2">
+          <!-- Tarjeta 1 -->
+          <article class="card risk-card reveal" style="--stagger-index: 1;">
+            <div class="risk-card__head">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div class="risk-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <path d="M12 2L4 5v6c0 5.5 3.4 10.6 8 12 4.6-1.4 8-6.5 8-12V5l-8-3z"/>
+                    <path d="M9 12l2 2 4-4"/>
+                  </svg>
+                </div>
+                <strong style="font-size:21px;">Integridad del contenido</strong>
+              </div>
+              <span class="badge badge--danger">Alto</span>
+            </div>
+            <div class="risk-row">
+              <div class="risk-box risk-box--problem"><strong>Riesgo:</strong> La IA altera palabras, cifras o reescribe oraciones.</div>
+              <div class="risk-box risk-box--solution"><strong>Mitigación:</strong> Validador estricto + 1 reintento + respaldo heurístico.</div>
+            </div>
+          </article>
+
+          <!-- Tarjeta 2 -->
+          <article class="card risk-card reveal" style="--stagger-index: 2;">
+            <div class="risk-card__head">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div class="risk-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <rect x="4" y="11" width="16" height="10" rx="2"/>
+                    <path d="M8 11V7a4 4 0 018 0v4"/>
+                  </svg>
+                </div>
+                <strong style="font-size:21px;">Fidelidad del paquete .docx</strong>
+              </div>
+              <span class="badge badge--danger">Alto</span>
+            </div>
+            <div class="risk-row">
+              <div class="risk-box risk-box--problem"><strong>Riesgo:</strong> Pérdida de imágenes, tablas previas o secciones del Word.</div>
+              <div class="risk-box risk-box--solution"><strong>Mitigación:</strong> Clonado XML sobre original + bloques opacos <code class="inline-code">keep</code>.</div>
+            </div>
+          </article>
+
+          <!-- Tarjeta 3 -->
+          <article class="card risk-card reveal" style="--stagger-index: 3;">
+            <div class="risk-card__head">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div class="risk-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <path d="M8 7h8M8 12h8M8 17h5"/>
+                    <rect x="4" y="3" width="16" height="18" rx="2"/>
+                  </svg>
+                </div>
+                <strong style="font-size:21px;">Acoplamiento de equipo</strong>
+              </div>
+              <span class="badge badge--amber">Medio</span>
+            </div>
+            <div class="risk-row">
+              <div class="risk-box risk-box--problem"><strong>Riesgo:</strong> Bloqueo entre Frontend y Backend durante el Sprint 3.</div>
+              <div class="risk-box risk-box--solution"><strong>Mitigación:</strong> Contrato API v1.1 + catálogo de mocks desde el día 1.</div>
+            </div>
+          </article>
+
+          <!-- Tarjeta 4 -->
+          <article class="card risk-card reveal" style="--stagger-index: 4;">
+            <div class="risk-card__head">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div class="risk-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <circle cx="12" cy="12" r="9"/>
+                    <path d="M12 7v5l3 2"/>
+                  </svg>
+                </div>
+                <strong style="font-size:21px;">Infraestructura asíncrona</strong>
+              </div>
+              <span class="badge badge--amber">Medio</span>
+            </div>
+            <div class="risk-row">
+              <div class="risk-box risk-box--problem"><strong>Riesgo:</strong> Complejidad de desplegar Celery y Redis en Windows.</div>
+              <div class="risk-box risk-box--solution"><strong>Mitigación:</strong> <code class="inline-code">JobRunner</code> desacoplado con backend por hilos (<code class="inline-code">thread</code> / <code class="inline-code">sync</code>).</div>
+            </div>
+          </article>
+        </div>
+
+        <footer class="slide-footer">
+          <span>PrettyDocs · Gestión de Riesgos</span>
+          <span class="slide-num">10 / 12</span>
+        </footer>
+      </section>
+
+      <!-- ===================================================================
+           DIAPOSITIVA 11 — TRANSICIÓN A LA DEMOSTRACIÓN EN VIVO (HERO OSCURO)
+           =================================================================== -->
+      <section class="slide slide--dark" data-title="Demo en Vivo · PrettyDocs en Acción" data-kicker="DEMO EN VIVO">
+        <div class="hero-bg-grid" aria-hidden="true"></div>
+        <div class="hero-bg-glow hero-bg-glow--center" aria-hidden="true"></div>
+        <pre class="demo-bg-code" aria-hidden="true">POST /api/documents/               → 201 Created  { "document_id": 12, "status": "pending" }
+POST /api/documents/12/format/     → 202 Accepted { "status": "processing", "use_ai": true }
+GET  /api/documents/12/            → 200 OK       { "status": "review", "progress": { "stage": "validating" } }
+GET  /api/documents/12/structure/  → 200 OK       { "original": DI, "proposed": DI }
+POST /api/documents/12/review/     → 200 OK       { "status": "done", "action": "accept" }
+GET  /api/documents/12/download/   → 200 OK       application/vnd.openxmlformats-officedocument.wordprocessingml.document</pre>
+
+        <div class="demo-center">
+          <span class="badge badge--emerald reveal" style="--stagger-index: 0; font-size: 18px; padding: 8px 18px;">
+            <span class="live-dot"></span> DEMO EN VIVO
+          </span>
+
+          <h2 class="demo-title reveal" style="--stagger-index: 1;">PrettyDocs en acción</h2>
+          <p class="demo-subtitle reveal" style="--stagger-index: 2;">Flujo completo de principio a fin con un documento real.</p>
+
+          <div class="demo-steps">
+            <svg viewBox="0 0 1040 160" width="100%" height="160" role="img" aria-label="4 pasos de la demostración en vivo">
+              <!-- Línea conectora continua -->
+              <line x1="120" y1="56" x2="920" y2="56" stroke="#00bd7e" stroke-width="3.5" class="svg-flow"/>
+
+              <!-- Paso 1 -->
+              <g class="reveal" style="--stagger-index: 2;">
+                <circle cx="120" cy="56" r="38" fill="#222222" stroke="#00bd7e" stroke-width="2.5"/>
+                <path d="M120 42v24m0-24l-9 9m9-9l9 9M106 70h28" stroke="#00bd7e" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <text x="120" y="124" text-anchor="middle" fill="#ffffff" font-size="19" font-weight="800">1. Subir .docx</text>
+              </g>
+
+              <!-- Paso 2 -->
+              <g class="reveal" style="--stagger-index: 3;">
+                <circle cx="386" cy="56" r="38" fill="#222222" stroke="#00bd7e" stroke-width="2.5"/>
+                <path d="M386 38l3.5 11.5L401 53l-11.5 3.5L386 68l-3.5-11.5L371 53l11.5-3.5L386 38z" fill="#00bd7e"/>
+                <text x="386" y="124" text-anchor="middle" fill="#ffffff" font-size="19" font-weight="800">2. Configurar IA</text>
+              </g>
+
+              <!-- Paso 3 -->
+              <g class="reveal" style="--stagger-index: 4;">
+                <circle cx="654" cy="56" r="38" fill="#222222" stroke="#00bd7e" stroke-width="2.5"/>
+                <rect x="636" y="40" width="36" height="32" rx="5" fill="none" stroke="#00bd7e" stroke-width="2.5"/>
+                <line x1="654" y1="40" x2="654" y2="72" stroke="#00bd7e" stroke-width="2.2"/>
+                <text x="654" y="124" text-anchor="middle" fill="#ffffff" font-size="19" font-weight="800">3. Revisar estructura</text>
+              </g>
+
+              <!-- Paso 4 -->
+              <g class="reveal" style="--stagger-index: 5;">
+                <circle cx="920" cy="56" r="38" fill="#00bd7e"/>
+                <path d="M920 40v24m0 0l-9-9m9 9l9-9M906 70h28" stroke="#181818" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <text x="920" y="124" text-anchor="middle" fill="#ffffff" font-size="19" font-weight="800">4. Descargar Word</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <footer class="slide-footer">
+          <span>PrettyDocs · Transición a Demo</span>
+          <span class="slide-num">11 / 12</span>
+        </footer>
+      </section>
+
+      <!-- ===================================================================
+           DIAPOSITIVA 12 — CIERRE: QUÉ FALTA Y QUÉ SIGUE (ROADMAP)
+           =================================================================== -->
+      <section class="slide" data-title="Cierre · Qué Falta y Qué Sigue" data-kicker="10 · CIERRE Y SIGUIENTES PASOS">
+        <header class="slide-header">
+          <div class="slide-header__text">
+            <span class="slide-kicker">10 · CIERRE Y SIGUIENTES PASOS</span>
+            <h2 class="slide-title">Qué falta por cerrar y evolución del producto</h2>
+          </div>
+          <div class="slide-brand-mini">
+            <img src="assets/prettydocs-mark.svg" alt="" /> PrettyDocs
+          </div>
+        </header>
+
+        <div class="slide-body">
+          <!-- Línea de tiempo SVG horizontal -->
+          <div class="timeline-box">
+            <svg viewBox="0 0 1160 108" width="100%" height="106" role="img" aria-label="Línea de tiempo hacia cierre y Sprint 4">
+              <!-- Tramo consolidado -->
+              <line x1="150" y1="42" x2="580" y2="42" stroke="#00bd7e" stroke-width="5" stroke-linecap="round"
+                    class="svg-draw" style="--path-len: 460; --draw-delay: 0.15s;"/>
+              <!-- Tramo futuro punteado -->
+              <line x1="580" y1="42" x2="1010" y2="42" stroke="#2c3e50" stroke-width="4" stroke-dasharray="9 7" opacity="0.55"/>
+
+              <!-- Nodo 1: Hoy 23 nov -->
+              <g class="reveal" style="--stagger-index: 1;">
+                <circle cx="150" cy="42" r="18" fill="#00bd7e"/>
+                <circle cx="150" cy="42" r="26" fill="none" stroke="#00bd7e" stroke-width="2" stroke-opacity="0.35"/>
+                <text x="150" y="88" text-anchor="middle" fill="#009966" font-size="18" font-weight="800">Hoy · 23 nov (Sprint 3)</text>
+              </g>
+
+              <!-- Nodo 2: Cierre U5 4 dic -->
+              <g class="reveal" style="--stagger-index: 2;">
+                <circle cx="580" cy="42" r="18" fill="#2c3e50"/>
+                <text x="580" y="88" text-anchor="middle" fill="var(--text-primary)" font-size="18" font-weight="800">Cierre Unidad 5 · 4 dic</text>
+              </g>
+
+              <!-- Nodo 3: Sprint 4 -->
+              <g class="reveal" style="--stagger-index: 3;">
+                <circle cx="1010" cy="42" r="18" fill="var(--surface-card)" stroke="#2c3e50" stroke-width="3" stroke-dasharray="5 3"/>
+                <text x="1010" y="88" text-anchor="middle" fill="var(--text-secondary)" font-size="18" font-weight="700">Sprint 4 · Evolución</text>
+              </g>
+            </svg>
+          </div>
+
+          <div class="grid-2">
+            <!-- Bloque 1: Cierre de Unidad 5 -->
+            <article class="card card--emerald reveal-left" style="--stagger-index: 2;">
+              <div class="section-label section-label--emerald">● Qué falta · Cierre de Unidad 5 (antes del 4 dic)</div>
+              <ul class="bullet-list" style="margin-top: 8px;">
+                <li>Consolidar métricas finales de evaluación con modelo real y documentación (<code class="inline-code">evaluacion-ia.md</code>).</li>
+                <li>Ejecutar pruebas integrales E2E en entorno limpio desde cero siguiendo el <code class="inline-code">README</code>.</li>
+              </ul>
+            </article>
+
+            <!-- Bloque 2: Qué sigue (Sprint 4) -->
+            <article class="card reveal-right" style="--stagger-index: 3;">
+              <div class="section-label" style="color: var(--text-primary);">● Qué sigue · Sprint 4 / Evolución</div>
+              <ul class="bullet-list bullet-list--amber" style="margin-top: 8px;">
+                <li>Corrección ortográfica y gramatical con IA y edición manual en vista previa.</li>
+                <li>Autenticación de usuarios, historial persistente y API key propia cifrada (Fernet).</li>
+                <li>Índice automático (TOC), portada y escalamiento con Celery + Redis.</li>
+              </ul>
+            </article>
+          </div>
+
+          <div class="closing-banner reveal" style="--stagger-index: 4;">
+            <span>Gracias por su atención · PrettyDocs</span>
+            <span style="color: #6ee7b7; font-size: 18px;">Espacio para retroalimentación y preguntas</span>
+          </div>
+        </div>
+
+        <footer class="slide-footer">
+          <span>PrettyDocs · Cierre y Roadmap</span>
+          <span class="slide-num">12 / 12</span>
+        </footer>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- HUD discreto del presentador -->
+  <nav class="presenter-hud" aria-label="Controles de presentación">
+    <div class="hud-group">
+      <button id="btn-prev" class="hud-btn" type="button" title="Anterior (←)">←</button>
+      <span id="hud-counter" class="hud-counter">01 / 12</span>
+      <button id="btn-next" class="hud-btn" type="button" title="Siguiente (→ / Espacio)">→</button>
+    </div>
+
+    <div class="hud-group">
+      <button id="hud-timer" class="hud-timer" type="button" title="Iniciar/pausar cronómetro 20:00 (C) · Reiniciar (R)">20:00</button>
+      <button id="btn-overview" class="hud-btn" type="button" title="Vista general (G)">Vista (G)</button>
+      <button id="btn-theme" class="hud-btn" type="button" title="Tema claro/oscuro (T)">Tema (T)</button>
+      <button id="btn-fullscreen" class="hud-btn" type="button" title="Pantalla completa (F)">Full (F)</button>
+      <button id="btn-help" class="hud-btn" type="button" title="Atajos de teclado (?)">?</button>
+    </div>
+  </nav>
+
+  <!-- Barra de progreso inferior -->
+  <div class="deck-progress" aria-hidden="true">
+    <div id="deck-progress-bar" class="deck-progress__bar"></div>
+  </div>
+
+  <!-- Vista Overview de las 12 láminas (tecla G) -->
+  <div id="overview-overlay" class="overview-overlay" hidden role="dialog" aria-label="Vista general de diapositivas">
+    <div class="overview-header">
+      <h2>Vista general · 12 diapositivas (PrettyDocs)</h2>
+      <button id="btn-close-overview" class="hud-btn" type="button" style="border:1px solid rgba(255,255,255,0.25);">Cerrar (Esc / G)</button>
+    </div>
+    <div id="overview-grid" class="overview-grid"></div>
+  </div>
+
+  <!-- Ayuda rápida de atajos (tecla ?) -->
+  <div id="help-overlay" class="help-overlay" hidden role="dialog" aria-label="Atajos de teclado">
+    <div class="help-dialog">
+      <h3>Controles del presentador</h3>
+      <ul class="help-list">
+        <li><span>Siguiente / Anterior</span><span><span class="kbd">→</span> <span class="kbd">←</span> <span class="kbd">Espacio</span></span></li>
+        <li><span>Vista general (12 láminas)</span><span class="kbd">G</span></li>
+        <li><span>Iniciar / pausar cronómetro 20:00</span><span class="kbd">C</span></li>
+        <li><span>Reiniciar cronómetro a 20:00</span><span class="kbd">R</span></li>
+        <li><span>Alternar tema Claro / Oscuro</span><span class="kbd">T</span></li>
+        <li><span>Pantalla completa</span><span class="kbd">F</span></li>
+        <li><span>Cerrar paneles</span><span class="kbd">Esc</span></li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

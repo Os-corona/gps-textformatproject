@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="PrettyDocs isotipo">
+  <defs>
+    <linearGradient id="pd-grad" x1="8" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#00bd7e"/>
+      <stop offset="100%" stop-color="#009463"/>
+    </linearGradient>
+  </defs>
+  <!-- Documento base -->
+  <rect x="8" y="6" width="38" height="52" rx="7" fill="#2c3e50"/>
+  <path d="M34 6H39C42.866 6 46 9.13401 46 13V18H38C35.7909 18 34 16.2091 34 14V6Z" fill="#3f5770"/>
+  <!-- Líneas estructuradas -->
+  <rect x="15" y="16" width="14" height="4" rx="2" fill="#00bd7e"/>
+  <rect x="15" y="25" width="24" height="3" rx="1.5" fill="#ffffff" fill-opacity="0.88"/>
+  <rect x="15" y="32" width="20" height="3" rx="1.5" fill="#ffffff" fill-opacity="0.58"/>
+  <circle cx="17" cy="41.5" r="2" fill="#00bd7e"/>
+  <rect x="22" y="40" width="15" height="3" rx="1.5" fill="#ffffff" fill-opacity="0.72"/>
+  <circle cx="17" cy="48.5" r="2" fill="#00bd7e"/>
+  <rect x="22" y="47" width="11" height="3" rx="1.5" fill="#ffffff" fill-opacity="0.52"/>
+  <!-- Destello IA estructurado -->
+  <path d="M51 19L53.4 25.6L60 28L53.4 30.4L51 37L48.6 30.4L42 28L48.6 25.6L51 19Z" fill="url(#pd-grad)"/>
+  <circle cx="55.5" cy="17.5" r="2" fill="#00bd7e"/>
+</svg>
