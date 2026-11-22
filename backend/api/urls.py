@@ -4,6 +4,8 @@ from .views import (
     upload_document_view,
     format_document_view,
     document_status_view,
+    document_structure_view,
+    review_document_view,
     download_document_view,
     list_templates_view,
 )
@@ -14,8 +16,9 @@ urlpatterns = [
     path('documents/extract/', extract_text_view, name='extract_text'),
     path('documents/<int:id>/', document_status_view, name='document_status'),
     path('documents/<int:id>/format/', format_document_view, name='format_document'),
+    path('documents/<int:id>/structure/', document_structure_view, name='document_structure'),
+    path('documents/<int:id>/review/', review_document_view, name='review_document'),
     path('documents/<int:id>/download/', download_document_view, name='download_document'),
     path('documents/templates/', list_templates_view, name='list_templates_documents'),
     path('templates/', list_templates_view, name='list_templates'),
 ]
-

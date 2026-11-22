@@ -441,3 +441,248 @@ class DocumentAPITests(APITestCase):
             self.assertIn("line_spacing", config)
             self.assertIn("heading_sizes_pt", config)
 
+    # -------------------------------------------------------------------------
+    # 8) Tests S3T20: Endpoints de estructuración con IA, estructura y revisión
+    # -------------------------------------------------------------------------
+    def _upload_fixture(self, fixture_name: str) -> int:
+        fixture_path = FIXTURES_DIR / fixture_name
+        with open(fixture_path, "rb") as f:
+            uploaded = SimpleUploadedFile(
+                fixture_name,
+                f.read(),
+                content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            )
+        resp = self.client.post("/api/documents/", {"file": uploaded}, format="multipart")
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        return resp.data["document_id"]
+
+    def test_structure_and_review_require_review_state_else_409(self):
+        """
+        GET /structure/ y POST /review/ deben responder 409 INVALID_STATE
+        si el job está en pending, processing, done o error.
+        También download debe responder 409 NOT_READY en review/processing/pending/error.
+        """
+        doc_id = self._upload_fixture("01_planos.docx")
+        job = ProcessingJob.objects.filter(document_id=doc_id).last()
+
+        for non_review_state in ("pending", "processing", "done", "error"):
+            ProcessingJob.objects.filter(pk=job.pk).update(status=non_review_state)
+
+            struct_resp = self.client.get(f"/api/documents/{doc_id}/structure/")
+            self.assertEqual(struct_resp.status_code, status.HTTP_409_CONFLICT)
+            self.assertEqual(struct_resp.data.get("error"), "INVALID_STATE")
+
+            rev_resp = self.client.post(
+                f"/api/documents/{doc_id}/review/",
+                {"action": "accept", "revert": []},
+                format="json",
+            )
+            self.assertEqual(rev_resp.status_code, status.HTTP_409_CONFLICT)
+            self.assertEqual(rev_resp.data.get("error"), "INVALID_STATE")
+
+            if non_review_state != "done":
+                dl_resp = self.client.get(f"/api/documents/{doc_id}/download/")
+                self.assertEqual(dl_resp.status_code, status.HTTP_409_CONFLICT)
+                self.assertEqual(dl_resp.data.get("error"), "NOT_READY")
+
+    def test_structure_and_review_404_for_nonexistent_document(self):
+        struct_resp = self.client.get("/api/documents/999999/structure/")
+        self.assertEqual(struct_resp.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(struct_resp.data.get("error"), "NOT_FOUND")
+
+        rev_resp = self.client.post(
+            "/api/documents/999999/review/",
+            {"action": "accept"},
+            format="json",
+        )
+        self.assertEqual(rev_resp.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(rev_resp.data.get("error"), "NOT_FOUND")
+
+    def test_review_validation_errors_keep_job_in_review(self):
+        """
+        Validar que POST /review/ con action inválida o IDs en revert inexistentes
+        responda 400 INVALID_CONFIG y deje el job en estado 'review'.
+        """
+        doc_id = self._upload_fixture("02_headings_mixto.docx")
+        with self.captureOnCommitCallbacks(execute=True):
+            fmt_resp = self.client.post(
+                f"/api/documents/{doc_id}/format/",
+                {"preset_id": "reporte", "use_ai": True},
+                format="json",
+            )
+        self.assertEqual(fmt_resp.status_code, status.HTTP_202_ACCEPTED)
+
+        # En modo sync, tras ejecutarse el callback on_commit el job ya llegó a 'review'
+        status_resp = self.client.get(f"/api/documents/{doc_id}/")
+        self.assertEqual(status_resp.data["status"], "review")
+
+        # 1. Acción inválida
+        bad_action = self.client.post(
+            f"/api/documents/{doc_id}/review/",
+            {"action": "invalid_action"},
+            format="json",
+        )
+        self.assertEqual(bad_action.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(bad_action.data.get("error"), "INVALID_CONFIG")
+
+        # 2. ID de revert inexistente
+        bad_revert = self.client.post(
+            f"/api/documents/{doc_id}/review/",
+            {"action": "accept", "revert": ["id_que_no_existe_999"]},
+            format="json",
+        )
+        self.assertEqual(bad_revert.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(bad_revert.data.get("error"), "INVALID_CONFIG")
+
+        # 3. Tipo inválido en revert
+        bad_revert_type = self.client.post(
+            f"/api/documents/{doc_id}/review/",
+            {"action": "accept", "revert": "b0"},
+            format="json",
+        )
+        self.assertEqual(bad_revert_type.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(bad_revert_type.data.get("error"), "INVALID_CONFIG")
+
+        # El job sigue en 'review' y aún no permite descarga (409 NOT_READY)
+        still_review = self.client.get(f"/api/documents/{doc_id}/")
+        self.assertEqual(still_review.data["status"], "review")
+        dl_before = self.client.get(f"/api/documents/{doc_id}/download/")
+        self.assertEqual(dl_before.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(dl_before.data.get("error"), "NOT_READY")
+
+    def test_ai_flow_accept_and_revert_across_fixtures_01_02_05(self):
+        """
+        Flujo completo v1.1 con FakeProvider sobre los fixtures 01_planos.docx,
+        02_headings_mixto.docx y 05_listas.docx:
+        upload -> format(use_ai=True) 202 -> status(review) -> structure 200 ->
+        review(accept con revert) 200 -> status(done) -> download 200.
+        """
+        for fixture_name in ("01_planos.docx", "02_headings_mixto.docx", "05_listas.docx"):
+            doc_id = self._upload_fixture(fixture_name)
+
+            # 1. Iniciar formateo con IA -> 202 Accepted
+            with self.captureOnCommitCallbacks(execute=True):
+                fmt_resp = self.client.post(
+                    f"/api/documents/{doc_id}/format/",
+                    {
+                        "preset_id": "reporte",
+                        "use_ai": True,
+                        "ai": {
+                            "document_type": "reporte",
+                            "detect_headings": True,
+                            "detect_lists": True,
+                            "detect_tables": True,
+                            "emphasis": "light",
+                        },
+                    },
+                    format="json",
+                )
+            self.assertEqual(fmt_resp.status_code, status.HTTP_202_ACCEPTED)
+            self.assertEqual(fmt_resp.data["status"], "processing")
+            self.assertEqual(fmt_resp.data["document_id"], doc_id)
+
+            # 2. Consultar estado -> 'review' con progress, ai_summary y error_code=None
+            st_resp = self.client.get(f"/api/documents/{doc_id}/")
+            self.assertEqual(st_resp.status_code, status.HTTP_200_OK)
+            self.assertEqual(st_resp.data["status"], "review")
+            self.assertIsNotNone(st_resp.data["progress"])
+            self.assertIn("stage", st_resp.data["progress"])
+            self.assertIn("done", st_resp.data["progress"])
+            self.assertIn("total", st_resp.data["progress"])
+            self.assertIsNotNone(st_resp.data["ai_summary"])
+            self.assertIsNone(st_resp.data["error_code"])
+            self.assertIsNone(st_resp.data["download_url"])
+
+            # 3. Consultar estructura en 'review' -> 200 OK
+            struct_resp = self.client.get(f"/api/documents/{doc_id}/structure/")
+            self.assertEqual(struct_resp.status_code, status.HTTP_200_OK)
+            self.assertEqual(struct_resp.data["document_id"], doc_id)
+            self.assertEqual(struct_resp.data["status"], "review")
+            self.assertEqual(struct_resp.data["original"]["schema_version"], "di.v1")
+            self.assertEqual(struct_resp.data["proposed"]["schema_version"], "di.v1")
+            self.assertGreater(len(struct_resp.data["original"]["blocks"]), 0)
+            self.assertGreater(len(struct_resp.data["proposed"]["blocks"]), 0)
+            self.assertIn("revertible_blocks", struct_resp.data["summary"])
+
+            revertible = struct_resp.data["summary"]["revertible_blocks"]
+            revert_selection = [revertible[0]] if revertible else []
+
+            # 4. Confirmar revisión (accept) -> 200 OK
+            rev_resp = self.client.post(
+                f"/api/documents/{doc_id}/review/",
+                {"action": "accept", "revert": revert_selection},
+                format="json",
+            )
+            self.assertEqual(rev_resp.status_code, status.HTTP_200_OK)
+            self.assertEqual(rev_resp.data["status"], "done")
+            self.assertEqual(rev_resp.data["action"], "accept")
+            self.assertIn("summary", rev_resp.data)
+            self.assertIn("headings_applied", rev_resp.data["summary"])
+            self.assertIn("lists_applied", rev_resp.data["summary"])
+            self.assertIn("tables_applied", rev_resp.data["summary"])
+            self.assertEqual(
+                rev_resp.data["summary"]["reverted_blocks_count"],
+                len(revert_selection),
+            )
+            self.assertEqual(
+                rev_resp.data["download_url"],
+                f"/api/documents/{doc_id}/download/",
+            )
+            self.assertIsNotNone(rev_resp.data["finished_at"])
+
+            # 5. Descargar documento final -> 200 OK y verificar apertura con python-docx
+            dl_resp = self.client.get(f"/api/documents/{doc_id}/download/")
+            self.assertEqual(dl_resp.status_code, status.HTTP_200_OK)
+            dl_bytes = (
+                b"".join(dl_resp.streaming_content)
+                if hasattr(dl_resp, "streaming_content")
+                else dl_resp.content
+            )
+            reopened = DocxDocument(io.BytesIO(dl_bytes))
+            self.assertGreater(len(reopened.paragraphs), 0)
+
+    def test_ai_flow_reject_runs_sprint2_template_only(self):
+        """
+        Valida que POST /api/documents/{id}/review/ con {"action": "reject"}
+        descarte la propuesta de IA, ejecute el flujo de solo plantilla del Sprint 2
+        y deje el documento listo para descarga en estado 'done'.
+        """
+        doc_id = self._upload_fixture("02_headings_mixto.docx")
+        with self.captureOnCommitCallbacks(execute=True):
+            fmt_resp = self.client.post(
+                f"/api/documents/{doc_id}/format/",
+                {"preset_id": "apa7", "use_ai": True},
+                format="json",
+            )
+        self.assertEqual(fmt_resp.status_code, status.HTTP_202_ACCEPTED)
+
+        rev_resp = self.client.post(
+            f"/api/documents/{doc_id}/review/",
+            {"action": "reject"},
+            format="json",
+        )
+        self.assertEqual(rev_resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(rev_resp.data["status"], "done")
+        self.assertEqual(rev_resp.data["action"], "reject")
+        self.assertEqual(
+            rev_resp.data["summary"],
+            {
+                "headings_applied": 0,
+                "lists_applied": 0,
+                "tables_applied": 0,
+                "reverted_blocks_count": 0,
+            },
+        )
+        self.assertEqual(rev_resp.data["download_url"], f"/api/documents/{doc_id}/download/")
+
+        dl_resp = self.client.get(f"/api/documents/{doc_id}/download/")
+        self.assertEqual(dl_resp.status_code, status.HTTP_200_OK)
+        dl_bytes = (
+            b"".join(dl_resp.streaming_content)
+            if hasattr(dl_resp, "streaming_content")
+            else dl_resp.content
+        )
+        result_doc = DocxDocument(io.BytesIO(dl_bytes))
+        self.assertEqual(result_doc.styles["Normal"].font.name, "Times New Roman")
+
+
