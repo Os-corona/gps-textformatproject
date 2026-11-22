@@ -13,7 +13,7 @@ Regla de dependencias: ai_engine no importa python-docx ni docx_engine;
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 from common.document_schema import (
     AIChunkInput,
@@ -33,7 +33,9 @@ _HEADING_NUMBER_PREFIX_RE = re.compile(r"^\s*(\d+(?:\.\d+)*)(?:[.)]|\s)\s*\S+")
 class DocumentTooLargeForAI(ProviderError):
     """
     Excepción lanzada cuando el documento supera el límite máximo permitido
-    para procesamiento con IA (AI_MAX_DOC_CHARS = 60,000 caracteres).
+    para procesamiento con IA (AI_MAX_DOC_CHARS = 60,000 caracteres) o cuando
+    un bloque individual excede AI_MAX_CHUNK_CHARS (8,000 caracteres) y no
+    puede dividirse sin partir el bloque.
     """
 
     error_code: str = "DOCUMENT_TOO_LARGE_FOR_AI"
@@ -53,6 +55,76 @@ class DocumentTooLargeForAI(ProviderError):
             f"({self.total_chars} caracteres > máximo permitido de {self.max_chars})."
         )
         super().__init__(message or default_msg, error_code=self.error_code)
+
+
+class BlockTooLargeForAI(DocumentTooLargeForAI):
+    """
+    Excepción lanzada cuando un único bloque individual supera AI_MAX_CHUNK_CHARS
+    (8,000 caracteres). Como no se permite partir bloques a la mitad ni exceder
+    el máximo por fragmento, se rechaza explícitamente.
+    """
+
+    def __init__(
+        self,
+        *,
+        block_id: Optional[str],
+        block_chars: int,
+        max_chunk_chars: int = AI_MAX_CHUNK_CHARS,
+    ) -> None:
+        self.block_id = block_id
+        self.block_chars = int(block_chars)
+        self.max_chunk_chars = int(max_chunk_chars)
+        msg = (
+            f"El bloque '{block_id}' tiene {self.block_chars} caracteres y excede el "
+            f"tamaño máximo por fragmento ({self.max_chunk_chars} caracteres). "
+            "No se permite partir bloques a la mitad."
+        )
+        super().__init__(msg, total_chars=self.block_chars, max_chars=self.max_chunk_chars)
+
+
+class _TrackedHeadingPath(list):
+    """
+    Subclase de `list` que almacena internamente el nivel jerárquico (0..6) de cada
+    título en la ruta, comportándose como una `list[str]` estándar en comparaciones
+    y serialización JSON.
+    """
+
+    def __init__(
+        self,
+        items: Sequence[str] = (),
+        levels: Optional[Sequence[int]] = None,
+    ) -> None:
+        super().__init__(items)
+        if levels is not None and len(levels) == len(self):
+            self._levels: List[int] = [int(lvl) for lvl in levels]
+        else:
+            self._levels = _infer_path_levels(self)
+
+
+def _infer_path_levels(path: Sequence[str]) -> List[int]:
+    """
+    Infiere los niveles jerárquicos (0..6) de una ruta de títulos cuando proviene
+    de una lista plana de strings (p. ej. `AIChunkInput.heading_path`).
+    """
+    if not path:
+        return []
+
+    levels: List[int] = []
+    for idx, text in enumerate(path):
+        stripped = (text or "").strip()
+        num_match = _HEADING_NUMBER_PREFIX_RE.match(stripped)
+        if num_match:
+            lvl = min(6, max(1, num_match.group(1).count(".") + 1))
+        elif idx == 0:
+            # Si el primer elemento no está numerado y hay un siguiente elemento de nivel 1
+            # o es un título raíz sin numeración, se trata como nivel 0 (Title) si le sigue
+            # un H1, o nivel 0 por defecto para no perderse ante un H1 numerado.
+            lvl = 0
+        else:
+            prev_lvl = levels[-1]
+            lvl = min(6, max(1, prev_lvl + 1))
+        levels.append(lvl)
+    return levels
 
 
 def _extract_blocks(
@@ -159,19 +231,27 @@ def is_potential_heading(block: SourceBlock) -> bool:
 
 def estimate_heading_level(block: SourceBlock) -> int:
     """
-    Estima el nivel jerárquico (1..6) de un bloque que es título o posible título,
-    para mantener actualizado el heading_path acumulado entre fragmentos.
+    Estima el nivel jerárquico (0..6, donde 0 = Title y 1..6 = Heading 1..6)
+    de un bloque que es título o posible título, para mantener actualizado
+    el heading_path acumulado entre fragmentos.
     """
-    if block.level is not None and block.level >= 1:
-        return min(6, int(block.level))
+    if block.level is not None and 0 <= block.level <= 6:
+        return int(block.level)
 
     hints: Hints = block.hints or Hints()
-    if hints.suggested_level is not None and hints.suggested_level >= 1:
-        return min(6, int(hints.suggested_level))
+    if hints.suggested_level is not None and 0 <= hints.suggested_level <= 6:
+        return int(hints.suggested_level)
 
-    style_name = (block.style_name or hints.style_name or "").strip()
+    style_name = (block.style_name or hints.style_name or "").strip().lower()
+    if style_name in ("title", "título", "titulo") or style_name.startswith("title"):
+        return 0
     for lvl in range(1, 7):
-        if f"heading {lvl}" in style_name.lower() or f"título {lvl}" in style_name.lower():
+        if (
+            f"heading {lvl}" in style_name
+            or f"título {lvl}" in style_name
+            or f"titulo {lvl}" in style_name
+            or f"encabezado {lvl}" in style_name
+        ):
             return lvl
 
     text = get_block_text(block).strip()
@@ -190,23 +270,39 @@ def estimate_heading_level(block: SourceBlock) -> int:
     return 1
 
 
-def update_heading_path(current_path: List[str], block: SourceBlock) -> List[str]:
+def update_heading_path(current_path: Sequence[str], block: SourceBlock) -> List[str]:
     """
     Actualiza la ruta de títulos activa si el bloque es un título o posible título.
+    Conserva todos los títulos ancestros con nivel estrictamente menor al nivel del
+    nuevo título (por ejemplo, un título principal de nivel 0 se conserva cuando
+    aparece un H1 de nivel 1).
     """
+    if isinstance(current_path, _TrackedHeadingPath):
+        existing_levels = list(current_path._levels)
+    else:
+        existing_levels = _infer_path_levels(current_path)
+
     if not is_potential_heading(block):
-        return list(current_path)
+        return _TrackedHeadingPath(current_path, levels=existing_levels)
 
     heading_text = get_block_text(block).strip()
     if not heading_text:
-        return list(current_path)
+        return _TrackedHeadingPath(current_path, levels=existing_levels)
 
     level = estimate_heading_level(block)
-    # Truncar la ruta al nivel padre (level - 1) y colocar el título actual
-    parent_depth = max(0, level - 1)
-    updated = list(current_path[:parent_depth])
-    updated.append(heading_text)
-    return updated
+
+    kept_texts: List[str] = []
+    kept_levels: List[int] = []
+    for txt, lvl in zip(current_path, existing_levels):
+        if lvl < level:
+            kept_texts.append(txt)
+            kept_levels.append(lvl)
+        else:
+            break
+
+    kept_texts.append(heading_text)
+    kept_levels.append(level)
+    return _TrackedHeadingPath(kept_texts, levels=kept_levels)
 
 
 def _split_blocks_into_groups(
@@ -216,9 +312,19 @@ def _split_blocks_into_groups(
     """
     Agrupa los bloques en listas de máximo `max_chunk_chars` caracteres sin
     partir bloques a la mitad, cortando preferentemente antes de un posible título.
+    Si un único bloque supera `max_chunk_chars`, lanza `BlockTooLargeForAI`.
     """
     if not blocks:
         return []
+
+    for block in blocks:
+        b_chars = get_block_char_count(block)
+        if b_chars > max_chunk_chars:
+            raise BlockTooLargeForAI(
+                block_id=block.id,
+                block_chars=b_chars,
+                max_chunk_chars=max_chunk_chars,
+            )
 
     groups: List[List[SourceBlock]] = []
     n = len(blocks)
@@ -234,8 +340,6 @@ def _split_blocks_into_groups(
             block = blocks[idx]
             b_chars = get_block_char_count(block)
 
-            # Si el grupo está vacío, siempre debemos incluir al menos un bloque
-            # (incluso si él solo supera max_chunk_chars, nunca se parte a la mitad).
             if not current_group:
                 current_group.append(block)
                 current_chars += b_chars
@@ -272,6 +376,31 @@ def _split_blocks_into_groups(
     return groups
 
 
+def _extract_initial_heading_path(
+    doc_or_blocks: Union[DocumentIntermediate, AIChunkInput, Sequence[Union[SourceBlock, Dict[str, Any]]]],
+    explicit_heading_path: Optional[Sequence[str]] = None,
+) -> _TrackedHeadingPath:
+    """
+    Extrae la ruta de títulos inicial si se provee explícitamente o si la entrada
+    es un AIChunkInput que ya trae `heading_path`.
+    """
+    if explicit_heading_path is not None:
+        if isinstance(explicit_heading_path, _TrackedHeadingPath):
+            return _TrackedHeadingPath(explicit_heading_path, levels=explicit_heading_path._levels)
+        return _TrackedHeadingPath(explicit_heading_path)
+
+    if isinstance(doc_or_blocks, AIChunkInput):
+        raw_path = doc_or_blocks.heading_path
+        if not raw_path and doc_or_blocks.metadata:
+            raw_path = doc_or_blocks.metadata.get("heading_path") or []
+        raw_levels = (doc_or_blocks.metadata or {}).get("heading_levels") if doc_or_blocks.metadata else None
+        if isinstance(raw_path, _TrackedHeadingPath):
+            return _TrackedHeadingPath(raw_path, levels=raw_path._levels)
+        return _TrackedHeadingPath(raw_path or (), levels=raw_levels)
+
+    return _TrackedHeadingPath()
+
+
 def chunk_document(
     doc_or_blocks: Union[DocumentIntermediate, AIChunkInput, Sequence[Union[SourceBlock, Dict[str, Any]]]],
     *,
@@ -279,16 +408,20 @@ def chunk_document(
     max_doc_chars: Optional[int] = None,
     document_id: Optional[Union[int, str]] = None,
     doc_context: Optional[Dict[str, Any]] = None,
+    heading_path: Optional[Sequence[str]] = None,
 ) -> List[AIChunkInput]:
     """
-    Divide un Documento Intermedio (DI) o lista de SourceBlock en fragmentos
-    AIChunkInput de máximo `AI_MAX_CHUNK_CHARS` (8000 caracteres).
+    Divide un Documento Intermedio (DI), AIChunkInput o lista de SourceBlock en
+    fragmentos AIChunkInput de máximo `AI_MAX_CHUNK_CHARS` (8000 caracteres).
 
     Garantías:
     1. Lanza `DocumentTooLargeForAI` si el total del documento supera `AI_MAX_DOC_CHARS` (60000).
-    2. Nunca parte un bloque a la mitad.
+    2. Lanza `BlockTooLargeForAI` (subclase de `DocumentTooLargeForAI`) si un bloque individual
+       supera `max_chunk_chars` (8000), garantizando que ningún fragmento exceda el máximo y
+       que ningún bloque se parta a la mitad.
     3. Corta preferentemente antes de un posible título.
-    4. Adjunta `heading_path` acumulado al inicio de cada fragmento.
+    4. Conserva la ruta inicial `heading_path` (incluyendo cuando se recibe un `AIChunkInput`
+       y preservando títulos de nivel 0 cuando aparecen títulos H1..H6) y la adjunta a cada fragmento.
     5. Conserva el 100% de los bloques en su orden exacto sin pérdidas ni duplicados.
     """
     ensure_within_limit(doc_or_blocks, max_chars=max_doc_chars)
@@ -303,8 +436,14 @@ def chunk_document(
 
     block_groups = _split_blocks_into_groups(blocks, max_chunk_chars=chunk_limit)
 
+    effective_doc_id = (
+        document_id
+        if document_id is not None
+        else (doc_or_blocks.document_id if isinstance(doc_or_blocks, AIChunkInput) else None)
+    )
+    active_heading_path: List[str] = _extract_initial_heading_path(doc_or_blocks, explicit_heading_path=heading_path)
+
     chunks: List[AIChunkInput] = []
-    active_heading_path: List[str] = []
     total_chunks = len(block_groups)
 
     for chunk_idx, group in enumerate(block_groups, start=1):
@@ -323,7 +462,7 @@ def chunk_document(
         chunk_input = AIChunkInput(
             schema_version=SCHEMA_VERSION,
             chunk_id=f"chunk-{chunk_idx:03d}",
-            document_id=document_id,
+            document_id=effective_doc_id,
             heading_path=chunk_heading_path,
             blocks=list(group),
             metadata=metadata,
