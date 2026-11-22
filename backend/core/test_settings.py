@@ -15,5 +15,6 @@ DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": ":memor
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 JOB_RUNNER = "sync"
 AI_PROVIDER = "fake"
+os.environ["AI_PROVIDER"] = "fake"
 _test_media = TemporaryDirectory(prefix="prettydocs-tests-")
 MEDIA_ROOT = _test_media.name

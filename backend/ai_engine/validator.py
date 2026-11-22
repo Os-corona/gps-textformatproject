@@ -23,7 +23,7 @@ _WORD = re.compile(r"\w+", re.UNICODE)
 _TOKEN = re.compile(r"\w+|[^\w\s]", re.UNICODE)
 _CRITICAL = re.compile(r"[+\-−]?\d+(?:[.,:/\-]\d+)*(?:\s?%)?|[^\w\s]")
 _GLYPH = re.compile(r"^\s*(?:[•·◦▪*]\s*|[\-–]\s+)")
-_NUMBER = re.compile(r"^\s*(?:\d+(?:\.\d+)+[.)]?|\d+[.)]|\(\d+\)|[a-zA-Z][.)]|[ivxlcdmIVXLCDM]+[.)])\s+")
+_NUMBER = re.compile(r"^\s*(?:\d+(?:\.\d+)+[.)]?|\d{1,3}[.)]|\(\d{1,3}\)|[a-zA-Z][.)]|[ivxlcdmIVXLCDM]+[.)])\s+")
 _OUT = TypeAdapter(OutBlock)
 
 
@@ -32,8 +32,11 @@ def threshold(name):
 
 
 def _critical(text):
-    return [m.group() for m in _CRITICAL.finditer(text)
-            if any(c.isdecimal() or category(c) == "Sc" or c == "%" for c in m.group())]
+    return [
+        re.sub(r"\s+%", "%", m.group())
+        for m in _CRITICAL.finditer(text)
+        if any(c.isdecimal() or category(c) == "Sc" or c == "%" for c in m.group())
+    ]
 
 
 def _text(block):
@@ -44,17 +47,35 @@ def _text(block):
 
 def _tokens(text, *, table=False, split_list=False):
     if split_list:
-        return [token for clause in re.split(r"[,;]|\b(?:y|e|o)\b", text) for token in _tokens(clause, table=table)]
+        return [
+            token
+            for clause in re.split(r"[,;]|\b(?:y|e|o)\b", text, flags=re.IGNORECASE)
+            for token in _tokens(clause, table=table)
+        ]
     tokens = _TOKEN.findall(text)
     if table:
         tokens = [t for t in tokens if t not in (":", "|")]
-    if split_list:
-        tokens = [t for t in tokens if t not in (",", ";", "y", "e", "o")]
     for i, token in enumerate(tokens):
         if _WORD.fullmatch(token):
             tokens[i] = token.casefold()
             break
     return tokens
+
+
+def _safe_refs(refs) -> list[str]:
+    if isinstance(refs, (list, tuple)):
+        return [str(r) for r in refs if r is not None]
+    if isinstance(refs, str) and refs:
+        return [refs]
+    return []
+
+
+def _source_bold_words(source: SourceBlock) -> int:
+    if source.runs:
+        return sum(len(_WORD.findall(r.text)) for r in source.runs if r.bold)
+    if source.hints and source.hints.all_bold:
+        return len(_WORD.findall(get_block_text(source)))
+    return 0
 
 
 def _table_text(block, *, include_generated=False):
@@ -91,7 +112,7 @@ def validate_chunk(input_blocks, output_blocks) -> IntegrityReport:
     violations, warnings, outputs = [], [], []
 
     def fail(kind, refs, message):
-        violations.append(IntegrityViolation(type=kind, src=list(refs), message=message))
+        violations.append(IntegrityViolation(type=kind, src=_safe_refs(refs), message=message))
 
     for block in raw_outputs:
         raw = block.model_dump(exclude_none=True) if hasattr(block, "model_dump") else block
@@ -115,6 +136,7 @@ def validate_chunk(input_blocks, output_blocks) -> IntegrityReport:
             ref = parent[ref]
         return ref
 
+    generated_headings = 0
     for index, block in enumerate(outputs):
         kind, refs = block["type"], block.get("src", [])
         if kind == "keep" and not refs and block.get("id"):
@@ -125,13 +147,14 @@ def validate_chunk(input_blocks, output_blocks) -> IntegrityReport:
         if len(set(refs)) != len(refs) or any(ref not in by_id for ref in refs):
             fail("INVALID_SRC", refs, "Referencias desconocidas o duplicadas.")
             continue
-        if kind not in ("paragraph", "heading", "list_item", "table", "keep"):
+        if kind not in ("paragraph", "heading", "list_item", "table", "callout", "keep"):
             fail("UNSUPPORTED_BLOCK", refs, "Los elementos opacos deben conservarse como keep.")
         if generated:
             if kind != "heading" or not 1 <= block.get("level", 0) <= 3:
                 fail("GENERATED_LOCATION", refs, "Solo se permiten subtítulos generados de nivel 1 a 3.")
             if len(_WORD.findall(_text(block))) > threshold("AI_MAX_GENERATED_HEADING_WORDS"):
                 fail("GENERATED_LENGTH", refs, "El subtítulo generado supera el máximo de palabras.")
+            generated_headings += 1
             warnings.append("GENERATED_HEADING: " + ", ".join(refs))
         else:
             indices = [positions[ref] for ref in refs]
@@ -165,20 +188,29 @@ def validate_chunk(input_blocks, output_blocks) -> IntegrityReport:
                         warnings.append("GENERATED_HEADER: " + ", ".join(refs))
         # Check text blocks and individual table cells, never opaque XML.
         prose = [cell for row in block.get("rows", []) for cell in row] if kind == "table" else [block]
+        orig_bold = 0 if generated else sum(_source_bold_words(by_id[ref]) for ref in refs)
         if kind != "keep":
             for item in prose:
                 runs = item.get("runs", [])
                 total = len(_WORD.findall(_text(item)))
                 bold = sum(len(_WORD.findall(r["text"])) for r in runs if r.get("bold"))
-                if total and bold / total > threshold("AI_MAX_BOLD_RATIO"):
+                added_bold = max(0, bold - orig_bold) if kind != "table" else bold
+                if total and added_bold / total > threshold("AI_MAX_BOLD_RATIO"):
                     fail("BOLD_RATIO", refs, "Se supera el porcentaje máximo de negritas.")
+
+    text_sources = [s for s in sources if s.type != "keep"]
+    if generated_headings and generated_headings > max(1, len(text_sources)):
+        fail("GENERATED_EXCESS", [b.id for b in sources], "Demasiados subtítulos generados para el fragmento.")
 
     for source in sources:
         indices = coverage[source.id]
         if not indices:
+            if source.type == "keep" and source.keep_kind == "empty":
+                continue
             fail("SOURCE_OMITTED", [source.id], "El bloque original no aparece en la salida.")
         if source.type == "keep" and len(indices) != 1:
-            fail("KEEP_COUNT", [source.id], "keep debe aparecer exactamente una vez.")
+            if not (source.keep_kind == "empty" and len(indices) == 0):
+                fail("KEEP_COUNT", [source.id], "keep debe aparecer exactamente una vez.")
         if len(indices) > 1 and not all(outputs[i]["type"] == "list_item" for i in indices):
             fail("SOURCE_DUPLICATED", [source.id], "Solo se admite dividir un origen en varios list_item.")
 
@@ -203,11 +235,12 @@ def validate_chunk(input_blocks, output_blocks) -> IntegrityReport:
                 if all(b.get("is_numbered") for b in own_targets):
                     text = _NUMBER.sub("", text, count=1)
             texts.append(text)
-        source_critical.extend(_critical(" ".join(texts)))
         if is_table and (deduplicated := _deduplicated_source(texts, targets[0])) is not None:
+            source_critical.extend(_critical(" ".join(deduplicated)))
             expected_parts = [_tokens(text, table=True) for text in deduplicated]
             warnings.append("DEDUPLICATED_TABLE_KEYS: " + ", ".join(refs))
         else:
+            source_critical.extend(_critical(" ".join(texts)))
             expected_parts = [_tokens(text, table=is_table, split_list=split_list) for text in texts]
         expected = [t for part in expected_parts for t in part]
         actual = []
@@ -237,7 +270,7 @@ def validate_chunk(input_blocks, output_blocks) -> IntegrityReport:
             offset += len(part)
         if added_ratio > threshold("AI_MAX_ADDED_TOKEN_RATIO"):
             fail("ADDED_TOKENS", refs, f"Proporción de tokens nuevos {added_ratio:.3f} excesiva.")
-        if added and any(b["type"] == "paragraph" for b in targets):
+        if added and any(b["type"] in ("paragraph", "callout") for b in targets):
             fail("PARAGRAPH_ADDED_TEXT", refs, "Los párrafos normales no pueden contener texto inventado.")
         deleted = Counter()
         inserted = Counter()

@@ -209,7 +209,11 @@ def document_status_view(request, id):
             "size_bytes": document.size_bytes,
             "uploaded_at": document.uploaded_at,
             "use_ai": job.use_ai,
-            "progress": {"stage": job.progress_stage, "done": job.progress_done, "total": job.progress_total},
+            "progress": (
+                None
+                if job.status in ("pending", "error") or not job.progress_stage
+                else {"stage": job.progress_stage, "done": job.progress_done, "total": job.progress_total}
+            ),
             "ai_summary": job.ai_summary,
             "ai_usage": job.ai_usage,
             "error_code": job.error_code,

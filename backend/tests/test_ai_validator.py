@@ -181,3 +181,73 @@ def test_empty_cell_runs_do_not_hide_missing_rendered_content():
     inputs = [source("Nombre: Ana"), source("Nombre: Luis", "b2")]
     outputs = [table([["Nombre", {"text": "Ana", "runs": []}], ["Nombre", "Luis"]], header=False)]
     assert not validate_chunk(inputs, outputs).ok
+
+
+@pytest.mark.parametrize("bad_src", [123, [123], "b1"])
+def test_malformed_src_becomes_invalid_schema_without_crashing(bad_src):
+    report = validate_chunk([source("Hola")], [{"type": "paragraph", "src": bad_src, "runs": [{"text": "Hola"}]}])
+    assert not report.ok
+    assert "INVALID_SCHEMA" in {v.type for v in report.violations}
+    if bad_src == "b1":
+        schema_violation = next(v for v in report.violations if v.type == "INVALID_SCHEMA")
+        assert schema_violation.src == ["b1"]
+
+
+def test_existing_bold_in_source_is_preserved_without_bold_ratio_failure():
+    src_block = source(
+        "Título original en negrita",
+        runs=[{"text": "Título original en negrita", "bold": True}],
+        hints={"all_bold": True, "size_ratio": 1.4, "words": 4},
+    )
+    out_heading = out(
+        "Título original en negrita",
+        kind="heading",
+        level=1,
+        runs=[{"text": "Título original en negrita", "bold": True}],
+    )
+    assert validate_chunk([src_block], [out_heading]).ok
+    out_para = out("Título original en negrita", runs=[{"text": "Título original en negrita", "bold": True}])
+    assert validate_chunk([src_block], [out_para]).ok
+
+
+def test_callout_is_supported_and_cannot_invent_text():
+    assert validate_chunk([source("Nota importante.")], [out("Nota importante.", kind="callout")]).ok
+    report = validate_chunk([source("Nota importante.")], [out("Nota importante inventada.", kind="callout")])
+    assert "PARAGRAPH_ADDED_TEXT" in {v.type for v in report.violations}
+
+
+def test_empty_keep_can_be_omitted_while_non_empty_keep_is_required():
+    inputs = [source("Hola."), {"id": "k_empty", "type": "keep", "keep_kind": "empty"}]
+    assert validate_chunk(inputs, [out("Hola.")]).ok
+    inputs_img = [source("Hola."), {"id": "k_img", "type": "keep", "keep_kind": "image"}]
+    assert not validate_chunk(inputs_img, [out("Hola.")]).ok
+
+
+def test_pivoted_table_with_numeric_header_keys_preserves_critical_data():
+    inputs = [source("Q1: 100; Q2: 200"), source("Q1: 150; Q2: 250", "b2")]
+    outputs = [table([["Q1", "Q2"], ["100", "200"], ["150", "250"]])]
+    assert validate_chunk(inputs, outputs).ok
+
+
+def test_percentage_spacing_and_uppercase_conjunction_in_split_list():
+    assert validate_chunk([source("Tasa del 15%.")], [out("Tasa del 15 %.")]).ok
+    assert validate_chunk(
+        [source("Ana, Luis Y Pedro")],
+        [out("Ana", kind="list_item"), out("Luis", kind="list_item"), out("Pedro", kind="list_item")],
+    ).ok
+
+
+def test_four_digit_year_is_not_stripped_as_list_numbering():
+    report = validate_chunk(
+        [source("2026. Año de recesión.")],
+        [out("Año de recesión.", kind="list_item", ordered=True)],
+    )
+    assert not report.ok
+    assert "CRITICAL_DATA" in {v.type for v in report.violations}
+
+
+def test_excessive_generated_headings_are_rejected():
+    gen = [out("Subtítulo inventado", kind="heading", level=2, generated=True) for _ in range(5)]
+    report = validate_chunk([source("Hola.")], gen + [out("Hola.")])
+    assert not report.ok
+    assert "GENERATED_EXCESS" in {v.type for v in report.violations}

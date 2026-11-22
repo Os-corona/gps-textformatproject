@@ -1,5 +1,6 @@
 """Persistent AI proposal and approved-document finalization pipeline."""
 from copy import deepcopy
+from datetime import timedelta
 from io import BytesIO
 
 from docx import Document as DocxDocument
@@ -9,7 +10,12 @@ from django.db.models import Q
 from django.utils import timezone
 
 from ai_engine.chunker import DocumentTooLargeForAI, ensure_within_limit
-from ai_engine.providers.base import AINotConfiguredError, ProviderAuthError, ProviderError
+from ai_engine.providers.base import (
+    AINotConfiguredError,
+    ProviderAuthError,
+    ProviderError,
+    ProviderRateLimitError,
+)
 from ai_engine.service import structure_document
 from ai_engine.validator import _critical
 from common.integrity import validate_tokens
@@ -27,14 +33,29 @@ def mark_job_error(job_id, exc):
     """Persist only a typed code and a safe message; no provider/document details."""
     if isinstance(exc, (ProviderAuthError, AINotConfiguredError)):
         code, message = "AI_NOT_CONFIGURED", "El proveedor de IA no está configurado o rechazó la autenticación."
+    elif isinstance(exc, ProviderRateLimitError):
+        code, message = "AI_RATE_LIMIT", "Se superó el límite de peticiones del proveedor de IA. Intenta de nuevo en unos momentos."
     elif isinstance(exc, DocumentTooLargeForAI):
         code, message = exc.error_code, "El documento o un bloque excede el límite permitido para IA."
     elif isinstance(exc, ProviderError):
-        code, message = "AI_UNAVAILABLE", "El proveedor de IA no está disponible."
+        code, message = getattr(exc, "error_code", "AI_UNAVAILABLE"), "El proveedor de IA no está disponible."
     else:
         code, message = "PROCESSING_ERROR", "No se pudo procesar el documento."
     ProcessingJob.objects.filter(pk=job_id, status__in=("pending", "processing")).update(
         status="error", error_code=code, error_message=message, finished_at=timezone.now(),
+    )
+
+
+def recover_stale_jobs(*, max_age_minutes=10) -> int:
+    """Mark jobs stuck in processing after a server restart as error so documents can be retried."""
+    cutoff = timezone.now() - timedelta(minutes=max_age_minutes)
+    return ProcessingJob.objects.filter(status="processing").filter(
+        Q(started_at__lt=cutoff) | Q(started_at__isnull=True, created_at__lt=cutoff)
+    ).update(
+        status="error",
+        error_code="PROCESSING_ERROR",
+        error_message="El procesamiento anterior fue interrumpido. Intenta de nuevo.",
+        finished_at=timezone.now(),
     )
 
 
@@ -102,6 +123,10 @@ def restore_original_blocks(original, proposed, revert_ids):
     """
     source_ids = [b["id"] for b in original["blocks"]]
     source_set = set(source_ids)
+    empty_keep_ids = {
+        b["id"] for b in original["blocks"]
+        if b.get("type") == "keep" and b.get("keep_kind") == "empty"
+    }
     if not isinstance(revert_ids, (list, tuple, set)) or any(not isinstance(sid, str) for sid in revert_ids):
         raise ValueError("revert_ids debe ser una lista de IDs de origen.")
     selected = set(revert_ids)
@@ -131,9 +156,10 @@ def restore_original_blocks(original, proposed, revert_ids):
                     emitted.add(sid)
         else:
             restored.append(block)
-    if emitted != selected:
+    missing = selected - emitted
+    if missing - empty_keep_ids:
         raise ValueError("La propuesta no contiene todos los orígenes que se quieren restaurar.")
-    return {**deepcopy(proposed), "blocks": restored}, [sid for sid in source_ids if sid in selected]
+    return {**deepcopy(proposed), "blocks": restored}, [sid for sid in source_ids if sid in emitted]
 
 
 def finalize_job(job, revert_ids):
@@ -141,6 +167,13 @@ def finalize_job(job, revert_ids):
     job.refresh_from_db()
     if job.status != "review":
         raise InvalidJobState("Solo se puede finalizar un trabajo en revisión.")
+    if (
+        not isinstance(job.structure_original, dict)
+        or "blocks" not in job.structure_original
+        or not isinstance(job.structure_proposed, dict)
+        or "blocks" not in job.structure_proposed
+    ):
+        raise InvalidJobState("El trabajo en revisión no contiene una propuesta válida para finalizar.")
     # Invalid user selections leave the proposal in review and do not claim the job.
     structured, reverted = restore_original_blocks(job.structure_original, job.structure_proposed, revert_ids)
     if not ProcessingJob.objects.filter(pk=job.pk, status="review").update(

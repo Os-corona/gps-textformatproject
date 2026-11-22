@@ -389,3 +389,98 @@ def test_reverting_all_also_removes_unanchored_generated_headings():
     restored, ids = ai_pipeline.restore_original_blocks(original, proposed, ["b0"])
     assert ids == ["b0"]
     assert restored["blocks"] == [{"type": "keep", "id": "b0", "src": ["b0"]}]
+
+
+def test_finalize_rejects_review_job_with_missing_structures(make_job):
+    job = make_job()
+    job.status = "review"
+    job.structure_original = None
+    job.structure_proposed = None
+    job.save()
+    with pytest.raises(ai_pipeline.InvalidJobState):
+        ai_pipeline.finalize_job(job, [])
+
+
+def test_mark_job_error_maps_rate_limit_to_ai_rate_limit(make_job):
+    from ai_engine.providers.base import ProviderRateLimitError
+
+    job = make_job()
+    job.status = "processing"
+    job.save()
+    ai_pipeline.mark_job_error(job.pk, ProviderRateLimitError("429 quota"))
+    job.refresh_from_db()
+    assert job.status == "error"
+    assert job.error_code == "AI_RATE_LIMIT"
+    assert "429" not in job.error_message
+
+
+def test_restore_original_blocks_tolerates_omitted_empty_keep():
+    original = {"blocks": [{"id": "b0", "type": "paragraph"}, {"id": "b1", "type": "keep", "keep_kind": "empty"}]}
+    proposed = {"blocks": [{"type": "paragraph", "src": ["b0"]}]}
+    restored, ids = ai_pipeline.restore_original_blocks(original, proposed, ["b0", "b1"])
+    assert ids == ["b0"]
+    assert restored["blocks"] == [{"type": "keep", "id": "b0", "src": ["b0"]}]
+
+
+def test_recover_stale_jobs_only_marks_old_processing_jobs(make_job):
+    from datetime import timedelta
+    from django.utils import timezone
+
+    stale = make_job(["Antiguo."])
+    stale.status = "processing"
+    stale.started_at = timezone.now() - timedelta(minutes=15)
+    stale.save()
+
+    fresh = make_job(["Reciente."])
+    fresh.status = "processing"
+    fresh.started_at = timezone.now() - timedelta(minutes=2)
+    fresh.save()
+
+    recovered = ai_pipeline.recover_stale_jobs(max_age_minutes=10)
+    assert recovered == 1
+    stale.refresh_from_db()
+    fresh.refresh_from_db()
+    assert stale.status == "error"
+    assert stale.error_code == "PROCESSING_ERROR"
+    assert fresh.status == "processing"
+
+
+def test_status_api_returns_null_progress_in_pending_and_error(make_job):
+    job = make_job()
+    client = APIClient()
+    res_pending = client.get(f"/api/documents/{job.document_id}/")
+    assert res_pending.status_code == 200
+    assert res_pending.data["progress"] is None
+
+    job.status = "error"
+    job.error_code = "PROCESSING_ERROR"
+    job.progress_stage = "structuring"
+    job.save()
+    res_error = client.get(f"/api/documents/{job.document_id}/")
+    assert res_error.status_code == 200
+    assert res_error.data["progress"] is None
+
+
+def test_e2e_all_real_fixtures_with_fake_provider_and_presets(make_job):
+    from pathlib import Path
+    from templates_engine.config import load_preset
+
+    fixtures_dir = Path(__file__).resolve().parent / "fixtures"
+    for preset_id in ("reporte", "apa7"):
+        cfg = load_preset(preset_id).model_dump()
+        cfg["use_ai"] = True
+        for docx_path in sorted(fixtures_dir.glob("*.docx")):
+            raw = docx_path.read_bytes()
+            doc = Document.objects.create(
+                user=make_job().document.user,
+                original_file=ContentFile(raw, name=docx_path.name),
+                original_name=docx_path.name,
+                size_bytes=len(raw),
+            )
+            job = ProcessingJob.objects.create(document=doc, use_ai=True, config=cfg)
+            runner.enqueue(job.pk).result()
+            job.refresh_from_db()
+            assert job.status == "review", f"{preset_id}/{docx_path.name}: {job.error_code}"
+            assert job.ai_summary["fallback_only"] is False, f"{preset_id}/{docx_path.name} fell back"
+            finalized = ai_pipeline.finalize_job(job, [])
+            assert finalized.status == "done", f"{preset_id}/{docx_path.name}: {finalized.error_code}"
