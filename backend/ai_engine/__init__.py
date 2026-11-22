@@ -20,6 +20,8 @@ from .prompts import (
     build_user_prompt,
     get_few_shot_examples,
 )
+from .service import StructureResult, structure_document
+from .validator import validate_chunk
 
 __all__ = [
     "AI_MAX_CHUNK_CHARS",
@@ -36,4 +38,7 @@ __all__ = [
     "chunk_document",
     "ensure_within_limit",
     "get_few_shot_examples",
+    "StructureResult",
+    "structure_document",
+    "validate_chunk",
 ]

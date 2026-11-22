@@ -9,6 +9,7 @@ import hashlib
 import re
 from pathlib import Path
 import pytest
+from pydantic import ValidationError
 
 from ai_engine.chunker import (
     AI_MAX_CHUNK_CHARS,
@@ -45,7 +46,7 @@ from common.document_schema import (
 )
 
 SNAPSHOT_FILE = Path(__file__).resolve().parent / "snapshots" / "prompt_v1.0.txt"
-EXPECTED_PROMPT_V1_SHA256 = "c9fced9587e09d2a36b436e39a0fd002c55a5a1c1705af75cf5125427be34586"
+EXPECTED_PROMPT_V1_SHA256 = "2c26bd443a155dc9edf24cd854cf4423bddaa6837bbb5d89400a862c375572f5"
 
 
 def _word_count(text: str) -> int:
@@ -187,7 +188,7 @@ class TestPromptV1:
         assert messages[1]["role"] == "user"
         assert "<documento>" in messages[1]["content"]
 
-    def test_generated_field_supported_on_heading_and_table_but_ignored_on_paragraph(self):
+    def test_generated_field_supported_on_heading_and_header_cells_only(self):
         h = HeadingOutBlock(
             id="h-gen",
             src=["b1"],
@@ -201,25 +202,18 @@ class TestPromptV1:
             id="t-gen",
             src=["b2", "b3"],
             header_row=True,
-            generated=True,
             rows=[
                 [TableCell(text="Campo", generated=True), TableCell(text="Valor", generated=True)],
                 [TableCell(text="Autor"), TableCell(text="Ana")],
             ],
         )
-        assert tbl.generated is True
         assert tbl.rows[0][0].generated is True
 
-        p = ParagraphOutBlock.model_validate(
-            {
-                "type": "paragraph",
-                "id": "p1",
-                "src": ["b4"],
-                "runs": [{"text": "Párrafo normal."}],
-                "generated": True,
-            }
-        )
-        assert not hasattr(p, "generated") or "generated" not in ParagraphOutBlock.model_fields
+        with pytest.raises(ValidationError):
+            ParagraphOutBlock.model_validate({
+                "type": "paragraph", "id": "p1", "src": ["b4"],
+                "runs": [{"text": "Párrafo normal."}], "generated": True,
+            })
 
 
 # ---------------------------------------------------------------------------

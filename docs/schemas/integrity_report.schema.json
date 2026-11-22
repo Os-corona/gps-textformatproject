@@ -1,4 +1,32 @@
 {
+  "$defs": {
+    "IntegrityViolation": {
+      "description": "Error bloqueante con trazabilidad a los bloques de origen.",
+      "properties": {
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "src": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Src",
+          "type": "array"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "message"
+      ],
+      "title": "IntegrityViolation",
+      "type": "object"
+    }
+  },
   "additionalProperties": true,
   "description": "Reporte de integridad para verificar que la IA no alteró ni destruyó contenido crítico.",
   "properties": {
@@ -12,6 +40,13 @@
       "description": "True si el documento supera todas las reglas de integridad",
       "title": "Is Valid",
       "type": "boolean"
+    },
+    "violations": {
+      "items": {
+        "$ref": "#/$defs/IntegrityViolation"
+      },
+      "title": "Violations",
+      "type": "array"
     },
     "total_source_blocks": {
       "default": 0,

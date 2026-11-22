@@ -398,17 +398,10 @@
           "title": "V Merge"
         },
         "generated": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
+          "default": false,
           "description": "True si la celda de encabezado fue generada por la IA y no existía en el texto original",
-          "title": "Generated"
+          "title": "Generated",
+          "type": "boolean"
         },
         "hints": {
           "anyOf": [
