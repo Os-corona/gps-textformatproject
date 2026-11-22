@@ -197,7 +197,18 @@ def finalize_job(job, revert_ids):
         buffer.seek(0)
         job.result_file.save(f"result_{job.pk}.docx", ContentFile(buffer.read()), save=False)
         saved_name = job.result_file.name
-        summary = {**(job.ai_summary or {}), "reverted_blocks_count": len(reverted), "reverted_source_ids": reverted}
+        applied_blocks = structured.get("blocks") or []
+        headings_applied = sum(1 for b in applied_blocks if b.get("type") == "heading")
+        lists_applied = sum(1 for b in applied_blocks if b.get("type") == "list_item")
+        tables_applied = sum(1 for b in applied_blocks if b.get("type") == "table")
+        summary = {
+            **(job.ai_summary or {}),
+            "headings_applied": headings_applied,
+            "lists_applied": lists_applied,
+            "tables_applied": tables_applied,
+            "reverted_blocks_count": len(reverted),
+            "reverted_source_ids": reverted,
+        }
         completed = ProcessingJob.objects.filter(pk=job.pk, status="processing", progress_stage="building").update(
             status="done", progress_stage="building", progress_done=job.progress_total,
             ai_summary=summary, result_file=saved_name, finished_at=timezone.now(),
