@@ -435,6 +435,37 @@ class TestChunker:
             "1.1 Definiciones",
         ]
 
+    @pytest.mark.parametrize("include_title", [False, True])
+    def test_rechunking_preserves_unnumbered_heading_levels_after_serialization(self, include_title):
+        blocks = []
+        if include_title:
+            blocks.append(SourceBlock(id="title", type="heading", level=0, text="Informe"))
+        blocks.extend([
+            SourceBlock(id="intro", type="heading", level=1, text="Introducción"),
+            SourceBlock(id="body1", type="paragraph", text="A" * 7000),
+            SourceBlock(id="methods", type="heading", level=1, text="Metodología"),
+            SourceBlock(id="body2", type="paragraph", text="B" * 7000),
+        ])
+        chunks = chunk_document(blocks)
+        assert len(chunks) == 2
+        ancestors = ["Informe"] if include_title else []
+        ancestor_levels = [0] if include_title else []
+        assert chunks[1].heading_path == ancestors + ["Introducción"]
+        assert chunks[1].metadata["heading_levels"] == ancestor_levels + [1]
+
+        # Los niveles deben sobrevivir al transporte JSON y a divisiones sucesivas.
+        restored = AIChunkInput.model_validate_json(chunks[1].model_dump_json())
+        sub_chunks = chunk_document(restored, max_chunk_chars=7000)
+        assert len(sub_chunks) == 2
+        assert sub_chunks[1].heading_path == ancestors + ["Metodología"]
+        assert sub_chunks[1].metadata["heading_levels"] == ancestor_levels + [1]
+        assert [block for chunk in sub_chunks for block in chunk.blocks] == restored.blocks
+
+        restored_body = AIChunkInput.model_validate_json(sub_chunks[1].model_dump_json())
+        repeated = chunk_document(restored_body, max_chunk_chars=7000)
+        assert repeated[0].heading_path == ancestors + ["Metodología"]
+        assert repeated[0].metadata["heading_levels"] == ancestor_levels + [1]
+
     def test_single_oversized_block_exceeding_max_chunk_chars_is_rejected(self):
         big_text = "Z" * 9500
         b1 = SourceBlock(id="b1", type="paragraph", text="Inicio corto.", runs=[Run(text="Inicio corto.")])

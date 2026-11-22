@@ -54,6 +54,7 @@ Este documento registra el diseño, las reglas, las defensas de seguridad, los e
 - **Política de corte y conservación de `heading_path`:**
   - Cuando un fragmento alcanza el límite, el `chunker` busca hacia atrás el último posible título o corta justo antes de un título entrante para que cada sección viaje junto con sus párrafos hijos.
   - Se propaga `heading_path` de un fragmento al siguiente respetando el nivel `0` (`Title`) como raíz de los encabezados `H1..H6` (`level` 1..6) y conservando cualquier `heading_path` inicial recibido en un `AIChunkInput`.
+  - Cada fragmento guarda en `metadata.heading_levels` los niveles de su `heading_path`, en el mismo orden, para conservar la jerarquía al serializarlo y volver a dividirlo, incluso con títulos sin numeración.
 
 ---
 

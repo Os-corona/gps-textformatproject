@@ -270,7 +270,7 @@ def estimate_heading_level(block: SourceBlock) -> int:
     return 1
 
 
-def update_heading_path(current_path: Sequence[str], block: SourceBlock) -> List[str]:
+def update_heading_path(current_path: Sequence[str], block: SourceBlock) -> _TrackedHeadingPath:
     """
     Actualiza la ruta de títulos activa si el bloque es un título o posible título.
     Conserva todos los títulos ancestros con nivel estrictamente menor al nivel del
@@ -441,7 +441,7 @@ def chunk_document(
         if document_id is not None
         else (doc_or_blocks.document_id if isinstance(doc_or_blocks, AIChunkInput) else None)
     )
-    active_heading_path: List[str] = _extract_initial_heading_path(doc_or_blocks, explicit_heading_path=heading_path)
+    active_heading_path = _extract_initial_heading_path(doc_or_blocks, explicit_heading_path=heading_path)
 
     chunks: List[AIChunkInput] = []
     total_chunks = len(block_groups)
@@ -455,6 +455,7 @@ def chunk_document(
             "total_chunks": total_chunks,
             "char_count": chunk_chars,
             "heading_path": chunk_heading_path,
+            "heading_levels": list(active_heading_path._levels),
         }
         if doc_context:
             metadata["doc_context"] = dict(doc_context)
