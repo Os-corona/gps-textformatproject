@@ -114,7 +114,7 @@
 
         <footer class="slide-footer">
           <span>PrettyDocs · gps-textformatproject</span>
-          <span class="slide-num">01 / 12</span>
+          <span class="slide-num">01 / 13</span>
         </footer>
       </section>
 
@@ -218,7 +218,7 @@
 
         <footer class="slide-footer">
           <span>PrettyDocs · Problema y Usuario</span>
-          <span class="slide-num">02 / 12</span>
+          <span class="slide-num">02 / 13</span>
         </footer>
       </section>
 
@@ -320,7 +320,7 @@
 
         <footer class="slide-footer">
           <span>PrettyDocs · Dos Modos de Operación</span>
-          <span class="slide-num">03 / 12</span>
+          <span class="slide-num">03 / 13</span>
         </footer>
       </section>
 
@@ -446,7 +446,7 @@
 
         <footer class="slide-footer">
           <span>PrettyDocs · Arquitectura Modular</span>
-          <span class="slide-num">04 / 12</span>
+          <span class="slide-num">04 / 13</span>
         </footer>
       </section>
 
@@ -562,7 +562,7 @@
 
         <footer class="slide-footer">
           <span>PrettyDocs · Documento Intermedio (di.v1)</span>
-          <span class="slide-num">05 / 12</span>
+          <span class="slide-num">05 / 13</span>
         </footer>
       </section>
 
@@ -674,7 +674,7 @@
 
         <footer class="slide-footer">
           <span>PrettyDocs · Integridad de Contenido</span>
-          <span class="slide-num">06 / 12</span>
+          <span class="slide-num">06 / 13</span>
         </footer>
       </section>
 
@@ -738,7 +738,7 @@
 
         <footer class="slide-footer">
           <span>PrettyDocs · Seguimiento del Plan (js/data.js)</span>
-          <span class="slide-num">07 / 12</span>
+          <span class="slide-num">07 / 13</span>
         </footer>
       </section>
 
@@ -802,19 +802,19 @@
 
         <footer class="slide-footer">
           <span>PrettyDocs · Comprometido vs. Terminado</span>
-          <span class="slide-num">08 / 12</span>
+          <span class="slide-num">08 / 13</span>
         </footer>
       </section>
 
       <!-- ===================================================================
-           DIAPOSITIVA 09 — CALIDAD, PRUEBAS Y EVALUACIÓN DE IA (PLACEHOLDERS)
+           DIAPOSITIVA 09 — CALIDAD, PRUEBAS Y EVALUACIÓN DE IA
            =================================================================== -->
       <section class="slide" data-title="Calidad, Pruebas y Evaluación de IA" data-kicker="08 · CALIDAD Y VALIDACIÓN">
         <header class="slide-header">
           <div class="slide-header__text">
             <span class="slide-kicker">08 · CALIDAD Y VALIDACIÓN</span>
             <h2 class="slide-title">Cobertura de pruebas y evaluación del modelo de IA</h2>
-            <p class="slide-subtitle">Validación sin regresiones sobre la base de 61 pruebas del Sprint 2 más el corpus del Sprint 3.</p>
+            <p class="slide-subtitle">Validación sin regresiones: de 61 pruebas en el Sprint 2 a 442 pruebas automatizadas en el Sprint 3.</p>
           </div>
           <div class="slide-brand-mini">
             <img src="assets/prettydocs-mark.svg" alt="" /> PrettyDocs
@@ -824,28 +824,28 @@
         <div class="slide-body grid-40-60">
           <!-- 4 KPI Cards dinámicas desde js/data.js -->
           <div class="kpi-grid-2x2">
-            <div id="kpi-backend-tests" class="kpi-card reveal" style="--stagger-index: 1;">
-              <span class="kpi-value">241</span>
+            <div id="kpi-backend-tests" class="kpi-card kpi-card--accent reveal" style="--stagger-index: 1;">
+              <span class="kpi-value">430</span>
               <span class="kpi-label">Pruebas Backend (pytest)</span>
               <span class="kpi-sub">Base S2: 61 en verde</span>
             </div>
 
-            <div id="kpi-frontend-tests" class="kpi-card reveal" style="--stagger-index: 2;">
+            <div id="kpi-frontend-tests" class="kpi-card kpi-card--accent reveal" style="--stagger-index: 2;">
               <span class="kpi-value">12</span>
               <span class="kpi-label">Pruebas Frontend (vitest)</span>
-              <span class="kpi-sub">Review / Result / Mocks</span>
+              <span class="kpi-sub">Vitest · Review / Result / Mocks</span>
             </div>
 
-            <div id="kpi-coverage" class="kpi-card is-placeholder reveal" style="--stagger-index: 3;">
-              <span class="kpi-value">{{XX}}%</span>
+            <div id="kpi-coverage" class="kpi-card kpi-card--accent reveal" style="--stagger-index: 3;">
+              <span class="kpi-value">91.1%</span>
               <span class="kpi-label">Cobertura crítica</span>
-              <span class="kpi-sub">ai_engine + docx_engine</span>
+              <span class="kpi-sub">ai_engine 90.2% · docx_engine 92.4%</span>
             </div>
 
-            <div id="kpi-integrity" class="kpi-card is-placeholder reveal" style="--stagger-index: 4;">
-              <span class="kpi-value">{{100}}%</span>
+            <div id="kpi-integrity" class="kpi-card kpi-card--accent reveal" style="--stagger-index: 4;">
+              <span class="kpi-value">100%</span>
               <span class="kpi-label">Integridad textual</span>
-              <span class="kpi-sub">Meta obligatoria: 100 %</span>
+              <span class="kpi-sub">8/8 casos del corpus S3T23</span>
             </div>
           </div>
 
@@ -853,9 +853,9 @@
           <div class="chart-card reveal" style="--stagger-index: 2;">
             <div class="chart-card__head">
               <h3 class="chart-card__title">Meta Plan S3 vs. Heurístico vs. Modelo IA</h3>
-              <span id="eval-model-badge" class="badge badge--amber">Modelo: {{MODELO_OPENROUTER}}</span>
+              <span id="eval-model-badge" class="badge badge--emerald">openai/gpt-6-luna · OpenRouter</span>
             </div>
-            <div id="eval-placeholder-banner" class="placeholder-banner">
+            <div id="eval-placeholder-banner" class="placeholder-banner" hidden>
               <span>⚠</span>
               <span>Datos de evaluación listos para inyectar en <code class="inline-code">js/data.js</code> (<code class="inline-code">isPlaceholder: false</code>)</span>
             </div>
@@ -865,17 +865,112 @@
 
         <footer class="slide-footer">
           <span>PrettyDocs · Calidad y Evaluación (js/data.js)</span>
-          <span class="slide-num">09 / 12</span>
+          <span class="slide-num">09 / 13</span>
         </footer>
       </section>
 
       <!-- ===================================================================
-           DIAPOSITIVA 10 — GESTIÓN DE RIESGOS Y DECISIONES TÉCNICAS
+           DIAPOSITIVA 10 — EFICIENCIA Y BAJO COSTO OPERATIVO
            =================================================================== -->
-      <section class="slide slide--alt" data-title="Riesgos y Mitigación" data-kicker="09 · RIESGOS Y MITIGACIÓN">
+      <section class="slide slide--alt" data-title="Costo y Eficiencia · PrettyDocs vs. Chat IA" data-kicker="09 · COSTO Y EFICIENCIA">
+        <header class="slide-header" style="margin-bottom: 16px;">
+          <div class="slide-header__text">
+            <span class="slide-kicker">09 · COSTO Y EFICIENCIA</span>
+            <h2 class="slide-title">Bajo costo operativo frente a un chat de IA</h2>
+          </div>
+          <div class="slide-brand-mini">
+            <img src="assets/prettydocs-mark.svg" alt="" /> PrettyDocs
+          </div>
+        </header>
+
+        <div class="slide-body">
+          <!-- 4 KPIs reales de OpenRouter (25 docs / 77 requests por chunks) -->
+          <div class="kpi-strip kpi-strip--4">
+            <div class="kpi-card kpi-card--accent reveal" style="--stagger-index: 1;">
+              <span id="kpi-cost-spend" class="kpi-value">$0.19</span>
+              <span class="kpi-label">Gasto total real (USD)</span>
+              <span id="kpi-cost-spend-sub" class="kpi-sub">25 docs · 77 req · 1.28M tok</span>
+            </div>
+
+            <div class="kpi-card kpi-card--accent reveal" style="--stagger-index: 2;">
+              <span id="kpi-cost-per-req" class="kpi-value">~$0.008</span>
+              <span class="kpi-label">Costo por documento</span>
+              <span class="kpi-sub">~3 chunks/doc · ≈ $0.15 MXN</span>
+            </div>
+
+            <div class="kpi-card reveal" style="--stagger-index: 3;">
+              <span id="kpi-cost-cache" class="kpi-value">41.8%</span>
+              <span class="kpi-label">Cache hit rate</span>
+              <span class="kpi-sub">Prompt y few-shot cacheados</span>
+            </div>
+
+            <div class="kpi-card reveal" style="--stagger-index: 4;">
+              <span id="kpi-cost-blended" class="kpi-value">$0.15</span>
+              <span class="kpi-label">Precio blended / 1M</span>
+              <span class="kpi-sub">OpenRouter · gpt-6-luna</span>
+            </div>
+          </div>
+
+          <div class="grid-55-45" style="gap: 20px;">
+            <!-- Gráfica comparativa SVG -->
+            <div class="chart-card reveal-left" style="--stagger-index: 2; padding: 14px 16px 10px;">
+              <div class="chart-card__head" style="margin-bottom: 6px;">
+                <h3 class="chart-card__title" style="font-size: 18px;">PrettyDocs vs. Chat (Gemini / Claude / ChatGPT)</h3>
+                <span class="badge badge--emerald" style="font-size: 14px; padding: 4px 10px;">Datos reales</span>
+              </div>
+              <div id="chart-cost-comparison" class="chart-host"></div>
+            </div>
+
+            <!-- Tabla compacta de ventajas -->
+            <div style="display:flex; flex-direction:column; justify-content:center;">
+              <table class="pd-table pd-table--cost reveal-right" style="--stagger-index: 3;">
+                <thead>
+                  <tr>
+                    <th>Aspecto</th>
+                    <th>Chat tradicional</th>
+                    <th>PrettyDocs</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Tokens</strong></td>
+                    <td>Reenvía historial por turno</td>
+                    <td><span class="badge badge--emerald">JSON por chunks</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Caché</strong></td>
+                    <td>Reprocesa prompts manuales</td>
+                    <td><span class="badge badge--emerald">41.8 % caché</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>100 docs</strong></td>
+                    <td>~$20/mes o varias sesiones</td>
+                    <td><span class="badge badge--emerald">~$0.76 USD</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Entrega</strong></td>
+                    <td>Copiar/pegar (rompe estilos)</td>
+                    <td><span class="badge badge--indigo">.docx intacto</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <footer class="slide-footer">
+          <span>PrettyDocs · Telemetría real de OpenRouter (25 pruebas con documentos)</span>
+          <span class="slide-num">10 / 13</span>
+        </footer>
+      </section>
+
+      <!-- ===================================================================
+           DIAPOSITIVA 11 — GESTIÓN DE RIESGOS Y DECISIONES TÉCNICAS
+           =================================================================== -->
+      <section class="slide" data-title="Riesgos y Mitigación" data-kicker="10 · RIESGOS Y MITIGACIÓN">
         <header class="slide-header">
           <div class="slide-header__text">
-            <span class="slide-kicker">09 · RIESGOS Y MITIGACIÓN</span>
+            <span class="slide-kicker">10 · RIESGOS Y MITIGACIÓN</span>
             <h2 class="slide-title">Principales riesgos técnicos mitigados en código</h2>
           </div>
           <div class="slide-brand-mini">
@@ -967,12 +1062,12 @@
 
         <footer class="slide-footer">
           <span>PrettyDocs · Gestión de Riesgos</span>
-          <span class="slide-num">10 / 12</span>
+          <span class="slide-num">11 / 13</span>
         </footer>
       </section>
 
       <!-- ===================================================================
-           DIAPOSITIVA 11 — TRANSICIÓN A LA DEMOSTRACIÓN EN VIVO (HERO OSCURO)
+           DIAPOSITIVA 12 — TRANSICIÓN A LA DEMOSTRACIÓN EN VIVO (HERO OSCURO)
            =================================================================== -->
       <section class="slide slide--dark" data-title="Demo en Vivo · PrettyDocs en Acción" data-kicker="DEMO EN VIVO">
         <div class="hero-bg-grid" aria-hidden="true"></div>
@@ -1031,17 +1126,17 @@ GET  /api/documents/12/download/   → 200 OK       application/vnd.openxmlforma
 
         <footer class="slide-footer">
           <span>PrettyDocs · Transición a Demo</span>
-          <span class="slide-num">11 / 12</span>
+          <span class="slide-num">12 / 13</span>
         </footer>
       </section>
 
       <!-- ===================================================================
-           DIAPOSITIVA 12 — CIERRE: QUÉ FALTA Y QUÉ SIGUE (ROADMAP)
+           DIAPOSITIVA 13 — CIERRE: QUÉ FALTA Y QUÉ SIGUE (ROADMAP)
            =================================================================== -->
-      <section class="slide" data-title="Cierre · Qué Falta y Qué Sigue" data-kicker="10 · CIERRE Y SIGUIENTES PASOS">
+      <section class="slide" data-title="Cierre · Qué Falta y Qué Sigue" data-kicker="11 · CIERRE Y SIGUIENTES PASOS">
         <header class="slide-header">
           <div class="slide-header__text">
-            <span class="slide-kicker">10 · CIERRE Y SIGUIENTES PASOS</span>
+            <span class="slide-kicker">11 · CIERRE Y SIGUIENTES PASOS</span>
             <h2 class="slide-title">Qué falta por cerrar y evolución del producto</h2>
           </div>
           <div class="slide-brand-mini">
@@ -1109,7 +1204,7 @@ GET  /api/documents/12/download/   → 200 OK       application/vnd.openxmlforma
 
         <footer class="slide-footer">
           <span>PrettyDocs · Cierre y Roadmap</span>
-          <span class="slide-num">12 / 12</span>
+          <span class="slide-num">13 / 13</span>
         </footer>
       </section>
 
@@ -1120,7 +1215,7 @@ GET  /api/documents/12/download/   → 200 OK       application/vnd.openxmlforma
   <nav class="presenter-hud" aria-label="Controles de presentación">
     <div class="hud-group">
       <button id="btn-prev" class="hud-btn" type="button" title="Anterior (←)">←</button>
-      <span id="hud-counter" class="hud-counter">01 / 12</span>
+      <span id="hud-counter" class="hud-counter">01 / 13</span>
       <button id="btn-next" class="hud-btn" type="button" title="Siguiente (→ / Espacio)">→</button>
     </div>
 
@@ -1138,10 +1233,10 @@ GET  /api/documents/12/download/   → 200 OK       application/vnd.openxmlforma
     <div id="deck-progress-bar" class="deck-progress__bar"></div>
   </div>
 
-  <!-- Vista Overview de las 12 láminas (tecla G) -->
+  <!-- Vista Overview de las 13 láminas (tecla G) -->
   <div id="overview-overlay" class="overview-overlay" hidden role="dialog" aria-label="Vista general de diapositivas">
     <div class="overview-header">
-      <h2>Vista general · 12 diapositivas (PrettyDocs)</h2>
+      <h2>Vista general · 13 diapositivas (PrettyDocs)</h2>
       <button id="btn-close-overview" class="hud-btn" type="button" style="border:1px solid rgba(255,255,255,0.25);">Cerrar (Esc / G)</button>
     </div>
     <div id="overview-grid" class="overview-grid"></div>
@@ -1153,7 +1248,7 @@ GET  /api/documents/12/download/   → 200 OK       application/vnd.openxmlforma
       <h3>Controles del presentador</h3>
       <ul class="help-list">
         <li><span>Siguiente / Anterior</span><span><span class="kbd">→</span> <span class="kbd">←</span> <span class="kbd">Espacio</span></span></li>
-        <li><span>Vista general (12 láminas)</span><span class="kbd">G</span></li>
+        <li><span>Vista general (13 láminas)</span><span class="kbd">G</span></li>
         <li><span>Iniciar / pausar cronómetro 20:00</span><span class="kbd">C</span></li>
         <li><span>Reiniciar cronómetro a 20:00</span><span class="kbd">R</span></li>
         <li><span>Alternar tema Claro / Oscuro</span><span class="kbd">T</span></li>

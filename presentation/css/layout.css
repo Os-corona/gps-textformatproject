@@ -759,6 +759,41 @@ code.inline-code {
   flex-shrink: 0;
 }
 
+.kpi-strip--4 {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.kpi-strip--4 .kpi-card {
+  padding: 11px 16px;
+  gap: 2px;
+}
+
+.kpi-strip--4 .kpi-value {
+  font-size: 34px;
+}
+
+.kpi-strip--4 .kpi-label {
+  font-size: 16px;
+}
+
+.kpi-strip--4 .kpi-sub {
+  font-size: 14.5px;
+}
+
+.pd-table--cost th,
+.pd-table--cost td {
+  padding: 11px 14px;
+  font-size: 16.5px;
+}
+
+.pd-table--cost .badge {
+  font-size: 14.5px;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+
 .kpi-grid-2x2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1156,9 +1191,9 @@ code.inline-code {
 
 .overview-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   grid-template-rows: repeat(3, 1fr);
-  gap: 16px;
+  gap: 14px;
   flex: 1;
   min-height: 0;
 }

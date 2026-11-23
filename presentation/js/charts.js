@@ -188,12 +188,12 @@
       {
         id: 'kpi-coverage',
         value: metrics.codeCoveragePct,
-        sub: 'ai_engine + docx_engine'
+        sub: metrics.coverageDetail || 'ai_engine + docx_engine'
       },
       {
         id: 'kpi-integrity',
         value: metrics.integrityScorePct,
-        sub: 'Meta obligatoria: 100 %'
+        sub: '8/8 casos del corpus S3T23'
       }
     ];
 
@@ -370,6 +370,88 @@
   }
 
   /* ------------------------------------------------------------------------
+     Slide 10 — Eficiencia de Costo y Tokens: PrettyDocs vs. Chat de IA
+     ------------------------------------------------------------------------ */
+  function renderCostTelemetry(cost) {
+    if (!cost) return;
+    const setText = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    };
+
+    setText('kpi-cost-spend', cost.totalSpendUsd);
+    setText('kpi-cost-spend-sub', `${cost.totalDocuments} docs · ${cost.totalRequests} req · ${cost.tokenVolumeLabel} tok`);
+    setText('kpi-cost-per-req', cost.costPerDocUsd);
+    setText('kpi-cost-cache', cost.cacheHitRatePct);
+    setText('kpi-cost-blended', `${cost.blendedPricePer1M}`);
+
+    const container = document.getElementById('chart-cost-comparison');
+    if (!container || !cost.comparison) return;
+
+    const c = cost.comparison;
+    const tokenReduction = Math.round((1 - c.prettyDocsTokens / c.chatTokens) * 100);
+    const costFactor = Math.round(c.chat100DocsCostUsd / c.prettyDocs100DocsCostUsd);
+    const W = 580;
+    const H = 292;
+    const barX = 18;
+    const maxW = 438;
+
+    const chatTokW = maxW;
+    const pdTokW = Math.max(40, (c.prettyDocsTokens / c.chatTokens) * maxW);
+
+    const chatCostW = maxW;
+    const pdCostW = Math.max(26, (c.prettyDocs100DocsCostUsd / c.chat100DocsCostUsd) * maxW);
+
+    container.innerHTML = `
+      <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Comparativa de tokens y costo PrettyDocs vs Chat IA">
+        <!-- Sección 1: Tokens por documento -->
+        <text x="${barX}" y="20" fill="var(--text-primary)" font-size="15.5" font-weight="800">
+          Tokens consumidos por documento (~5 págs.)
+        </text>
+        <rect x="444" y="3" width="124" height="24" rx="12" fill="var(--pd-emerald-soft)"/>
+        <text x="506" y="19" text-anchor="middle" fill="var(--pd-emerald-deep)" font-size="13.5" font-weight="800">-${tokenReduction}% tokens</text>
+
+        <!-- Barra Chat Tokens -->
+        <text x="${barX}" y="47" fill="var(--text-secondary)" font-size="14" font-weight="700">Chat IA (4–5 turnos reenviando historial + reescritura)</text>
+        <rect x="${barX}" y="54" width="${maxW}" height="24" rx="7" fill="var(--surface-mute)"/>
+        <rect x="${barX}" y="54" width="${chatTokW.toFixed(1)}" height="24" rx="7"
+              fill="#dc2626" fill-opacity="0.82" class="svg-bar-h" style="--bar-index: 0;"/>
+        <text x="${barX + chatTokW + 10}" y="72" fill="#dc2626" font-size="15" font-weight="800" font-family="var(--font-mono)">~48k</text>
+
+        <!-- Barra PrettyDocs Tokens -->
+        <text x="${barX}" y="102" fill="var(--text-primary)" font-size="14" font-weight="700">PrettyDocs (bloques JSON sin XML ni imágenes keep)</text>
+        <rect x="${barX}" y="109" width="${maxW}" height="24" rx="7" fill="var(--surface-mute)"/>
+        <rect x="${barX}" y="109" width="${pdTokW.toFixed(1)}" height="24" rx="7"
+              fill="#00bd7e" class="svg-bar-h" style="--bar-index: 1;"/>
+        <text x="${barX + pdTokW + 10}" y="127" fill="var(--pd-emerald-deep)" font-size="15" font-weight="800" font-family="var(--font-mono)">~8.8k</text>
+
+        <line x1="${barX}" y1="150" x2="${W - 12}" y2="150" stroke="var(--border-subtle)" stroke-dasharray="4 4"/>
+
+        <!-- Sección 2: Costo estimado por 100 documentos -->
+        <text x="${barX}" y="176" fill="var(--text-primary)" font-size="15.5" font-weight="800">
+          Costo estimado (100 documentos / uso mensual)
+        </text>
+        <rect x="444" y="159" width="124" height="24" rx="12" fill="var(--pd-emerald-soft)"/>
+        <text x="506" y="175" text-anchor="middle" fill="var(--pd-emerald-deep)" font-size="13.5" font-weight="800">~${costFactor}× menor</text>
+
+        <!-- Barra Chat Costo -->
+        <text x="${barX}" y="203" fill="var(--text-secondary)" font-size="14" font-weight="700">Plan Chat Pro (Gemini / Claude / ChatGPT)</text>
+        <rect x="${barX}" y="210" width="${maxW}" height="22" rx="7" fill="var(--surface-mute)"/>
+        <rect x="${barX}" y="210" width="${chatCostW.toFixed(1)}" height="22" rx="7"
+              fill="#2c3e50" class="svg-bar-h" style="--bar-index: 2;"/>
+        <text x="${barX + chatCostW + 10}" y="227" fill="var(--text-primary)" font-size="15" font-weight="800" font-family="var(--font-mono)">$20/mes</text>
+
+        <!-- Barra PrettyDocs Costo -->
+        <text x="${barX}" y="256" fill="var(--text-primary)" font-size="14" font-weight="700">PrettyDocs API (OpenRouter · ~$0.008/doc con caché)</text>
+        <rect x="${barX}" y="263" width="${maxW}" height="20" rx="7" fill="var(--surface-mute)"/>
+        <rect x="${barX}" y="263" width="${pdCostW.toFixed(1)}" height="20" rx="7"
+              fill="#00bd7e" class="svg-bar-h" style="--bar-index: 3;"/>
+        <text x="${barX + pdCostW + 10}" y="279" fill="var(--pd-emerald-deep)" font-size="15" font-weight="800" font-family="var(--font-mono)">~$${c.prettyDocs100DocsCostUsd.toFixed(2)} USD</text>
+      </svg>
+    `;
+  }
+
+  /* ------------------------------------------------------------------------
      API pública de charts.js
      ------------------------------------------------------------------------ */
   function renderAll(data) {
@@ -401,6 +483,9 @@
     // Slide 09 KPIs y gráfica comparativa
     renderQualityKpis(data.metricsPlaceholder);
     renderEvaluationChart(document.getElementById('chart-ai-evaluation'), data.metricsPlaceholder);
+
+    // Slide 10 Costo y eficiencia de tokens
+    renderCostTelemetry(data.costTelemetry);
   }
 
   ns.Charts = { renderAll, SVG_NS };
