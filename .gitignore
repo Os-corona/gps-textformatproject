@@ -70,5 +70,6 @@ htmlcov/
 !backend/tests/fixtures/**/*.docx
 !backend/tests/fixtures/*.docx
 !backend/tests/ai_fixtures/**/*.docx
+!docs/demo/*.docx
 .postman/
 postman/
