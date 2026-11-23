@@ -135,6 +135,10 @@ class AIConfig(BaseModel):
     detect_lists: bool = Field(default=True, description="Detectar listas")
     detect_tables: bool = Field(default=True, description="Detectar tablas")
     emphasis: Optional[str] = Field(default="light", description="Énfasis de IA: none|light|medium (o ninguno|ligero|medio)")
+    creative_structure: bool = Field(
+        default=False,
+        description="Habilita el enriquecimiento estructural proactivo (subtítulos sugeridos, listas, tablas y destacados donde no existían)",
+    )
     accepted_disclaimer: Optional[bool] = Field(default=True, description="Aceptación de aviso de IA")
 
     @model_validator(mode="before")
@@ -205,6 +209,8 @@ class TemplateConfig(BaseModel):
                     ai_dict["detect_lists"] = data["detect_lists"]
                 if "detect_tables" in data and "detect_tables" not in ai_dict:
                     ai_dict["detect_tables"] = data["detect_tables"]
+                if "creative_structure" in data and "creative_structure" not in ai_dict:
+                    ai_dict["creative_structure"] = data["creative_structure"]
                 data["ai"] = AIConfig(**ai_dict)
             elif isinstance(ai_data, AIConfig):
                 data["ai"] = ai_data

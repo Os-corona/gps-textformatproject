@@ -215,6 +215,19 @@ class TestPromptV1:
                 "runs": [{"text": "Párrafo normal."}], "generated": True,
             })
 
+    def test_creative_structure_prompt_opt_in_preserves_default_snapshot(self):
+        default_prompt = build_system_prompt({"emphasis": "ligero", "document_type": "general"})
+        creative_prompt = build_system_prompt({
+            "emphasis": "medio",
+            "document_type": "reporte",
+            "creative_structure": True,
+        })
+        assert "MODO DE ENRIQUECIMIENTO ESTRUCTURAL PROACTIVO" not in default_prompt
+        assert "MODO DE ENRIQUECIMIENTO ESTRUCTURAL PROACTIVO" in creative_prompt
+        assert "SUBTÍTULOS PROACTIVOS" in creative_prompt
+        assert "TABLAS COMPARATIVAS DESDE PROSA" in creative_prompt
+        assert "VIÑETAS DESDE ENUMERACIONES EN PROSA" in creative_prompt
+
 
 # ---------------------------------------------------------------------------
 # 2. Pruebas del Chunker y límites de caracteres

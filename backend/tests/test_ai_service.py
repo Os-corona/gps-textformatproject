@@ -204,3 +204,20 @@ def test_progress_callback_and_usage_include_both_integrity_attempts():
     assert progress.call_args_list[0].args == ("structuring", 0, 1)
     assert progress.call_args_list[-1].args == ("validating", 1, 1)
     assert all(call.args[1] == 0 for call in progress.call_args_list[:-1])
+
+
+def test_bold_ratio_only_violation_is_sanitized_without_discarding_ai_structure():
+    provider = Mock()
+    provider.structure.return_value = SimpleNamespace(output={
+        "chunk_id": "chunk-001",
+        "blocks": [
+            {"type": "heading", "level": 2, "generated": True, "src": ["b1"], "runs": [{"text": "Resumen", "bold": True}]},
+            {"type": "paragraph", "src": ["b1"], "runs": [{"text": "Total $10.", "bold": True}]},
+        ],
+    })
+    result = structure_document(document(), {"creative_structure": True}, provider)
+    provider.structure.assert_called_once()
+    assert result.summary["chunks_ai"] == 1
+    assert result.summary["chunks_heuristic"] == 0
+    assert result.summary["blocks_by_type"] == {"heading": 1, "paragraph": 1}
+    assert all(not r.bold for b in result.blocks for r in b.runs)

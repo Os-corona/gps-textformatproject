@@ -83,6 +83,7 @@ interface AiFormState {
   detect_titles: boolean
   detect_lists: boolean
   detect_tables: boolean
+  creative_structure: boolean
   emphasis: 'ninguno' | 'ligero' | 'medio'
   accepted_disclaimer: boolean
 }
@@ -93,6 +94,7 @@ const aiForm = reactive<AiFormState>({
   detect_titles: true,
   detect_lists: true,
   detect_tables: true,
+  creative_structure: true,
   emphasis: (userPrefs.defaultEmphasis as AiFormState['emphasis']) || 'medio',
   accepted_disclaimer: false
 })
@@ -250,12 +252,14 @@ async function submitFormatting() {
     payload.detect_titles = aiForm.detect_titles
     payload.detect_lists = aiForm.detect_lists
     payload.detect_tables = aiForm.detect_tables
+    payload.creative_structure = aiForm.creative_structure
     payload.emphasis = aiForm.emphasis
     payload.ai_options = {
       document_type: aiForm.document_type,
       detect_titles: aiForm.detect_titles,
       detect_lists: aiForm.detect_lists,
       detect_tables: aiForm.detect_tables,
+      creative_structure: aiForm.creative_structure,
       emphasis: aiForm.emphasis,
       accepted_disclaimer: aiForm.accepted_disclaimer
     }
@@ -593,6 +597,25 @@ function cancel() {
                 <input id="detect-tables" class="form-check-input" type="checkbox" v-model="aiForm.detect_tables" />
                 <label class="form-check-label small fw-medium" for="detect-tables">Crear tablas desde texto</label>
               </div>
+            </div>
+
+            <div class="p-3 mb-3 rounded-3 border bg-light-subtle">
+              <div class="form-check form-switch mb-0">
+                <input
+                  id="ai-creative-structure"
+                  class="form-check-input cursor-pointer"
+                  type="checkbox"
+                  role="switch"
+                  v-model="aiForm.creative_structure"
+                />
+                <label class="form-check-label fw-semibold small text-dark cursor-pointer d-flex flex-wrap align-items-center gap-2" for="ai-creative-structure">
+                  <span>Enriquecimiento estructural proactivo</span>
+                  <span class="badge rounded-pill ai-chip">✦ Crea estructura faltante</span>
+                </label>
+              </div>
+              <p class="text-secondary mb-0 mt-1 ms-5" style="font-size: 0.78rem">
+                Impulsa a la IA a sugerir subtítulos temáticos, viñetas, tablas comparativas y tarjetas destacadas en textos planos sin modificar tus palabras ni cifras originales.
+              </p>
             </div>
 
             <div class="alert alert-warning border-warning-subtle d-flex flex-column gap-2 mb-0 rounded-3" role="alert">

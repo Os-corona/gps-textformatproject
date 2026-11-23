@@ -45,21 +45,42 @@ def _text(block):
     return block.get("text") or ""
 
 
-def _tokens(text, *, table=False, split_list=False):
+def _tokens(text, *, table=False, split_list=False, _casefold_sentences=False):
     if split_list:
         return [
             token
             for clause in re.split(r"[,;]|\b(?:y|e|o)\b", text, flags=re.IGNORECASE)
-            for token in _tokens(clause, table=table)
+            for token in _tokens(clause, table=table, split_list=False, _casefold_sentences=True)
         ]
     tokens = _TOKEN.findall(text)
     if table:
         tokens = [t for t in tokens if t not in (":", "|")]
+    at_start = True
+    casefold_after_punct = table or _casefold_sentences
     for i, token in enumerate(tokens):
         if _WORD.fullmatch(token):
-            tokens[i] = token.casefold()
-            break
+            if at_start:
+                tokens[i] = token.casefold()
+                at_start = False
+        elif casefold_after_punct and token in (".", ":"):
+            at_start = True
     return tokens
+
+
+def _valid_split_types(types):
+    """Allow splitting one source paragraph into list items, or optional intro/closing paragraphs + list/table."""
+    if all(t == "list_item" for t in types):
+        return True
+    inner = list(types)
+    while inner and inner[0] == "paragraph":
+        inner = inner[1:]
+    while inner and inner[-1] == "paragraph":
+        inner = inner[:-1]
+    if len(inner) >= 2 and all(t == "list_item" for t in inner):
+        return True
+    if inner == ["table"]:
+        return True
+    return False
 
 
 def _safe_refs(refs) -> list[str]:
@@ -186,23 +207,34 @@ def validate_chunk(input_blocks, output_blocks) -> IntegrityReport:
                         if len(_WORD.findall(_text(cell))) > threshold("AI_MAX_GENERATED_HEADING_WORDS"):
                             fail("GENERATED_LENGTH", refs, "La celda generada supera el máximo de palabras.")
                         warnings.append("GENERATED_HEADER: " + ", ".join(refs))
-        # Check text blocks and individual table cells, never opaque XML.
-        prose = [cell for row in block.get("rows", []) for cell in row] if kind == "table" else [block]
+        # Check text blocks and table rows (not single-word key cells), never opaque XML.
         orig_bold = 0 if generated else sum(_source_bold_words(by_id[ref]) for ref in refs)
-        if kind != "keep":
-            for item in prose:
-                runs = item.get("runs", [])
-                item_text = _text(item)
-                total = len(_WORD.findall(item_text))
-                bold = sum(len(_WORD.findall(r["text"])) for r in runs if r.get("bold"))
-                added_bold = max(0, bold - orig_bold) if kind != "table" else bold
-                # Permitir prefijo corto 'Etiqueta:' en negrita cuando le sigue texto sin negrita
-                if added_bold and bold < total and ":" in item_text:
-                    prefix_words = len(_WORD.findall(item_text.split(":", 1)[0]))
-                    if 0 < prefix_words <= 6 and added_bold <= prefix_words:
-                        added_bold = 0
-                if total and added_bold / total > threshold("AI_MAX_BOLD_RATIO"):
+        if kind == "table":
+            for row_idx, row in enumerate(block.get("rows", [])):
+                if row_idx == 0 and block.get("header_row", True):
+                    continue
+                row_total = sum(len(_WORD.findall(_text(cell))) for cell in row)
+                row_bold = sum(
+                    len(_WORD.findall(r["text"]))
+                    for cell in row
+                    for r in cell.get("runs", [])
+                    if r.get("bold")
+                )
+                if row_total and row_bold / row_total > threshold("AI_MAX_BOLD_RATIO"):
                     fail("BOLD_RATIO", refs, "Se supera el porcentaje máximo de negritas.")
+        elif kind != "keep":
+            runs = block.get("runs", [])
+            item_text = _text(block)
+            total = len(_WORD.findall(item_text))
+            bold = sum(len(_WORD.findall(r["text"])) for r in runs if r.get("bold"))
+            added_bold = max(0, bold - orig_bold)
+            # Permitir prefijo corto 'Etiqueta:' en negrita cuando le sigue texto sin negrita
+            if added_bold and bold < total and ":" in item_text:
+                prefix_words = len(_WORD.findall(item_text.split(":", 1)[0]))
+                if 0 < prefix_words <= 6 and added_bold <= prefix_words:
+                    added_bold = 0
+            if total and added_bold / total > threshold("AI_MAX_BOLD_RATIO"):
+                fail("BOLD_RATIO", refs, "Se supera el porcentaje máximo de negritas.")
 
     text_sources = [s for s in sources if s.type != "keep"]
     if generated_headings and generated_headings > max(1, len(text_sources)):
@@ -217,8 +249,8 @@ def validate_chunk(input_blocks, output_blocks) -> IntegrityReport:
         if source.type == "keep" and len(indices) != 1:
             if not (source.keep_kind == "empty" and len(indices) == 0):
                 fail("KEEP_COUNT", [source.id], "keep debe aparecer exactamente una vez.")
-        if len(indices) > 1 and not all(outputs[i]["type"] == "list_item" for i in indices):
-            fail("SOURCE_DUPLICATED", [source.id], "Solo se admite dividir un origen en varios list_item.")
+        if len(indices) > 1 and not _valid_split_types([outputs[i]["type"] for i in indices]):
+            fail("SOURCE_DUPLICATED", [source.id], "Solo se admite dividir un origen en varios list_item o en párrafo introductorio + lista/tabla.")
 
     groups = defaultdict(list)
     for source in sources:
@@ -231,7 +263,9 @@ def validate_chunk(input_blocks, output_blocks) -> IntegrityReport:
         indices = sorted({i for ref in refs for i in coverage[ref]})
         targets = [outputs[i] for i in indices if outputs[i]["type"] != "keep"]
         is_table = len(targets) == 1 and targets[0]["type"] == "table"
-        split_list = len(targets) > 1 and all(b["type"] == "list_item" for b in targets)
+        has_table = any(b["type"] == "table" for b in targets)
+        target_types = [b["type"] for b in targets]
+        split_list = len(targets) > 1 and _valid_split_types(target_types) and not has_table
         texts = []
         for source in group:
             text = get_block_text(source)
@@ -247,7 +281,7 @@ def validate_chunk(input_blocks, output_blocks) -> IntegrityReport:
             warnings.append("DEDUPLICATED_TABLE_KEYS: " + ", ".join(refs))
         else:
             source_critical.extend(_critical(" ".join(texts)))
-            expected_parts = [_tokens(text, table=is_table, split_list=split_list) for text in texts]
+            expected_parts = [_tokens(text, table=has_table, split_list=split_list) for text in texts]
         expected = [t for part in expected_parts for t in part]
         actual = []
         for target in targets:
@@ -256,7 +290,7 @@ def validate_chunk(input_blocks, output_blocks) -> IntegrityReport:
                     text = " ".join(_text(c) for c in row if not c.get("generated"))
                     actual.extend(_tokens(text, table=True))
             else:
-                actual.extend(_tokens(_text(target), split_list=split_list))
+                actual.extend(_tokens(_text(target), table=has_table, split_list=split_list))
         matcher = SequenceMatcher(None, expected, actual, autojunk=False)
         matched = sum(size for _, _, size in matcher.get_matching_blocks())
         added = len(actual) - matched

@@ -251,3 +251,71 @@ def test_excessive_generated_headings_are_rejected():
     report = validate_chunk([source("Hola.")], gen + [out("Hola.")])
     assert not report.ok
     assert "GENERATED_EXCESS" in {v.type for v in report.violations}
+
+
+def test_split_intro_paragraph_plus_list_items_preserves_integrity():
+    src = source("Objetos de la estación. Los paneles informan horarios, las cámaras vigilan y las máquinas cobran.")
+    outputs = [
+        out("Objetos de la estación.", kind="paragraph"),
+        out("Los paneles informan horarios", kind="list_item"),
+        out("Las cámaras vigilan", kind="list_item"),
+        out("Las máquinas cobran.", kind="list_item"),
+    ]
+    assert validate_chunk([src], outputs).ok
+
+    # Invented text in intro paragraph must still be rejected
+    bad_outputs = [
+        out("Objetos inventados de la estación.", kind="paragraph"),
+        out("Los paneles informan horarios", kind="list_item"),
+        out("Las cámaras vigilan", kind="list_item"),
+        out("Las máquinas cobran.", kind="list_item"),
+    ]
+    assert not validate_chunk([src], bad_outputs).ok
+
+    # Intro + list items + closing paragraph from one source block
+    src_with_closing = source(
+        "Objetos de la estación. Los paneles informan horarios, las cámaras vigilan y las máquinas cobran. Todo opera coordinado."
+    )
+    outputs_with_closing = [
+        out("Objetos de la estación.", kind="paragraph"),
+        out("Los paneles informan horarios", kind="list_item"),
+        out("Las cámaras vigilan", kind="list_item"),
+        out("Las máquinas cobran.", kind="list_item"),
+        out("Todo opera coordinado.", kind="paragraph"),
+    ]
+    assert validate_chunk([src_with_closing], outputs_with_closing).ok
+
+
+def test_split_intro_paragraph_plus_comparative_table_preserves_integrity():
+    src = source("Materiales distintos. El acero resiste tensión, el concreto soporta compresión y la madera es ligera.")
+    outputs = [
+        out("Materiales y propiedades", kind="heading", level=2, generated=True),
+        out("Materiales distintos.", kind="paragraph"),
+        table(
+            [
+                [{"text": "Material", "generated": True}, {"text": "Propiedad", "generated": True}],
+                ["El acero", "resiste tensión,"],
+                ["el concreto", "soporta compresión"],
+                ["y la madera", "es ligera."],
+            ],
+            refs=("b1",),
+            header=True,
+        ),
+    ]
+    assert validate_chunk([src], outputs).ok
+
+    # Reordered rows must still fail TOKEN_ORDER
+    reordered = [
+        out("Materiales distintos.", kind="paragraph"),
+        table(
+            [
+                [{"text": "Material", "generated": True}, {"text": "Propiedad", "generated": True}],
+                ["el concreto", "soporta compresión"],
+                ["El acero", "resiste tensión,"],
+                ["y la madera", "es ligera."],
+            ],
+            refs=("b1",),
+            header=True,
+        ),
+    ]
+    assert not validate_chunk([src], reordered).ok

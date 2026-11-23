@@ -28,6 +28,27 @@ class StructureResult(BaseModel):
     })
 
 
+def _strip_excess_bold(output: AIChunkOutput, offending_refs: set[str]) -> AIChunkOutput:
+    """Clear added bold flags only on blocks flagged with BOLD_RATIO so valid AI structure is preserved."""
+    cleaned = output.model_copy(deep=True)
+    for block in cleaned.blocks:
+        refs = set(getattr(block, "src", None) or [])
+        if offending_refs and not (refs & offending_refs):
+            continue
+        if getattr(block, "runs", None):
+            for run in block.runs:
+                if run.bold:
+                    run.bold = None
+        if getattr(block, "rows", None):
+            for row in block.rows:
+                for cell in row:
+                    if cell.runs:
+                        for run in cell.runs:
+                            if run.bold:
+                                run.bold = None
+    return cleaned
+
+
 def structure_document(di, options=None, provider=None, *, on_progress=None) -> StructureResult:
     """Return accepted/fallback blocks, attempt reports and counts for the whole DI.
 
@@ -82,6 +103,13 @@ def structure_document(di, options=None, provider=None, *, on_progress=None) -> 
                 output = AIChunkOutput.model_validate(response.output)
                 progress("validating", index)
                 report = validate_chunk(chunk.blocks, output.blocks)
+                if not report.ok and report.violations and all(v.type == "BOLD_RATIO" for v in report.violations):
+                    offending_refs = {ref for v in report.violations for ref in v.src}
+                    sanitized = _strip_excess_bold(output, offending_refs)
+                    recheck = validate_chunk(chunk.blocks, sanitized.blocks)
+                    if recheck.ok:
+                        output = sanitized
+                        report = recheck
                 if output.chunk_id != chunk.chunk_id:
                     report.is_valid = False
                     report.violations.append(IntegrityViolation(
