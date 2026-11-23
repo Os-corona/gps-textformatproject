@@ -279,8 +279,9 @@ def run_evaluation(
 
     resolved_model_name = getattr(provider, "model", model or ("heuristic" if mode == "heuristic" else "unknown"))
 
-    for golden_path in paths:
+    for i, golden_path in enumerate(paths):
         golden = load_json(golden_path)
+        print(f"[{i+1}/{len(paths)}] Evaluando {golden['fixture_id']} ({mode})...", flush=True)
         docx_path = golden_path.parent / "document.docx"
         di = extract_document(docx_path)
 
