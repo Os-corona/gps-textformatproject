@@ -46,6 +46,7 @@ from common.document_schema import (
 )
 
 SNAPSHOT_FILE = Path(__file__).resolve().parent / "snapshots" / "prompt_v1.0.txt"
+SNAPSHOT_V1_1_FILE = Path(__file__).resolve().parent / "snapshots" / "prompt_v1.1.txt"
 EXPECTED_PROMPT_V1_SHA256 = "2c26bd443a155dc9edf24cd854cf4423bddaa6837bbb5d89400a862c375572f5"
 
 
@@ -65,23 +66,28 @@ def _bold_word_ratio(runs: list[dict]) -> float:
 # 1. Pruebas de Prompt v1 y Snapshot Real
 # ---------------------------------------------------------------------------
 class TestPromptV1:
-    def test_prompt_version_is_1_0(self):
-        assert PROMPT_VERSION == "1.0"
-        assert "[PROMPT_VERSION=1.0]" in SYSTEM_PROMPT
+    def test_prompt_version_is_valid(self):
+        assert PROMPT_VERSION in ("1.0", "1.1")
+        assert f"[PROMPT_VERSION={PROMPT_VERSION}]" in SYSTEM_PROMPT
 
     def test_system_prompt_matches_versioned_snapshot_file_and_fixed_hash(self):
-        prompt = build_system_prompt()
-        assert prompt == SYSTEM_PROMPT
-        assert prompt == build_system_prompt({"emphasis": "ligero", "document_type": "general"})
+        prompt_v1_0 = build_system_prompt(version="1.0")
+        assert prompt_v1_0 == build_system_prompt({"emphasis": "ligero", "document_type": "general"}, version="1.0")
 
-        # Comparación contra el archivo de referencia versionado en el repositorio
+        # Comparación contra el archivo de referencia versionado en el repositorio (v1.0)
         assert SNAPSHOT_FILE.is_file(), f"No existe el archivo de snapshot: {SNAPSHOT_FILE}"
         snapshot_text = SNAPSHOT_FILE.read_text(encoding="utf-8").replace("\r\n", "\n")
-        assert prompt == snapshot_text
+        assert prompt_v1_0 == snapshot_text
 
-        # Comparación contra el hash SHA-256 fijo (detecta cualquier regresión o cambio accidental)
-        actual_sha256 = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
+        # Comparación contra el hash SHA-256 fijo de v1.0
+        actual_sha256 = hashlib.sha256(prompt_v1_0.encode("utf-8")).hexdigest()
         assert actual_sha256 == EXPECTED_PROMPT_V1_SHA256
+
+        # Verificación del snapshot actual (v1.1) si está activo
+        if PROMPT_VERSION == "1.1":
+            assert SNAPSHOT_V1_1_FILE.is_file()
+            v1_1_text = SNAPSHOT_V1_1_FILE.read_text(encoding="utf-8").replace("\r\n", "\n")
+            assert build_system_prompt() == v1_1_text
 
     def test_system_prompt_contains_all_required_sections(self):
         prompt = build_system_prompt()
